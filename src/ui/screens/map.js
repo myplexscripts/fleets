@@ -10,7 +10,7 @@ import { CHARTERS } from '../../data/charters.js';
 import { BOSSES } from '../../data/bosses.js';
 import {
   allRoutes, effDanger, voyageOpen, bossReady, charterAvailable,
-  patrolActive, patrolLeft, fmtDur
+  patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 
@@ -19,17 +19,20 @@ function starPath(x, y, r) {
          `L${x},${y + r} L${x - r * 0.35},${y + r * 0.35} L${x - r},${y} L${x - r * 0.35},${y - r * 0.35} Z`;
 }
 
-/* Mission type reads from the marker's silhouette, not just its colour. */
+/* Mission type reads from the marker's silhouette, not just its colour, and the
+   two voyage shapes read differently from the four fighting shapes. */
 function nodeShape(r, col, k) {
   const { x, y } = r, s = 5.5 * k;
-  if (r.type === 'patrol')
+  if (r.type === 'dive')                            // ring: something below
+    return `<circle cx="${x}" cy="${y}" r="${s}" fill="none" stroke="${col}" stroke-width="${2.8 * k}"/>`
+         + `<circle cx="${x}" cy="${y}" r="${s * 0.34}" fill="${col}"/>`;
+  if (r.type === 'patrol')                          // rotated square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" transform="rotate(45 ${x} ${y})" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'raid' || r.type === 'blockade')
+  if (r.type === 'raid' || r.type === 'blockade')    // spearhead
     return `<path d="M${x},${y - s * 1.35} L${x + s * 1.2},${y + s * 0.85} L${x - s * 1.2},${y + s * 0.85} Z" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'salvage')
-    return `<circle cx="${x}" cy="${y}" r="${s}" fill="none" stroke="${col}" stroke-width="${2.8 * k}"/>`;
-  if (r.type === 'escort')
+  if (r.type === 'escort')                          // square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  /* cargo run: filled disc with a bright centre */
   return `<circle cx="${x}" cy="${y}" r="${s}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/><circle cx="${x}" cy="${y}" r="${2 * k}" fill="#eaf4f4"/>`;
 }
 
@@ -51,8 +54,8 @@ export function renderMap() {
      chart, so measure it and keep the chart clear of it. Written first so the
      SVG (inserted afterwards) lands behind it. */
   $('main').innerHTML = `<div id="mapwrap">
-    <div class="legend">${buildLegend(rs)}</div>
-    <div class="maphint">Green = open to trade · Blue = your ships at sea · Gold star = charter · Red star = admiral</div>
+    <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
+    <div class="maphint">Disc = cargo run · Ring = dive · Angular = a fight · Star = charter</div>
   </div>`;
   const legendEl = host.querySelector('.legend');
   const hintEl = host.querySelector('.maphint');
@@ -88,6 +91,22 @@ export function renderMap() {
   const HLBL = Math.max(18, Math.round(14.5 * NR));
   const LSX = CW / 360, LSY = CH / 560;
 
+  /* How close together the nodes actually landed. As more regions unlock the
+     same screen has to hold more of the chart, and a fixed tap target would
+     start swallowing its neighbours — so both the marker and its hit circle
+     shrink to fit the tightest gap on screen. */
+  let minGap = Infinity;
+  for (let a = 0; a < pts.length; a++) {
+    for (let b = a + 1; b < pts.length; b++) {
+      const dx = (pts[a].x - pts[b].x) * k, dy = (pts[a].y - pts[b].y) * k;
+      const dd = Math.hypot(dx, dy);
+      if (dd > 0.5) minGap = Math.min(minGap, dd);
+    }
+  }
+  const HIT = Math.max(9, Math.min(22 * NR, (minGap === Infinity ? 999 : minGap) / 2 - 1));
+  /* Markers follow the hit circle down, but never below legibility. */
+  const MS = Math.max(NR * 0.55, Math.min(NR, HIT / 16));
+
   /* Labels are centre-anchored on their node, so one near an edge would run off
      screen. Nudge the text (not the marker) far enough in to stay readable. */
   const labelX = (x, text, size) => {
@@ -99,24 +118,32 @@ export function renderMap() {
   let lines = '', nodes = '', bossNodes = '', voyLines = '';
 
   rs.forEach(r => {
-    const d = effDanger(r), col = DHEX[d], isCh = r.type === 'charter', open = voyageOpen(r);
+    const isCh = r.type === 'charter', isDive = r.type === 'dive';
+    const d = effDanger(r);
+    /* Dives carry no danger rating, so they are tinted by whether the bell can
+       reach them rather than by how dangerous the water is. */
+    const col = isDive ? (diveReachable(r) ? '#7ab0e0' : '#4a6070') : DHEX[d];
+    const open = canVoyage(r) && voyageOpen(r);
     const x = MX(r.x), y = MY(r.y);
 
-    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="${col}" stroke-width="${1.6 * NR}" opacity="0.7"/>`;
+    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="${col}" stroke-width="${1.6 * MS}" opacity="0.7"/>`;
     if (active[r.id])
-      voyLines += `<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#7ab0e0" stroke-width="${2.4 * NR}" opacity="0.95"/>`;
+      voyLines += `<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#7ab0e0" stroke-width="${2.4 * MS}" opacity="0.95"/>`;
 
-    const isPort = r.id.startsWith('pt_') || isCh;
-    const label = isPort ? (isCh ? PORTS[r.charterDef.loc].n : PORTS[r.id.slice(3)].n).toUpperCase() : '';
+    const label = isCh ? PORTS[r.charterDef.loc].n.toUpperCase()
+      : r.portId ? PORTS[r.portId].n.toUpperCase()
+      : isDive ? 'DEPTH ' + r.depth
+      : '';
+    const labelColor = isCh ? '#efe3ae' : (isDive ? '#8fb8d8' : '#a8c4c6');
 
     nodes += `<g id="node_${r.id}" data-act="mission" data-id="${r.id}" class="mapnode">
-      <circle cx="${x}" cy="${y}" r="${22 * NR}" fill="transparent"/>
+      <circle cx="${x}" cy="${y}" r="${HIT}" fill="transparent"/>
       ${isCh
-        ? `<path class="charterstar" d="${starPath(x, y, 10 * NR)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
-        : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * NR}" fill="${col}"/>${nodeShape({ ...r, x, y }, col, NR)}`}
-      ${open && !isCh ? `<circle cx="${x + 10 * NR}" cy="${y - 10 * NR}" r="${4.2 * NR}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
-      ${active[r.id] ? `<circle cx="${x - 10 * NR}" cy="${y - 10 * NR}" r="${4.2 * NR}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
-      ${isPort ? `<text x="${labelX(x, label, LBL)}" y="${y + 20 * NR + LBL}" text-anchor="middle" fill="${isCh ? '#efe3ae' : '#a8c4c6'}" font-size="${LBL}" font-family="Oswald" letter-spacing="1" style="paint-order:stroke" stroke="#04161c" stroke-width="3">${esc(label)}</text>` : ''}
+        ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
+        : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${nodeShape({ ...r, x, y }, col, MS)}`}
+      ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
+      ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
+      ${label ? `<text x="${labelX(x, label, LBL)}" y="${y + 18 * MS + LBL}" text-anchor="middle" fill="${labelColor}" font-size="${LBL}" font-family="Oswald" letter-spacing="1" style="paint-order:stroke" stroke="#04161c" stroke-width="3">${esc(label)}</text>` : ''}
     </g>`;
   });
 
@@ -126,18 +153,18 @@ export function renderMap() {
 
     if (S.bossBeaten[rk]) {
       /* A struck flag marks a beaten admiral. */
-      bossNodes += `<g><circle cx="${x}" cy="${y}" r="${9 * NR}" fill="none" stroke="#d9c98a" stroke-width="1.8" opacity=".6"/>
-        <path d="M${x - 3.5 * NR},${y - 5 * NR} v${10 * NR} M${x - 3.5 * NR},${y - 5 * NR} h${7.5 * NR} l${-2.4 * NR},${2.6 * NR} l${2.4 * NR},${2.6 * NR} h${-7.5 * NR}"
-          fill="#d9c98a" stroke="#d9c98a" stroke-width="${1.2 * NR}" stroke-linejoin="round"/></g>`;
+      bossNodes += `<g><circle cx="${x}" cy="${y}" r="${9 * MS}" fill="none" stroke="#d9c98a" stroke-width="1.8" opacity=".6"/>
+        <path d="M${x - 3.5 * MS},${y - 5 * MS} v${10 * MS} M${x - 3.5 * MS},${y - 5 * MS} h${7.5 * MS} l${-2.4 * MS},${2.6 * MS} l${2.4 * MS},${2.6 * MS} h${-7.5 * MS}"
+          fill="#d9c98a" stroke="#d9c98a" stroke-width="${1.2 * MS}" stroke-linejoin="round"/></g>`;
       return;
     }
 
-    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#d94a3a" stroke-width="${2 * NR}" opacity="0.9"/>`;
+    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#d94a3a" stroke-width="${2 * MS}" opacity="0.9"/>`;
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
-      <circle cx="${x}" cy="${y}" r="${26 * NR}" fill="transparent"/>
-      <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * NR}" fill="#d94a3a"/>
-      <path d="${starPath(x, y, 10 * NR)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/>
-      <text x="${labelX(x, b.n.toUpperCase(), LBL)}" y="${y + 24 * NR + LBL}" text-anchor="middle" fill="#f0b0a6" font-size="${LBL}" font-family="Oswald" letter-spacing="1.2" style="paint-order:stroke" stroke="#0a0507" stroke-width="3">${esc(b.n.toUpperCase())}</text></g>`;
+      <circle cx="${x}" cy="${y}" r="${HIT * 1.15}" fill="transparent"/>
+      <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#d94a3a"/>
+      <path d="${starPath(x, y, 10 * MS)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/>
+      <text x="${labelX(x, b.n.toUpperCase(), LBL)}" y="${y + 22 * MS + LBL}" text-anchor="middle" fill="#f0b0a6" font-size="${LBL}" font-family="Oswald" letter-spacing="1.2" style="paint-order:stroke" stroke="#0a0507" stroke-width="3">${esc(b.n.toUpperCase())}</text></g>`;
   });
 
   const svg = `<svg id="mapsvg" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
@@ -156,9 +183,9 @@ export function renderMap() {
       </g>
       ${lines}${voyLines}
       <g>
-        <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * NR}" fill="#d9c98a"/>
-        <circle cx="${hx}" cy="${hy}" r="${7 * NR}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
-        <text x="${labelX(hx, 'HOME PORT', HLBL)}" y="${hy + 24 * NR + HLBL}" text-anchor="middle" fill="#d9c98a" font-size="${HLBL}" font-family="Oswald" letter-spacing="2" style="paint-order:stroke" stroke="#04161c" stroke-width="3">HOME PORT</text>
+        <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
+        <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
+        <text x="${labelX(hx, 'HOME PORT', HLBL)}" y="${hy + 22 * MS + HLBL}" text-anchor="middle" fill="#d9c98a" font-size="${HLBL}" font-family="Oswald" letter-spacing="2" style="paint-order:stroke" stroke="#04161c" stroke-width="3">HOME PORT</text>
       </g>
       ${nodes}${bossNodes}
     </svg>`;
@@ -179,7 +206,7 @@ function buildLegend(rs) {
     const b = BOSSES[rk], need = b ? b.noto : 1;
     const cur = Math.min(S.noto[rk] || 0, need), done = S.bossBeaten[rk];
     const chn = CHARTERS.filter(c => PORTS[c.loc].region === rk && charterAvailable(c)).length;
-    const openN = mine.filter(voyageOpen).length;
+    const openN = mine.filter(r => canVoyage(r) && voyageOpen(r)).length;
 
     const meta = [
       patrolActive(rk) ? `<span title="Patrol in force">${iconHTML('flag', 18)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : '',

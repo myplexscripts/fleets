@@ -18,6 +18,7 @@ import { initLoading, loadStep, hideLoading } from './ui/loading.js';
 import { showTitle } from './ui/title.js';
 import './ui/pause.js';
 import './ui/mission.js';
+import './ui/stores.js';
 
 const LOAD_MSGS = [
   'Bending on sail…',

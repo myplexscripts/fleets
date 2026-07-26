@@ -4,7 +4,9 @@ import { $, esc } from '../core/dom.js';
 import { S, save, newShip } from '../core/state.js';
 import { actions } from '../core/actions.js';
 import { rnd } from '../core/rng.js';
+import { grant } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
+import { SCRAP_YIELD, MATERIALS } from '../data/materials.js';
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
@@ -15,14 +17,18 @@ import { coinFly } from '../fx/coins.js';
 import { toast } from '../fx/toast.js';
 import { tutEvent, refreshTut } from './tutorial.js';
 
-export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', fromVoyage = false }) {
+export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, fromVoyage = false }) {
+  /* A dive's chest money is not part of the route reward, so fold it in for the
+     payout line and the coin shower. */
+  const paid = { ...(route.rew || {}) };
+  if (extra) for (const k in extra) paid[k] = (paid[k] || 0) + extra[k];
   const isBoss = route.type === 'boss', isCh = route.type === 'charter';
   const title = success
     ? (isBoss ? 'Admiral Defeated' : (isCh ? 'Charter Fulfilled' : (fromVoyage ? 'Ships Returned' : 'Lane Swept')))
     : (isBoss ? 'Repulsed' : (fromVoyage ? 'Run Lost' : 'Battle Lost'));
 
   let h = `<div class="resulthead ${success ? 'good' : 'bad'}">${title}</div>
-    <div class="sub center">${success ? '<b style="color:var(--goldhi)">' + fmt(route.rew) + '</b> paid into the strongbox. ' : ''}${esc(msg || '')}</div>
+    <div class="sub center">${success && fmt(paid) ? '<b style="color:var(--goldhi)">' + fmt(paid) + '</b> paid into the strongbox. ' : ''}${esc(msg || '')}</div>
     ${prizeMsg ? `<div class="evt prize">${esc(prizeMsg)}</div>` : ''}
     ${noto ? `<div class="evt noto">Your name carries further in ${REGIONS[route.region].n} — notoriety +${noto}, now ${S.noto[route.region] || 0} of ${BOSSES[route.region].noto}.</div>` : ''}
     ${evt ? `<div class="evt">${esc(evt)}</div>` : ''}`;
@@ -34,10 +40,10 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
       h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
         <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
         <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
-        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Scrap: ${t.salv} parts and 1 gem.${e.derelict ? ' No crew aboard to ransom.' : ' Ransom: ' + t.ransom + ' reales.'}</div></div></div>
+        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Break up: ${scrapLine(e.type)}.${e.derelict ? ' No crew aboard to ransom.' : ' Ransom: ' + t.ransom + ' reales.'}</div></div></div>
         <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:7px">
           <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button>
-          <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Scrap</button>
+          <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Break Up</button>
           ${e.derelict ? '' : `<button class="btn sm" data-act="cap" data-i="${i}" data-mode="ransom" data-type="${e.type}">Ransom</button>`}
           <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ignore" data-type="${e.type}">Let Go</button>
         </div>${full ? '<div class="sub" style="color:var(--yel);margin-top:8px">No free berth. Scuttle a ship in Port, or buy a berth in the Market, to keep her.</div>' : ''}</div>`;
@@ -49,13 +55,19 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   setSheet(`<h3>${esc(route.n)}</h3>`, h);
   openSheet();
 
-  if (success && route.rew.reales) {
-    setTimeout(() => coinFly(Math.min(12, Math.ceil(route.rew.reales / 200))), 500);
+  if (success && paid.reales) {
+    setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.reales / 200))), 500);
   }
   save();
   updateRes();
   refreshTut();
 }
+
+const scrapWords = type => {
+  const y = SCRAP_YIELD[type];
+  return `${y.wood} ${MATERIALS.wood.unit}, ${y.metal} ${MATERIALS.metal.unit} and ${y.cloth} ${MATERIALS.cloth.unit}`;
+};
+const scrapLine = type => scrapWords(type) + ', plus a gem';
 
 function capAct(i, mode, type) {
   const t = TYPES[type], el = $('cap' + i);
@@ -68,9 +80,10 @@ function capAct(i, mode, type) {
     sub.textContent = 'Added to your fleet, damaged. Repair her in Port.';
     toast('The ' + t.n + ' flies your colours now.', 'gold');
   } else if (mode === 'salvage') {
-    S.parts += t.salv;
+    const yld = SCRAP_YIELD[type];
+    grant(yld);
     S.gems += 1;
-    sub.textContent = `Scrapped for ${t.salv} parts and 1 gem.`;
+    sub.textContent = `Broken up for ${scrapWords(type)} and 1 gem.`;
   } else if (mode === 'ransom') {
     S.reales += t.ransom;
     coinFly(6);

@@ -58,6 +58,8 @@ header{
 .resitem span{
   font-family:var(--ui);color:var(--dim);letter-spacing:1px;text-transform:uppercase;
   line-height:1.15;white-space:nowrap;font-size:clamp(11px,2.8vw,15px);
+  /* a long label ellipsizes rather than shoving the plate out of the row */
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
 }
 @media (max-width:400px){.resitem span{letter-spacing:.2px}}
 
@@ -112,3 +114,5 @@ nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinit
   nav .navlbl{font-size:clamp(14px,1.1vw,18px);letter-spacing:2px}
   main{order:2}
 }
+/* "MATERIALS" is wider than a sixth of a phone screen with normal tracking. */
+.resitem span.tight{letter-spacing:0}

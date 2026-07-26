@@ -1,4 +1,5 @@
-/* Charted ports. `t` is the port tier — it scales its standing supply lane. */
+/* Charted ports. `t` is the port tier — it scales the cargo contracts the port
+   offers and the goods it asks for. */
 
 export const PORTS = {
   staug:        { n: 'St. Augustine',   region: 'caribbean', x: 226, y: 368, t: 1 },

@@ -1,13 +1,18 @@
-/* Derived game facts. Pure reads over `S` — no DOM, no mutation except the
-   lane-security bookkeeping that has to stamp a timestamp. */
+/* Derived game facts. Pure reads over `S`, plus the small wallet helpers that
+   every screen needs. No DOM. */
 
 import { S, routes } from './state.js';
-import { SEC_DECAY_PER_MIN, VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GEM_PER_MIN } from './config.js';
+import { VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GEM_PER_MIN } from './config.js';
 import { TYPES } from '../data/ships.js';
-import { REGIONS, NOTO_BONUS } from '../data/world.js';
+import { REGIONS, NOTO_BONUS, VOYAGE_TYPES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { CHARTERS } from '../data/charters.js';
 import { BOSSES } from '../data/bosses.js';
+import { GOOD_KEYS } from '../data/goods.js';
+import { MAT_KEYS } from '../data/materials.js';
+import { SETS, SET_KEYS } from '../data/collectibles.js';
+import { bellMaxDepth, CHEST_VALUE } from '../data/salvage.js';
+import { contractRoute } from './contracts.js';
 import { now } from './dom.js';
 
 /* ---- ships ---- */
@@ -19,6 +24,7 @@ export const repairCost = s => Math.ceil((s.max - s.hull) * repRate(s));
 export const power = s => Math.round(s.guns * 2 + s.speed + s.hull / 5);
 export const fleetPower = l => l.reduce((a, s) => a + power(s), 0);
 export const fleetHull = l => l.reduce((a, s) => a + Math.max(0, s.hull), 0);
+export const holdCap = l => l.reduce((a, s) => a + s.cargo, 0);
 export const hasFit = k => !!(S.flag && S.flag.fittings.includes(k));
 
 export function cond(s) {
@@ -29,60 +35,81 @@ export function condColor(c) {
   return c === 'CRIPPLED' ? 'var(--red)' : (c === 'DAMAGED' ? 'var(--yel)' : 'var(--grn)');
 }
 
-/* ---- money ---- */
-export const canPay = c => S.reales >= (c.reales || 0) && S.parts >= (c.parts || 0) && S.gems >= (c.gems || 0);
+/* ---- wallet ----
+   A cost or a reward is one flat bag: { reales, gems, wood, metal, cloth }. */
+export function canPay(c) {
+  if ((c.reales || 0) > S.reales) return false;
+  if ((c.gems || 0) > S.gems) return false;
+  return MAT_KEYS.every(m => (c[m] || 0) <= S.mats[m]);
+}
 export function pay(c) {
   S.reales -= (c.reales || 0);
-  S.parts  -= (c.parts || 0);
-  S.gems   -= (c.gems || 0);
+  S.gems -= (c.gems || 0);
+  MAT_KEYS.forEach(m => { S.mats[m] -= (c[m] || 0); });
 }
+export function grant(o) {
+  if (!o) return;
+  S.reales += (o.reales || 0);
+  S.gems += (o.gems || 0);
+  MAT_KEYS.forEach(m => { S.mats[m] += (o[m] || 0); });
+}
+export const totalGoods = () => GOOD_KEYS.reduce((a, k) => a + S.goods[k], 0);
+export const totalMats = () => MAT_KEYS.reduce((a, k) => a + S.mats[k], 0);
 
-/* ---- lane security & danger ---- */
-function rtOf(id) {
-  if (!S.rt[id]) S.rt[id] = { sec: 0, ts: now() };
-  return S.rt[id];
-}
-export function secNow(id) {
-  const r = rtOf(id);
-  return Math.max(0, Math.min(100, r.sec - (now() - r.ts) / 60000 * SEC_DECAY_PER_MIN));
-}
-export function addSec(id, n) {
-  const r = rtOf(id);
-  r.sec = Math.max(0, Math.min(100, secNow(id) + n));
-  r.ts = now();
-}
-
-/* A patrol win suppresses regional danger until its timestamp runs out. */
+/* ---- danger ----
+   Nothing you do to a lane changes its danger any more. Only a standing patrol
+   over the whole region does, and patrols wear off. */
 export const patrolActive = rk => (S.patrol[rk] || 0) > now();
 export const patrolLeft = rk => Math.max(0, (S.patrol[rk] || 0) - now());
 
 export function effDanger(r) {
   const base = r.danger || 0;
-  const fromSecurity = Math.floor(secNow(r.id) / 40);
-  const fromPatrol = patrolActive(r.region) ? 1 : 0;
-  return Math.max(0, Math.min(3, base - fromSecurity - fromPatrol));
+  return Math.max(0, Math.min(3, base - (patrolActive(r.region) ? 1 : 0)));
 }
 
 /* ---- mission shape ---- */
-export const canVoyage = r => ['trade', 'port', 'salvage'].includes(r.type);
-export const voyageOpen = r => canVoyage(r) && effDanger(r) <= 1;
+export const canVoyage = r => VOYAGE_TYPES.includes(r.type);
+export const isBattle = r => !canVoyage(r);
 
-export function battleChance(r) {
-  const d = effDanger(r);
-  if (['raid', 'blockade', 'boss', 'charter'].includes(r.type)) return 1;
-  if (r.type === 'escort') return Math.min(0.9, [0.05, 0.35, 0.72, 1.0][d] + 0.3);
-  return [0.05, 0.35, 0.72, 1.0][d];
+/* Do we hold the goods a cargo run wants? */
+export const goodsHeld = good => (good ? S.goods[good] || 0 : 0);
+export const cargoReady = r => r.type !== 'cargo' || goodsHeld(r.good) >= r.qty;
+
+/* Can the fleet physically carry it? */
+export const holdReady = (r, fleet) =>
+  r.type !== 'cargo' || holdCap(fleet) >= r.qty;
+
+/* ---- dives ---- */
+export const bellDepth = () => bellMaxDepth(S.bell);
+export const diveReachable = r => r.type !== 'dive' || bellDepth() >= r.depth;
+
+/* Chests a dive is expected to raise. Spare bell capability adds to the haul,
+   and the fleet's hold caps what can be brought up in one trip. */
+export function diveChests(r, fleet, roll) {
+  const spare = Math.max(0, S.bell - (r.depth - 1));
+  const spread = r.chestMax - r.chestMin;
+  const base = r.chestMin + (roll === undefined ? spread / 2 : Math.floor(roll * (spread + 1)));
+  const cap = Math.max(1, Math.floor(holdCap(fleet) / 6));
+  return Math.max(1, Math.min(cap, Math.round(base + spare)));
 }
+export const chestValue = r => CHEST_VALUE[r.depth] || 0;
+
+/* A voyage is launchable when its own gate is satisfied. */
+export function voyageOpen(r) {
+  if (r.type === 'dive') return diveReachable(r);
+  if (r.type === 'cargo') return cargoReady(r);
+  return false;
+}
+
+/* Chance a cargo run arrives intact. Danger hurts, escorting power helps. */
 export function tradeChance(r, fp) {
-  const d = effDanger(r), ratio = r.power ? fp / r.power : 1;
-  return Math.max(20, Math.min(97, Math.round(100 * (0.55 + 0.35 * Math.min(ratio, 1.4) - 0.09 * d))));
-}
-export function salvageChance(r, fh) {
-  return Math.max(20, Math.min(95, Math.round(100 * (0.35 + 0.5 * Math.min(fh / r.hullreq, 1.3)))));
+  const d = effDanger(r);
+  const ratio = r.qty ? fp / (r.qty * 2.5) : 1;
+  return Math.max(35, Math.min(98, Math.round(100 * (0.72 + 0.16 * Math.min(ratio, 1.5) - 0.11 * d))));
 }
 
-/* Total times a lane has been finished, by battle or by trade run. Older saves
-   counted battles under a 'bat_' prefix, so fold both. */
+/* Total times a mission has been finished. Older saves counted battles under a
+   'bat_' prefix, so fold both. */
 export function doneCount(id) {
   return (S.done[id] || 0) + (S.done['bat_' + id] || 0);
 }
@@ -111,36 +138,35 @@ export function charterAvailable(c) {
 }
 export const chartersAt = pid => CHARTERS.filter(c => c.loc === pid && charterAvailable(c));
 
+/* ---- collectibles ---- */
+export const piecesOf = setKey => S.collected[setKey] || [];
+export const hasPiece = (setKey, name) => piecesOf(setKey).includes(name);
+export const setComplete = setKey =>
+  !!SETS[setKey] && piecesOf(setKey).length >= SETS[setKey].pieces.length;
+export const totalPieces = () =>
+  Object.keys(S.collected).reduce((a, k) => a + S.collected[k].length, 0);
+export const completedSets = () => SET_KEYS.filter(setComplete).length;
+
 /* ---- synthetic routes ---- */
-export function portRoute(pid) {
-  const p = PORTS[pid], t = p.t;
-  return {
-    id: 'pt_' + pid, region: p.region, n: p.n + ' Lane', type: 'port',
-    danger: Math.min(3, Math.floor((t - 1) / 3)),
-    cargo: 6 + 3 * t, len: Math.max(1, Math.ceil(t / 2)), power: 16 * t,
-    rew: { reales: 110 * t, parts: Math.ceil(t / 2), gems: t >= 8 ? 1 : 0 },
-    x: p.x, y: p.y
-  };
-}
 export function charterRoute(c) {
   const p = PORTS[c.loc];
   return {
     id: 'ch_' + c.id, region: p.region, n: c.n, type: 'charter', charterDef: c,
     danger: Math.min(3, Math.floor((c.t - 1) / 3)),
-    len: Math.max(1, Math.ceil(c.t / 2)), power: 18 * c.t,
-    rew: { reales: 140 * c.t, parts: 2 * c.t },
+    power: 18 * c.t,
+    rew: { reales: 140 * c.t, metal: c.t, cloth: c.t },
     x: p.x, y: p.y
   };
 }
 export function bossAsRoute(b) {
   return {
-    id: b.id, region: b.region, n: b.n, type: 'boss', danger: 3, len: 0,
+    id: b.id, region: b.region, n: b.n, type: 'boss', danger: 3,
     power: b.power, rew: b.rew, bossDef: b, final: b.final, x: b.x, y: b.y
   };
 }
 
-/* Every mission currently on the chart: fixed lanes plus one node per charted
-   port (a charter if one is on offer there, otherwise its supply lane). */
+/* Every mission currently on the chart: fixed nodes plus one node per charted
+   port — a charter if one is on offer there, otherwise its cargo contract. */
 export function allRoutes() {
   const out = routes.filter(r =>
     S.unlocked.includes(r.region) && (!r.requiresBoss || S.bossBeaten[r.requiresBoss]));
@@ -148,7 +174,7 @@ export function allRoutes() {
     const p = PORTS[pid];
     if (!p || !S.unlocked.includes(p.region)) return;
     const chs = chartersAt(pid);
-    out.push(chs.length ? charterRoute(chs[0]) : portRoute(pid));
+    out.push(chs.length ? charterRoute(chs[0]) : contractRoute(pid));
   });
   return out;
 }
@@ -158,9 +184,9 @@ export function routeById(id) {
   if (r) return r;
   const bk = Object.keys(BOSSES).find(k => BOSSES[k].id === id);
   if (bk) return bossAsRoute(BOSSES[bk]);
-  if (id.startsWith('pt_')) {
-    const pid = id.slice(3), chs = chartersAt(pid);
-    return chs.length ? charterRoute(chs[0]) : portRoute(pid);
+  if (id.startsWith('k_')) {
+    const pid = id.slice(2), chs = chartersAt(pid);
+    return chs.length ? charterRoute(chs[0]) : contractRoute(pid);
   }
   if (id.startsWith('ch_')) {
     const c = CHARTERS.find(x => 'ch_' + x.id === id);

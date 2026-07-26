@@ -1,34 +1,37 @@
 /* Small HTML fragments shared across screens. */
 
 import { iconHTML } from '../art/icons.js';
-import { BOONS } from '../data/flagship.js';
+import { GOODS } from '../data/goods.js';
+import { MATERIALS } from '../data/materials.js';
 
-/* A reward bundle: "◎260  ⚙2" */
-export function fmt(o) {
-  const p = [];
-  if (o.reales) p.push(iconHTML('reales', 19) + o.reales);
-  if (o.parts)  p.push(iconHTML('parts', 19) + o.parts);
-  if (o.gems)   p.push(iconHTML('gems', 19) + o.gems);
-  return p.join('  ');
+/* Order things always appear in, so a cost and a reward read the same way. */
+const BAG_ORDER = ['reales', 'wood', 'metal', 'cloth', 'gems'];
+
+/* A cost or reward bag: "◎260  ▤4  ▮2" */
+export function bag(o, size) {
+  if (!o) return '';
+  return BAG_ORDER
+    .filter(k => o[k])
+    .map(k => iconHTML(k, size || 19) + o[k])
+    .join('  ');
 }
 
-/* A price tag, always leading with reales. */
-export function costStr(c) {
-  return `${iconHTML('reales', 19)}${c.reales}` +
-    (c.parts ? ' ' + iconHTML('parts', 19) + c.parts : '') +
-    (c.gems ? ' ' + iconHTML('gems', 19) + c.gems : '');
+/* Same thing — kept under both names because rewards read better as fmt(). */
+export const fmt = bag;
+export const costStr = bag;
+
+/* "12 barrels of rum" */
+export function goodsLine(good, qty) {
+  const g = GOODS[good];
+  if (!g) return qty + ' units';
+  return `${qty} ${g.unit} of ${g.n.toLowerCase()}`;
 }
+
+export const goodIcon = (good, size) => iconHTML(good, size || 19);
+export const matName = m => (MATERIALS[m] ? MATERIALS[m].n : m);
 
 export function hullBar(s) {
   const p = Math.max(0, s.hull / s.max * 100);
   const c = p < 26 ? 'crit' : (p < 60 ? 'low' : '');
   return `<div class="bar"><i class="${c}" style="width:${p}%"></i></div>`;
-}
-
-export function prizeDesc(p) {
-  if (!p) return '';
-  if (p.relic) return 'Relic: ' + p.relic;
-  if (p.boon) return 'Legendary refit: ' + BOONS[p.boon].n;
-  if (p.gems) return 'Treasure map worth ' + p.gems + ' gems';
-  return '';
 }

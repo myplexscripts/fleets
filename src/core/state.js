@@ -8,11 +8,16 @@ import { SAVE_KEY, TUT_KEY, PATROL_MS } from './config.js';
 import { TYPES, NAMES } from '../data/ships.js';
 import { FLAGBASE, BOONS } from '../data/flagship.js';
 import { makeRoutes } from '../data/routes.js';
+import { GOOD_KEYS } from '../data/goods.js';
+import { MAT_KEYS } from '../data/materials.js';
+import { PIECE_SET } from '../data/collectibles.js';
 
 export let S = null;
 export let routes = [];
 
 let shipSeq = 1, voySeq = 1;
+
+const zeroed = keys => keys.reduce((o, k) => { o[k] = 0; return o; }, {});
 
 export function newShip(type, hullPct) {
   const t = TYPES[type];
@@ -51,12 +56,16 @@ export function nextVoyId() { return 'v' + (voySeq++); }
 
 export function newGame() {
   S = {
-    reales: 500, cargo: 20, parts: 10, gems: 0, barrels: 3, docks: 3,
+    reales: 500, gems: 0, barrels: 3, docks: 3,
+    goods: { ...zeroed(GOOD_KEYS), sugar: 10, rum: 6 },
+    mats: { ...zeroed(MAT_KEYS), wood: 8, metal: 6, cloth: 4 },
+    bell: 0,
     ships: [newShip('schooner'), newShip('schooner'), newShip('brig')],
     flag: newFlag(),
     unlocked: ['caribbean'],
-    done: {}, patrol: {}, noto: {}, bossBeaten: {}, rt: {}, voyages: [],
-    ports: ['staug'], charters: {}, relics: [], flagBoons: [], won: false,
+    done: {}, patrol: {}, noto: {}, bossBeaten: {}, voyages: [],
+    ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
+    won: false,
     tut: localStorage.getItem(TUT_KEY) ? 'done' : 0,
     startedAt: Date.now()
   };
@@ -106,11 +115,10 @@ function migrate() {
   if (!S.flag.fittings) S.flag.fittings = [];
   S.noto = S.noto || {};
   S.bossBeaten = S.bossBeaten || {};
-  S.rt = S.rt || {};
   S.voyages = S.voyages || [];
   S.ports = S.ports || ['staug'];
   S.charters = S.charters || {};
-  S.relics = S.relics || [];
+  S.contracts = S.contracts || {};
   S.flagBoons = S.flagBoons || [];
   S.patrol = S.patrol || {};
   S.done = S.done || {};
@@ -125,5 +133,45 @@ function migrate() {
     if (typeof v !== 'number' || v < 1e12) S.patrol[k] = Date.now() + PATROL_MS;
   }
 
+  /* Generic `cargo` units became five named trade goods. Convert the old stock
+     into the two staples so nothing is silently confiscated. */
+  if (!S.goods) {
+    const old = Math.max(0, S.cargo | 0);
+    S.goods = zeroed(GOOD_KEYS);
+    S.goods.sugar = Math.ceil(old * 0.6);
+    S.goods.rum = Math.floor(old * 0.4);
+  } else {
+    GOOD_KEYS.forEach(k => { if (typeof S.goods[k] !== 'number') S.goods[k] = 0; });
+  }
+  delete S.cargo;
+
+  /* `parts` became wood / metal / cloth. Split the stockpile three ways. */
+  if (!S.mats) {
+    const old = Math.max(0, S.parts | 0);
+    S.mats = zeroed(MAT_KEYS);
+    S.mats.wood = Math.ceil(old * 0.4);
+    S.mats.metal = Math.round(old * 0.35);
+    S.mats.cloth = Math.floor(old * 0.25);
+  } else {
+    MAT_KEYS.forEach(k => { if (typeof S.mats[k] !== 'number') S.mats[k] = 0; });
+  }
+  delete S.parts;
+
+  if (typeof S.bell !== 'number') S.bell = 0;
+
+  /* Flat relic list became named collectible sets. Slot the old names into
+     whichever set claims them and keep anything unrecognised in `loose`. */
+  if (!S.collected) {
+    S.collected = {};
+    (S.relics || []).forEach(name => {
+      const set = PIECE_SET[name] || 'loose';
+      S.collected[set] = S.collected[set] || [];
+      if (!S.collected[set].includes(name)) S.collected[set].push(name);
+    });
+  }
+  delete S.relics;
+
+  /* Lane security is gone: trade is no longer gated behind clearing a lane. */
+  delete S.rt;
   delete S.routes; delete S.day; delete S.lastSail;
 }

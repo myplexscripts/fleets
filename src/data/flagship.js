@@ -9,15 +9,27 @@ export const FLAGTIERS = {
   hold:  { n: 'Cargo Hold',   icon: 'hold',  desc: '+10 cargo per level. Cargo space limits how much a trade run can carry.' }
 };
 
-export function tierCost(t) {
-  return { reales: 300 * (t + 1), parts: 8 * (t + 1), gems: t >= 3 ? (t - 2) : 0 };
+/* Each track eats a different material, so a captain who only ever fights ends
+   up short of cloth and one who only ever trades ends up short of metal. */
+const TIER_MATS = {
+  plate: { metal: 6, wood: 2 },
+  guns:  { metal: 8 },
+  rig:   { cloth: 7, wood: 3 },
+  hold:  { wood: 8, cloth: 2 }
+};
+
+export function tierCost(key, t) {
+  const cost = { reales: 300 * (t + 1), gems: t >= 3 ? (t - 2) : 0 };
+  const mats = TIER_MATS[key] || {};
+  for (const m in mats) cost[m] = mats[m] * (t + 1);
+  return cost;
 }
 
 export const FITTINGS = {
-  grapple:  { n: 'Grappling Hooks', desc: 'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.', cost: { reales: 800,  parts: 20, gems: 0 } },
-  magazine: { n: 'Powder Magazine', desc: 'Start every battle with one extra fire barrel.',                                              cost: { reales: 1200, parts: 25, gems: 2 } },
-  copper:   { n: 'Copper Sheathing', desc: 'The flagship takes no damage from storms or failed trade runs.',                             cost: { reales: 1500, parts: 30, gems: 2 } },
-  chase:    { n: 'Chase Guns',      desc: 'The flagship fires twice each round. The second shot deals 60% damage.',                      cost: { reales: 2200, parts: 40, gems: 4 } }
+  grapple:  { n: 'Grappling Hooks',  desc: 'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.', cost: { reales: 800,  metal: 16, cloth: 8 } },
+  magazine: { n: 'Powder Magazine',  desc: 'Start every battle with one extra fire barrel.',                                               cost: { reales: 1200, metal: 18, wood: 12, gems: 2 } },
+  copper:   { n: 'Copper Sheathing', desc: 'The flagship takes no damage from storms or from a cargo run gone wrong.',                     cost: { reales: 1500, metal: 30, gems: 2 } },
+  chase:    { n: 'Chase Guns',       desc: 'The flagship fires twice each round. The second shot deals 60% damage.',                       cost: { reales: 2200, metal: 34, wood: 16, gems: 4 } }
 };
 
 /* Permanent refits awarded by charters. */

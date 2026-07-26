@@ -26,15 +26,6 @@
 }
 .sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 18px calc(env(safe-area-inset-bottom) + 18px)}
 
-.modetabs{display:flex;margin-bottom:12px}
-.modetabs button{
-  flex:1;font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
-  background:rgba(10,28,33,.8);border:1px solid var(--line);color:var(--dim);padding:10px 0;cursor:pointer;
-}
-.modetabs button:first-child{border-radius:3px 0 0 3px}
-.modetabs button:last-child{border-radius:0 3px 3px 0;border-left:none}
-.modetabs button.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi);border-color:var(--line2)}
-
 .pick{
   border:1px solid var(--line);border-radius:3px;background:var(--panel2);
   padding:clamp(11px,.85vw,16px) clamp(13px,1vw,19px);margin-bottom:9px;cursor:pointer;
@@ -336,3 +327,33 @@
   font-size:clamp(15px,1.05vw,18px);letter-spacing:1px;text-transform:uppercase;
   text-decoration:underline;padding:6px 0;cursor:pointer;
 }
+
+/* ---- cargo/dive manifest block (mission sheet) ---- */
+.manifest{
+  border:1px solid var(--brass);background:rgba(58,47,20,.22);border-radius:3px;
+  padding:10px 12px;margin-bottom:11px;
+}
+.mrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0}
+.mrow + .mrow{border-top:1px solid rgba(138,121,62,.28)}
+.mrow span{
+  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--dim);flex-shrink:0;
+}
+.mrow b{font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:.6px;text-align:right}
+
+/* ---- Ship's Stores sheet ---- */
+.storelist{display:flex;flex-direction:column;gap:6px}
+.storerow{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  border:1px solid var(--line);background:var(--panel2);border-radius:3px;padding:8px 11px;
+}
+.storerow.empty{opacity:.5}
+.sname{display:flex;align-items:center;gap:9px}
+.sname b{font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:1px;text-transform:uppercase}
+.sname i{font-family:var(--ui);font-style:normal;font-size:clamp(14px,1vw,17px);color:var(--dim);margin-left:6px}
+.sright{display:flex;align-items:center;gap:7px}
+.sright .btn.sm{min-height:38px;padding:6px 10px}
+
+/* the two plates that open the stores sheet */
+.resitem.tappable{cursor:pointer}
+.resitem.tappable:active{transform:scale(.95)}

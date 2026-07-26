@@ -1,19 +1,18 @@
 /* Tuning knobs. Every number a designer might want to twist lives here. */
 
-/* Lane security */
-export const SEC_PER_WIN = 45;        // security gained by winning a battle on a lane
-export const SEC_DECAY_PER_MIN = 1.0; // security lost per real minute
-
-/* Voyages (trade runs) */
+/* Voyages — cargo runs and wreck dives */
 export const VOY_SEC_PER_DAY = 90;    // real seconds per unit of route length
 export const VOY_MAX_ACTIVE = 6;      // simultaneous fleets at sea
 export const RUSH_GEM_PER_MIN = 1;    // gems to skip one minute of sailing
 
-/* Patrols knock a region's danger down by one step for this long. */
+/* Patrols are the only thing that makes a region's water safer, and they wear
+   off — so keeping a trade region quiet is ongoing work, not a one-time job. */
 export const PATROL_MS = 10 * 60 * 1000;
 
-/* Economy */
-export const CARGO_PRICE = 12;
+/* Cargo contracts offered by charted ports */
+export const CONTRACT_PAY_BASE = 1.75;   // multiple of the goods' market buy price
+export const CONTRACT_PAY_PER_TIER = 0.06;
+
 export const MAXTIER = 5;             // flagship upgrade tiers
 
 /* Storage keys */

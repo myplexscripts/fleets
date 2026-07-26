@@ -4,9 +4,9 @@ import { $, esc } from '../../core/dom.js';
 import { S } from '../../core/state.js';
 import { render } from '../../core/bus.js';
 import { actions } from '../../core/actions.js';
-import { TYPES } from '../../data/ships.js';
+import { SCRAP_YIELD } from '../../data/materials.js';
 import {
-  cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur
+  cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
@@ -47,7 +47,7 @@ export function renderPort() {
              <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span></div>`
           : `<div class="row" style="margin-top:11px">
              <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair · ' + iconHTML('reales', 19) + repairCost(s)}</button>
-             <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Scuttle · ${iconHTML('parts', 19)}${TYPES[s.type].salv}</button></div>`}
+             <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Break Up</button></div>`}
       </div></div></div>`;
   });
 
@@ -73,16 +73,16 @@ async function doScuttle(id) {
   if (isBusy(id)) return toast('That ship is away trading. Wait for it to return.', 'bad');
   const s = findShip(id);
   if (!s) return;
-  const salv = TYPES[s.type].salv;
+  const yld = SCRAP_YIELD[s.type];
   const ok = await confirmDlg({
     title: 'Break Her Up?',
-    text: `The ${s.name} is stripped for ${salv} parts and struck from the register. This cannot be undone.`,
-    ok: 'Scuttle', cancel: 'Keep Her', danger: true
+    text: `The ${s.name} comes apart for ${yld.wood} timber, ${yld.metal} ingots and ${yld.cloth} bolts of cloth, and is struck from the register. This cannot be undone.`,
+    ok: 'Break Her Up', cancel: 'Keep Her', danger: true
   });
   if (!ok) return;
-  S.parts += salv;
+  grant(yld);
   S.ships = S.ships.filter(x => x.id !== id);
-  toast('The ' + s.name + ' scuttled for ' + salv + ' parts.');
+  toast('The ' + s.name + ' broken up for timber, metal and cloth.');
   render();
 }
 

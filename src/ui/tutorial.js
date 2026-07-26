@@ -22,6 +22,24 @@ export function tutLockedTab() {
   return st && st.lockTab ? st.lockTab : null;
 }
 
+/* Some steps point at one specific marker and mean it. */
+export function tutAllowsMission(id) {
+  const st = tutStep();
+  return !st || !st.only || st.only === id;
+}
+
+/* Losing the scripted fight would otherwise strand the player on a step whose
+   target is gone. Send them back to the step that opens that fight. */
+export function tutRewindToCombat() {
+  if (!tutActive()) return false;
+  const i = TUTSTEPS.findIndex(s => s.only === 'c3');
+  if (i < 0 || S.tut < i) return false;
+  S.tut = i;
+  save();
+  refreshTut();
+  return true;
+}
+
 export function tutEvent(ev) {
   if (!tutActive()) return;
   /* Look a couple of steps ahead so an event fired slightly early still counts. */
@@ -60,7 +78,7 @@ export function restartTut() {
   refreshTut();
 }
 
-let tutTarget = null, tutRaf = 0, tutShownStep = -1;
+let tutTarget = null, tutShownStep = -1;
 
 function ringTrack() {
   const hi = $('tutHi');
@@ -93,9 +111,11 @@ export function refreshTut() {
 
   if (st.modal) {
     tutTarget = null;
+    lastRect = null;
     hi.className = 'full';
     hi.style.display = 'block';
-    showTip(null, st);
+    renderTip(st);
+    placeTip(null);
     tutShownStep = S.tut;
     return;
   }
@@ -103,17 +123,44 @@ export function refreshTut() {
   hi.className = '';
   const el = st.sel ? qs(st.sel) : null;
   if (!el) { tutTarget = null; hide(); return; }
+
+  const fresh = tutShownStep !== S.tut || tutTarget !== el;
   tutTarget = el;
-
-  const fresh = tutShownStep !== S.tut;
   tutShownStep = S.tut;
-  if (fresh) { try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+  if (fresh) {
+    lastRect = null;
+    renderTip(st);
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+  }
+  /* Position on the next frame, and keep positioning — see track(). */
+  requestAnimationFrame(track);
+}
 
-  requestAnimationFrame(() => {
+/* The card must follow its target. Sheets slide in, screens re-render and cards
+   animate, so a rect measured once is wrong a moment later — and a stale card
+   parked on top of the button it is pointing at makes the step impossible to
+   complete. This runs while the tutorial is up and repositions on any move. */
+let lastRect = null, trackRaf = 0;
+
+function rectChanged(b) {
+  if (!lastRect) return true;
+  return Math.abs(b.top - lastRect.top) > 1 || Math.abs(b.bottom - lastRect.bottom) > 1
+      || Math.abs(b.left - lastRect.left) > 1 || Math.abs(b.right - lastRect.right) > 1;
+}
+
+function track() {
+  cancelAnimationFrame(trackRaf);
+  if (!tutActive() || !tutTarget || !tutTarget.isConnected) { lastRect = null; return; }
+  const st = TUTSTEPS[S.tut];
+  if (!st || st.modal) return;
+
+  const b = tutTarget.getBoundingClientRect();
+  if (rectChanged(b)) {
+    lastRect = { top: b.top, bottom: b.bottom, left: b.left, right: b.right };
     ringTrack();
-    const b = el.getBoundingClientRect();
-    showTip({ top: b.top, bottom: b.bottom }, st);
-  });
+    placeTip({ top: b.top, bottom: b.bottom });
+  }
+  trackRaf = requestAnimationFrame(track);
 }
 
 /* env(safe-area-inset-*) is not readable from JS, so a hidden probe element
@@ -125,7 +172,7 @@ function safeInsets() {
   return { t: parseFloat(cs.borderTopWidth) || 0, b: parseFloat(cs.borderBottomWidth) || 0 };
 }
 
-function showTip(r, st) {
+function renderTip(st) {
   const tip = $('tutTip');
   tip.innerHTML = `
     <div class="ttbody"><div class="tt">${esc(st.title)}</div><div class="tx">${esc(st.text)}</div></div>
@@ -135,25 +182,46 @@ function showTip(r, st) {
       <button class="skiplink" data-act="tut-skip">Skip</button>
     </div>`;
   tip.style.display = 'flex';
+}
+
+function placeTip(r) {
+  const tip = $('tutTip');
+  tip.style.display = 'flex';
 
   const ins = safeInsets(), pad = 12;
   const topLim = ins.t + pad, botLim = innerHeight - ins.b - pad;
   const band = Math.max(170, botLim - topLim);
-  tip.style.maxHeight = Math.round(band * (r ? 0.52 : 0.82)) + 'px';
 
-  let th = tip.offsetHeight, top;
   if (!r) {
-    top = topLim + Math.max(0, (band - th) / 2);
-  } else {
-    const above = Math.max(0, r.top - pad - topLim);
-    const below = Math.max(0, botLim - (r.bottom + pad));
-    const dockBottom = below >= above, room = dockBottom ? below : above;
-    if (room > 190) {
-      tip.style.maxHeight = Math.round(Math.min(room, band * 0.52)) + 'px';
-      th = tip.offsetHeight;
-    }
-    top = dockBottom ? botLim - th : topLim;
+    /* Modal step: centred, and the full-screen scrim behind it is the point. */
+    tip.style.maxHeight = Math.round(band * 0.82) + 'px';
+    const th = tip.offsetHeight;
+    tip.style.top = Math.round(topLim + Math.max(0, (band - th) / 2)) + 'px';
+    return;
   }
+
+  /* The card must never cover the element it is pointing at — the player has to
+     be able to tap that element to continue. So it is capped to the space on
+     whichever side has more of it, which makes overlap impossible. */
+  const above = Math.max(0, r.top - pad - topLim);
+  const below = Math.max(0, botLim - (r.bottom + pad));
+  const dockBottom = below >= above;
+  const room = dockBottom ? below : above;
+
+  const MIN_CARD = 96;
+  if (room < MIN_CARD) {
+    /* Target is too tall to sit beside. Pin the card to the far edge from the
+       target's middle so it covers as little of it as possible. */
+    tip.style.maxHeight = Math.round(Math.min(band * 0.42, 260)) + 'px';
+    const th = tip.offsetHeight;
+    const targetMid = (r.top + r.bottom) / 2;
+    tip.style.top = Math.round(targetMid > innerHeight / 2 ? topLim : botLim - th) + 'px';
+    return;
+  }
+
+  tip.style.maxHeight = Math.round(Math.max(MIN_CARD, Math.min(room, band * 0.55))) + 'px';
+  const th = tip.offsetHeight;
+  const top = dockBottom ? (r.bottom + pad) : (r.top - pad - th);
   tip.style.top = Math.round(Math.min(Math.max(topLim, top), Math.max(topLim, botLim - th))) + 'px';
 }
 
@@ -161,9 +229,5 @@ export function initTutorial() {
   action('tut-next', tutNext);
   action('tut-skip', finishTut);
   addEventListener('resize', refreshTut);
-  addEventListener('scroll', () => {
-    if (!tutActive() || !tutTarget) return;
-    cancelAnimationFrame(tutRaf);
-    tutRaf = requestAnimationFrame(ringTrack);
-  }, true);
+  addEventListener('scroll', () => { if (tutActive() && tutTarget) track(); }, true);
 }

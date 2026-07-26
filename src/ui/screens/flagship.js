@@ -6,7 +6,11 @@ import { render } from '../../core/bus.js';
 import { actions } from '../../core/actions.js';
 import { MAXTIER } from '../../core/config.js';
 import { FLAGTIERS, FITTINGS, BOONS, tierCost } from '../../data/flagship.js';
-import { cond, condColor, power, repairCost, isBusy, canPay, pay, hasFit } from '../../core/selectors.js';
+import { SETS, SET_KEYS } from '../../data/collectibles.js';
+import {
+  cond, condColor, power, repairCost, isBusy, canPay, pay, hasFit,
+  piecesOf, setComplete, totalPieces, completedSets
+} from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, costStr } from '../format.js';
@@ -47,7 +51,7 @@ export function renderFlagship() {
 
   h += `<div class="sect" style="--i:${i++}">Upgrades</div>`;
   Object.entries(FLAGTIERS).forEach(([k, d]) => {
-    const t = f.tiers[k], maxed = t >= MAXTIER, cost = tierCost(t), can = !maxed && canPay(cost);
+    const t = f.tiers[k], maxed = t >= MAXTIER, cost = tierCost(k, t), can = !maxed && canPay(cost);
     h += `<div class="card" style="--i:${i++}"><div class="row">
       <div style="flex:1"><h3>${iconHTML(d.icon, 30)} ${d.n}</h3>
         <div class="sub">${d.desc}<br><span class="pips">${'●'.repeat(t)}${'○'.repeat(MAXTIER - t)}</span></div></div>
@@ -63,10 +67,30 @@ export function renderFlagship() {
       <button class="btn sm gold" ${can ? '' : 'disabled'} data-act="buy-fit" data-key="${k}">${owned ? 'FITTED' : costStr(d.cost)}</button></div></div>`;
   });
 
-  h += `<div class="sect" style="--i:${i++}">Captain's Quarters — ${S.relics.length} Relic${S.relics.length !== 1 ? 's' : ''}</div>`;
-  h += S.relics.length
-    ? `<div class="relicgrid">${S.relics.map(r => `<div class="relic">${iconHTML('relic', 26)}${esc(r)}</div>`).join('')}</div>`
-    : `<div class="card sub" style="--i:${i++}">No relics yet. Relics are rewards from charters — the gold stars on the map.</div>`;
+  /* ---- Captain's Quarters: the collection ---- */
+  h += `<div class="sect" style="--i:${i++}">Captain's Quarters — ${totalPieces()} piece${totalPieces() === 1 ? '' : 's'}, ${completedSets()}/${SET_KEYS.length} sets</div>`;
+  h += `<div class="card" style="--i:${i++}"><div class="sub">Kept for the length of the voyage and never spent. Charters hand over most of them; the deep-water sets only come up off a wreck or off a beaten ship.</div></div>`;
+
+  SET_KEYS.forEach(key => {
+    const set = SETS[key];
+    const have = piecesOf(key);
+    const done = setComplete(key);
+    h += `<div class="card ${done ? 'setdone' : ''}" style="--i:${i++}">
+      <div class="row"><h3${done ? ' style="color:var(--goldhi)"' : ''}>${esc(set.n)}</h3>
+        <span class="tag ${done ? 'gold' : ''}">${have.length}/${set.pieces.length}${done ? ' · COMPLETE' : ''}</span></div>
+      <div class="sub">${set.kind} · ${set.source === 'drop' ? 'found at sea' : 'awarded by charter'}</div>
+      <div class="setbar ${done ? 'full' : ''}"><i style="width:${have.length / set.pieces.length * 100}%"></i></div>
+      <div class="pieces">${set.pieces.map(pc => {
+        const got = have.includes(pc);
+        return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 20)}<span>${got ? esc(pc) : '— unfound —'}</span></div>`;
+      }).join('')}</div></div>`;
+  });
+
+  const loose = S.collected.loose || [];
+  if (loose.length) {
+    h += `<div class="card" style="--i:${i++}"><h3>Oddments</h3>
+      <div class="pieces">${loose.map(pc => `<div class="piece got">${iconHTML('relic', 20)}<span>${esc(pc)}</span></div>`).join('')}</div></div>`;
+  }
 
   $('main').innerHTML = h;
 }
@@ -74,7 +98,7 @@ export function renderFlagship() {
 function upFlag(k) {
   const t = S.flag.tiers[k];
   if (t >= MAXTIER) return;
-  const c = tierCost(t);
+  const c = tierCost(k, t);
   if (!canPay(c)) return toast('Not enough to pay for that upgrade.', 'bad');
   pay(c);
   S.flag.tiers[k]++;

@@ -110,3 +110,54 @@
 .calm .routeline,.calm .voyline,.calm .nodeglow,.calm .bossglow,.calm .charterstar{animation:none}
 .calm .nodeglow{opacity:.45}
 .calm .bossglow{opacity:.6}
+
+/* ---- goods & materials grid (Market) ---- */
+.goodsgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:9px;margin-bottom:clamp(11px,.85vw,17px);
+  animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
+}
+.calm .goodsgrid{animation:none}
+.goodcard{
+  background:var(--panel);border:1px solid var(--line);border-radius:3px;
+  padding:10px 11px;box-shadow:var(--bevel),0 2px 8px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;gap:7px;
+}
+.ghead{display:flex;align-items:center;gap:9px}
+.ghead b{font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:1px;text-transform:uppercase;display:block}
+.ghead i{font-family:var(--ui);font-style:normal;font-size:clamp(14px,1vw,17px);color:var(--dim);display:block}
+.gprice{font-family:var(--ui);font-size:clamp(13px,.95vw,16px);letter-spacing:.6px;color:var(--dim)}
+.goodcard .btnset{gap:6px}
+.goodcard .btn.sm{flex:1;min-width:0;padding:8px 4px;min-height:40px;letter-spacing:.5px}
+
+/* ---- collectible sets (Captain's Quarters) ---- */
+.card.setdone{border-color:var(--brass);box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 26px rgba(217,201,138,.08)}
+.card.setdone::before,.card.setdone::after{border-color:var(--gold)}
+.setbar{height:6px;background:#03181c;border:1px solid #0e3a40;margin-top:7px;overflow:hidden}
+.setbar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
+.setbar.full i{background:linear-gradient(90deg,#3f7a44,#d9c98a)}
+.pieces{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:9px}
+.piece{
+  display:flex;align-items:center;gap:7px;padding:5px 8px;
+  border:1px solid rgba(30,80,88,.5);background:rgba(0,0,0,.24);
+  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:.5px;color:#5b787b;
+}
+.piece .ic{opacity:.35}
+.piece.got{border-color:var(--brass);background:rgba(58,47,20,.32);color:var(--goldhi)}
+.piece.got .ic{opacity:1}
+
+/* Narrow screens: the legend becomes a short scrollable chip strip instead of a
+   tall stack, which otherwise squeezes the chart down to nothing once several
+   regions are unlocked. */
+.legend.narrow{
+  flex-direction:row;gap:6px;width:auto;left:8px;right:8px;top:8px;
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+  padding-bottom:2px;
+}
+.legend.narrow::-webkit-scrollbar{display:none}
+.legend.narrow .leg{flex:0 0 auto;min-width:126px;max-width:190px;padding:5px 9px 6px}
+.legend.narrow .legrow{font-size:14px;letter-spacing:.8px}
+.legend.narrow .legrow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend.narrow .legmeta{font-size:12px;margin-top:3px;gap:7px}
+.legend.narrow .legdone{font-size:12px;margin-top:3px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend.narrow .notobar{margin-top:4px}

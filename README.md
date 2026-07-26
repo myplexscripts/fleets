@@ -1,8 +1,20 @@
 # Salt & Powder
 
-A fleet-command game set in the age of sail. Clear shipping lanes by force, then
-run cargo along them; spend the takings on hulls, guns and charters; and when
-your notoriety in a region fills up, its admiral comes looking for you.
+A fleet-command game set in the age of sail. Three things to do, and they are
+kept separate on purpose:
+
+- **Cargo runs** — buy goods, deliver X of them to port Z, get paid. No fighting.
+- **Wreck dives** — send divers down; chests come up and sell on the quay. No
+  enemies either, only depth, and depth is what your diving bell is for.
+- **Battles** — patrols, escorts, raids, blockades, charters and admirals. These
+  pay in coin, materials and reputation.
+
+A patrol is the bridge between the halves: winning one suppresses danger across
+its whole region for a while, which makes every cargo run through it safer. But
+you never have to fight to open a trade route — trade routes are always open.
+
+Fill a region's notoriety bar and its admiral comes looking for you. Beat the
+admiral and the next region of the chart unlocks.
 
 Vanilla JavaScript ES modules, no build step, no runtime dependencies beyond a
 vendored copy of [Phaser 3](https://phaser.io/) for the battle renderer.
@@ -50,21 +62,25 @@ src/
   core/
     config.js         every tuning number
     state.js          the save object, migrations, persistence
+    contracts.js      per-port cargo contracts (drawn, stored, redrawn)
     selectors.js      derived facts (power, danger, voyages) — pure reads
     settings.js       player options, stored separately from the save
     actions.js        data-act click delegation
     bus.js            tiny event bus, used to keep imports acyclic
     dom.js  rng.js    helpers
   data/               pure content: ships, routes, ports, charters, bosses,
+                      goods, materials, salvage/bell tables, collectible sets,
                       flagship upgrades, flavour text, tutorial script
   art/                procedural ship sprites and icons (SVG → canvas)
   fx/                 sound, toasts, transitions, coins, mist, haptics
-  systems/            voyages, notoriety, enemy generation, battle outcomes
+  systems/            voyages (cargo + dives), contracts, notoriety,
+                      collectibles, enemy generation, battle outcomes
   ui/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
     mission.js        mission sheet and launch
     result.js         after-action report and prizes
+    stores.js         Ship's Stores sheet (goods, materials, bell)
     title.js  pause.js  dialog.js  sheet.js  loading.js  tutorial.js  keys.js
   battle/
     state.js          live engagement state
@@ -105,11 +121,35 @@ takes over. Neither directory needs to exist.
 game boots identically offline. If Phaser somehow fails to load, battles still
 resolve through the log rather than taking the whole game down.
 
+## Economy
+
+**Trade goods** — sugar, rum, tobacco, wine, spice. Bought at the Market,
+consumed by cargo contracts, and sellable back at a loss. A delivery pays
+several times the counter price for the same crates, so the market is where you
+dump stock you cannot place, not a business model.
+
+**Materials** — wood, metal, cloth. What every refit is built from. They come
+from fighting, from breaking up captured hulls, and from wreck dives; contracts
+never pay in them. Each flagship upgrade track wants a different mix, so a
+captain who only ever fights runs short of cloth and one who only ever trades
+runs short of metal.
+
+**Chests** are not an item. A dive lands them and they convert to reales on the
+quayside — the player never holds one.
+
+**Collectible sets** accumulate for the life of a save and are never spent. Five
+sets are awarded piece by piece by charters; two only ever turn up at sea, off a
+wreck or off a beaten ship. Completing one changes nothing mechanically — it
+fills a shelf in the great cabin.
+
 ## Save data
 
 `localStorage`:
 
 - `saltpowder` — the game. `core/state.js#migrate` upgrades older shapes on
-  load, so adding fields is safe.
+  load, so adding fields is safe. It also converts pre-goods saves: the old
+  generic `cargo` becomes sugar and rum, `parts` splits into wood/metal/cloth,
+  flat `relics` fold into their collectible sets, and the retired lane-security
+  table is dropped.
 - `sp_settings` — audio, motion, haptics. Survives starting a new game.
 - `sp_tutdone` — whether the tutorial has ever been finished.

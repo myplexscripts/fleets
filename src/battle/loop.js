@@ -7,7 +7,7 @@ import { power, hasFit } from '../core/selectors.js';
 import { HIT_P, HIT_E, SINK, CRIP } from '../data/flavour.js';
 import { action } from '../core/actions.js';
 import { updateRes } from '../ui/hud.js';
-import { refreshTut, tutEvent, tutActive } from '../ui/tutorial.js';
+import { refreshTut, tutEvent, tutRewindToCombat } from '../ui/tutorial.js';
 import { wipe } from '../fx/wipe.js';
 import { play, ambience } from '../fx/sound.js';
 import { buzz } from '../fx/haptics.js';
@@ -345,12 +345,8 @@ export function endBattle(kind) {
     teardownPhaser();
 
     if (kind === 'win') tutEvent('battle:end');
-    else if (tutActive() && S.tut >= 7 && S.tut <= 9) {
-      /* Losing the scripted fight rewinds to "open the map" rather than
-         stranding the player on a step whose target no longer exists. */
-      S.tut = 3;
-      save();
-      toast('Repair your ships in Port and try again.', 'bad');
+    else if (tutRewindToCombat()) {
+      toast('Repair your ships in Port and try that patrol again.', 'bad');
     }
 
     b.onEnd(kind === 'win', b.enemies);
