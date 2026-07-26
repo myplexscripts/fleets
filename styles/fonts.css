@@ -1,0 +1,46 @@
+/* ============================================================
+   fonts — self-hosted, latin subsets only
+
+   Vendored rather than pulled from Google Fonts so the game has no external
+   dependencies: it loads identically offline, on a locked-down network, or
+   from a CDN outage, and there is no third-party request on boot.
+   Source: @fontsource/{cinzel,oswald,crimson-pro}
+   ============================================================ */
+
+/* Cinzel — wordmark and headings */
+@font-face{
+  font-family:'Cinzel';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/cinzel-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Cinzel';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/cinzel-latin-700-normal.woff2') format('woff2');
+}
+
+/* Oswald — UI labels, numbers, buttons */
+@font-face{
+  font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/oswald-latin-400-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/oswald-latin-500-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/oswald-latin-600-normal.woff2') format('woff2');
+}
+
+/* Crimson Pro — flavour text and briefings */
+@font-face{
+  font-family:'Crimson Pro';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/crimson-pro-latin-400-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Crimson Pro';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/crimson-pro-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Crimson Pro';font-style:italic;font-weight:400;font-display:swap;
+  src:url('../fonts/crimson-pro-latin-400-italic.woff2') format('woff2');
+}

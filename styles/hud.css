@@ -1,0 +1,114 @@
+/* ============================================================
+   hud — top bar, resource plates, bottom nav rail
+   ============================================================ */
+
+header{
+  padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;
+  background:linear-gradient(180deg,rgba(3,10,12,.95),rgba(6,20,24,.85));
+  border-bottom:1px solid var(--line);
+  box-shadow:0 2px 10px rgba(0,0,0,.5);
+}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hspacer{width:clamp(38px,3vw,48px);flex-shrink:0}
+
+.brand{
+  font-family:var(--display);font-weight:700;
+  font-size:clamp(16px,1.4vw,24px);letter-spacing:clamp(2px,.35vw,5px);
+  text-transform:uppercase;color:var(--goldhi);text-align:center;flex:1;
+  text-shadow:0 1px 0 #000,0 0 18px rgba(217,201,138,.16);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.brand span{color:var(--brass);margin:0 .15em}
+
+/* ship's wheel — the pause button */
+.iconbtn{
+  width:clamp(38px,3vw,48px);height:clamp(38px,3vw,48px);flex-shrink:0;
+  border:1px solid var(--line2);border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#14424a,#08222a);
+  box-shadow:var(--bevel),0 2px 6px rgba(0,0,0,.5);
+  cursor:pointer;position:relative;
+  transition:transform .15s cubic-bezier(.2,2,.4,1),filter .2s;
+}
+.iconbtn::before{
+  content:'';position:absolute;inset:14%;
+  background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23d9c98a' stroke-width='1.7'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.2v4.4M12 17.4v4.4M2.2 12h4.4M17.4 12h4.4M5.1 5.1l3.1 3.1M15.8 15.8l3.1 3.1M18.9 5.1l-3.1 3.1M8.2 15.8l-3.1 3.1'/></g><circle cx='12' cy='12' r='1.6' fill='%23d9c98a'/></svg>");
+}
+.iconbtn:hover{filter:brightness(1.2)}
+.iconbtn:active{transform:scale(.9) rotate(-18deg)}
+
+/* ---- resource plates ---- */
+.res{display:flex;gap:5px;margin-top:9px}
+@media (min-width:900px) and (orientation:landscape){
+  header{padding:12px 26px 10px}
+  .res{max-width:760px;margin-left:auto;gap:7px}
+}
+@media (max-width:400px){.res{gap:3px}}
+
+.resitem{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.46));
+  border:1px solid var(--line);border-radius:3px;padding:8px 2px 6px;
+  box-shadow:var(--bevel);
+  transition:transform .16s cubic-bezier(.2,2,.4,1),border-color .16s,box-shadow .16s;
+}
+@media (max-width:400px){.resitem{padding:7px 1px 5px}}
+
+.resitem .ic{width:clamp(40px,11vw,58px);height:auto;margin-bottom:1px}
+.resitem b{font-family:var(--ui);font-weight:500;color:var(--ink);line-height:1.15;font-size:clamp(20px,1.7vw,30px)}
+.resitem span{
+  font-family:var(--ui);color:var(--dim);letter-spacing:1px;text-transform:uppercase;
+  line-height:1.15;white-space:nowrap;font-size:clamp(11px,2.8vw,15px);
+}
+@media (max-width:400px){.resitem span{letter-spacing:.2px}}
+
+.resitem.bump{
+  transform:scale(1.12);border-color:var(--gold);
+  box-shadow:0 0 14px rgba(217,201,138,.25),var(--bevel);
+}
+
+/* ---- nav rail ---- */
+nav{
+  display:flex;justify-content:center;
+  background:linear-gradient(0deg,rgba(2,8,10,.97),rgba(5,16,19,.9));
+  border-top:1px solid var(--line);
+  padding:6px 8px calc(env(safe-area-inset-bottom) + 6px);
+  box-shadow:0 -2px 12px rgba(0,0,0,.55);
+}
+nav button{
+  font-family:var(--ui);letter-spacing:.5px;text-transform:uppercase;
+  background:linear-gradient(180deg,rgba(14,38,44,.85),rgba(8,24,29,.85));
+  border:1px solid var(--line);color:var(--dim);
+  padding:7px 2px 6px;flex:1;min-height:56px;position:relative;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:color .2s,background .2s;
+}
+nav button:first-child{border-radius:3px 0 0 3px}
+nav button:last-child{border-radius:0 3px 3px 0}
+nav button:not(:first-child){border-left:none}
+
+nav .navic{width:clamp(20px,1.7vw,26px);height:auto;opacity:.62;transition:opacity .2s,filter .2s}
+nav .navlbl{font-size:clamp(12px,1.05vw,16px);letter-spacing:1.2px;line-height:1}
+
+nav button.on{
+  background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi);
+  border-color:var(--line2);
+  box-shadow:inset 0 0 12px rgba(120,220,230,.12),inset 0 2px 0 rgba(217,201,138,.35);
+}
+nav button.on .navic{opacity:1;filter:drop-shadow(0 0 5px rgba(217,201,138,.5))}
+
+nav button.alert{color:var(--red);animation:navpulse 1.4s ease-in-out infinite}
+@keyframes navpulse{50%{color:#ff9080;text-shadow:0 0 10px rgba(217,74,58,.8)}}
+.calm nav button.alert{animation:none;color:#ff9080}
+
+nav .badge{
+  position:absolute;top:3px;right:6px;background:var(--gold);color:#0b1a1e;
+  border-radius:10px;font-family:var(--ui);font-size:12px;padding:0 6px;line-height:17px;font-weight:600;
+}
+nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinite}
+
+@media (min-width:900px) and (orientation:landscape){
+  nav{order:1;border-top:none;border-bottom:1px solid var(--line);padding:7px 18px}
+  nav button{max-width:clamp(150px,14vw,260px);flex-direction:row;gap:8px;min-height:52px}
+  nav .navlbl{font-size:clamp(14px,1.1vw,18px);letter-spacing:2px}
+  main{order:2}
+}

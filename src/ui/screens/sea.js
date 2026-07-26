@@ -1,0 +1,80 @@
+/* AT SEA — fleets on trade runs, with countdowns. */
+
+import { $, esc, now } from '../../core/dom.js';
+import { S } from '../../core/state.js';
+import { render } from '../../core/bus.js';
+import { actions } from '../../core/actions.js';
+import { VOY_MAX_ACTIVE } from '../../core/config.js';
+import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
+import { iconHTML } from '../../art/icons.js';
+import { fmt } from '../format.js';
+import { toast } from '../../fx/toast.js';
+import { play } from '../../fx/sound.js';
+import { confirmDlg } from '../dialog.js';
+import { collectVoyage } from '../../systems/voyages.js';
+
+export function renderSea() {
+  let i = 0;
+  let h = `<div class="sect" style="--i:${i++}">Ships at Sea — ${S.voyages.length}/${VOY_MAX_ACTIVE}</div>`;
+
+  if (!S.voyages.length) {
+    h += `<div class="card" style="--i:${i++}"><div class="sub">No ships trading right now. Attack a trade or salvage lane until its danger drops to <b>Hazardous</b> or lower, then open it again and use the TRADE tab to send ships.</div></div>`;
+    $('main').innerHTML = h;
+    return;
+  }
+
+  S.voyages.slice().sort((a, b) => a.endsAt - b.endsAt).forEach(v => {
+    const rdy = voyReady(v);
+    const tot = (v.endsAt - v.startedAt) / 1000, left = (v.endsAt - now()) / 1000;
+    const pct = Math.max(0, Math.min(100, (1 - left / tot) * 100));
+    const crew = v.ships.map(id => { const s = findShip(id); return s ? s.name : '—'; }).join(', ');
+
+    h += `<div class="card ${rdy ? 'ready' : 'atsea'}" style="--i:${i++}" data-voy="${v.id}">
+      <div class="row"><h3>${esc(v.routeName)}</h3><span class="tag ${rdy ? 't0' : 'blu'}">${rdy ? 'MADE PORT' : 'AT SEA'}</span></div>
+      <div class="sub">${esc(crew)}</div>
+      <div class="vbar ${rdy ? 'done' : ''}"><i style="width:${rdy ? 100 : pct}%"></i></div>
+      <div class="row" style="margin-top:8px">
+        <span class="sub">Safe arrival <b>${v.odds}%</b> · Reward <b style="color:var(--goldhi)">${fmt(v.rew)}</b></span>
+        <span class="clock ${rdy ? 'done' : ''}" data-endsat="${v.endsAt}">${rdy ? 'READY' : fmtDur(left)}</span></div>
+      <div class="row" style="margin-top:11px">
+        ${rdy
+          ? `<button class="btn sm grn" data-act="collect-voy" data-id="${v.id}">Collect</button>`
+          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up · ${iconHTML('gems', 19)}${rushCost(v)}</button>
+             <button class="btn sm red" data-act="recall-voy" data-id="${v.id}">Call Back</button>`}
+      </div></div>`;
+  });
+
+  $('main').innerHTML = h;
+}
+
+function rushVoyage(id) {
+  const v = S.voyages.find(x => x.id === id);
+  if (!v) return;
+  const c = rushCost(v);
+  if (S.gems < c) return toast('Not enough gems to speed that up.', 'bad');
+  S.gems -= c;
+  v.endsAt = now();
+  play('arrive');
+  toast('Voyage rushed — the fleet is docking now.', 'blu');
+  render();
+}
+
+async function recallVoyage(id) {
+  const v = S.voyages.find(x => x.id === id);
+  if (!v) return;
+  const ok = await confirmDlg({
+    title: 'Signal Them Home?',
+    text: `The ${v.routeName} run is abandoned where it stands. You lose the cargo and there is no payment.`,
+    ok: 'Recall', cancel: 'Let Them Sail', danger: true
+  });
+  if (!ok) return;
+  S.voyages = S.voyages.filter(x => x.id !== id);
+  toast('Fleet recalled. Cargo and payment lost.', 'bad');
+  render();
+}
+
+actions({
+  'collect-voy': d => collectVoyage(d.id),
+  'rush-voy': d => rushVoyage(d.id),
+  'recall-voy': d => recallVoyage(d.id)
+});
