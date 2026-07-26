@@ -55,7 +55,7 @@ export function renderMap() {
      SVG (inserted afterwards) lands behind it. */
   $('main').innerHTML = `<div id="mapwrap">
     <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
-    <div class="maphint">Disc = cargo run · Ring = dive · Angular = a fight · Star = charter</div>
+    <div class="maphint">${shapeKey()}</div>
   </div>`;
   const legendEl = host.querySelector('.legend');
   const hintEl = host.querySelector('.maphint');
@@ -208,12 +208,40 @@ export function renderMap() {
   host.querySelector('#mapwrap').insertAdjacentHTML('afterbegin', svg);
 }
 
+/* The shape key.
+
+   Each marker silhouette is shown beside the icon for the thing it means, so
+   the key is a picture of the marker against a picture of the job — nothing to
+   read, and nothing that only works if you already know the words. Titles carry
+   the same information for anyone who wants it spelled out. */
+const KEY_ITEMS = [
+  ['cargo', 'cargo', '#63c06a', 'Cargo run — a delivery, never a fight'],
+  ['dive', 'chest', '#7ab0e0', 'Wreck dive — depth, no enemies'],
+  ['patrol', 'power', '#e0a03a', 'A fight'],
+  /* A charter's marker is already a star, so the key pairs it with what a
+     charter is for — a new port — rather than with a second star. */
+  ['charter', 'port', '#efe3ae', 'Charter — a one-off commission that opens a port']
+];
+
+function keySwatch(type, col) {
+  const inner = type === 'charter'
+    ? `<path d="${starPath(11, 11, 8)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
+    : nodeShape({ type, x: 11, y: 11 }, col, 1.45);
+  return `<svg class="keysh" viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">${inner}</svg>`;
+}
+
+function shapeKey() {
+  return KEY_ITEMS.map(([type, icon, col, title]) =>
+    `<span class="key" title="${esc(title)}">${keySwatch(type, col)}${iconHTML(icon, 20)}</span>`).join('');
+}
+
 function buildLegend(rs) {
   let li = 0;
   return Object.keys(REGIONS).map(rk => {
     li++;
     if (!S.unlocked.includes(rk))
-      return `<div class="leg lock" style="--i:${li}"><div class="legrow"><i style="background:#173238"></i><span>LOCKED — ${REGIONS[rk].n}</span></div></div>`;
+      return `<div class="leg lock" style="--i:${li}"><div class="legrow"><i style="background:#173238"></i>`
+        + `${iconHTML('lock', 17)}<span>${esc(REGIONS[rk].n)}</span></div></div>`;
 
     const mine = rs.filter(r => r.region === rk);
     const maxd = mine.length ? Math.max(...mine.map(effDanger)) : 0;
@@ -222,19 +250,24 @@ function buildLegend(rs) {
     const chn = CHARTERS.filter(c => PORTS[c.loc].region === rk && charterAvailable(c)).length;
     const openN = mine.filter(r => canVoyage(r) && voyageOpen(r)).length;
 
+    /* Counts of things worth a tap, as glyph + number. */
     const meta = [
       patrolActive(rk) ? `<span title="Patrol in force">${iconHTML('flag', 18)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : '',
-      chn ? `<span style="color:#efe3ae">${iconHTML('star', 18)}${chn}</span>` : '',
-      openN ? `<span style="color:#63c06a">${iconHTML('anchor', 18)}${openN}</span>` : ''
+      chn ? `<span style="color:#efe3ae" title="Charters on offer">${iconHTML('star', 18)}${chn}</span>` : '',
+      openN ? `<span style="color:#63c06a" title="Ready to sail">${iconHTML('anchor', 18)}${openN}</span>` : ''
     ].filter(Boolean).join('');
 
+    /* The admiral bar is a have/need on notoriety: fill it and she sails out. */
+    const noto = done
+      ? `<div class="legdone" title="${esc(b.n)} defeated">${iconHTML('flag', 17)}${esc(b.n)}</div>`
+      : `<div class="notobar ${cur >= need ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></div>
+         <div class="legdone ${cur >= need ? 'ready' : ''}" title="${cur >= need ? 'Admiral ready — attack' : 'Notoriety'}">
+           ${iconHTML('noto', 17)}${cur}<i>/</i>${need}</div>`;
+
     return `<div class="leg" style="--i:${li}">
-      <div class="legrow"><i style="background:${DHEX[maxd]}"></i><span>${REGIONS[rk].n}</span></div>
+      <div class="legrow"><i style="background:${DHEX[maxd]}"></i><span>${esc(REGIONS[rk].n)}</span></div>
       ${meta ? `<div class="legmeta">${meta}</div>` : ''}
-      ${done
-        ? `<div class="legdone">${esc(b.n)} DEFEATED</div>`
-        : `<div class="notobar ${cur >= need ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></div>
-           <div class="legdone" style="color:${cur >= need ? '#f0b0a6' : 'var(--dim)'}">${cur >= need ? 'ADMIRAL READY — ATTACK' : 'NOTORIETY ' + cur + '/' + need}</div>`}
+      ${noto}
     </div>`;
   }).join('');
 }

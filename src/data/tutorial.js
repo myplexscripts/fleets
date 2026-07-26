@@ -15,7 +15,7 @@ export const TUTSTEPS = [
     btn: 'Begin' },
 
   { sel: '#main .card', lockTab: 'fleet', title: 'Your Ships',
-    text: 'This is Port. Each ship has four numbers: Speed, Guns, Hull and Hold. Hull is health — drop it to zero and the ship is crippled until you pay to repair it here. Hold is how much cargo she can carry.',
+    text: 'This is Port. Every ship reads as four icons: speed, guns, hull and cargo. Hull is health — drop it to zero and the ship is crippled until you pay to repair it here. Cargo is how much she can carry, and it decides which contracts she can take.',
     btn: 'Next' },
 
   { sel: '#tabRoutes', lockTab: 'routes', title: 'The Naval Map',
@@ -31,7 +31,7 @@ export const TUTSTEPS = [
     btn: 'Understood' },
 
   { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ships',
-    text: 'Pick a ship with enough hold to carry the whole consignment. Up to three can sail together, and their holds add up.',
+    text: 'One ship sails a run, so pick a hull big enough for the whole consignment on its own. Look at the cargo chip on each ship: the left number is what she holds, the right is what this contract needs. Green means she can take it.',
     wait: 'ships:1' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Send Them',
@@ -51,7 +51,7 @@ export const TUTSTEPS = [
     wait: 'route:c3' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Form the Line',
-    text: 'Pick two ships and attack. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less. The card above shows who is out there and your estimated odds — if a match-up looks bad you can stand off and look again for a different one, as often as you like.',
+    text: 'A fight takes a line of up to three. Pick two ships and attack. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less. The card above shows who is out there and your estimated odds — if a match-up looks bad you can stand off and look again for a different one, as often as you like.',
     wait: 'launch' },
 
   { modal: 1, when: 'battle', title: 'Broadsides',
@@ -71,7 +71,7 @@ export const TUTSTEPS = [
     wait: 'tab:flag' },
 
   { sel: '#main .hero', lockTab: 'flag', title: 'She Is Yours Alone',
-    text: 'Your flagship uses no berth, cannot be broken up, and is the only ship you can upgrade. Hull, guns, rigging and hold all cost materials — and each track wants a different one, so keep all three coming in. Her quarters also hold your collection.',
+    text: 'Your flagship uses no berth, cannot be broken up, and is the only ship you can upgrade. Hull, guns, rigging and cargo all cost materials — and each track wants a different one, so keep all three coming in. Her quarters also hold your collection.',
     btn: 'Next' },
 
   { modal: 1, title: 'Wrecks, Charters and Admirals',

@@ -10,7 +10,7 @@ import {
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar } from '../format.js';
+import { hullBar, shipChips, chip } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -21,8 +21,9 @@ export function renderPort() {
   let i = 0;
 
   let h = `<div class="card flagcard ${fBusy ? 'atsea' : ''}" style="--i:${i++}"><div class="row">
-      <div><h3 style="color:var(--goldhi)">${iconHTML('flag', 24)} ${esc(f.name)}</h3>
-      <div class="sub">Flagship · hull ${Math.max(0, f.hull)}/${f.max} · <span style="color:${condColor(fc)}">${fc}</span>${fBusy ? ' · <b style="color:var(--blu)">AT SEA</b>' : ''}</div></div>
+      <div style="flex:1"><h3 style="color:var(--goldhi)">${iconHTML('flag', 24)} ${esc(f.name)}</h3>
+      ${shipChips(f, chip('power', power(f), '', 'Power'))}
+      <div class="sub" style="color:${fBusy ? 'var(--blu)' : condColor(fc)}">${fBusy ? 'AT SEA' : fc}</div></div>
       <button class="btn sm gold" data-act="goto" data-tab="flag">Upgrade</button></div></div>`;
 
   h += `<div class="sect" style="--i:${i++}">Your Ships — ${S.ships.length}/${S.docks} berths</div>`;
@@ -39,11 +40,11 @@ export function renderPort() {
       <div class="shipmeta">
         <div class="row"><h3>${esc(s.name)}</h3>
           <span class="statechip" style="color:${bz ? 'var(--blu)' : condColor(c)}">${bz ? 'AT SEA' : c}</span></div>
-        <div class="sub">${tname(s)} · Power ${power(s)}${bz ? ' · ' + esc(v.routeName) : ''}</div>
+        <div class="sub">${tname(s)}${bz ? ' · ' + esc(v.routeName) : ''}</div>
         ${hullBar(s)}
-        <div class="stats"><span>SPD <b>${s.speed}</b></span><span>GUNS <b>${s.guns}</b></span><span>HULL <b>${Math.max(0, s.hull)}/${s.max}</b></span><span>CARGO <b>${s.cargo}</b></span></div>
+        ${shipChips(s, chip('power', power(s), '', 'Power'))}
         ${bz
-          ? `<div class="row" style="margin-top:11px"><span class="sub">Home in</span>
+          ? `<div class="row" style="margin-top:11px"><span class="sub">${iconHTML('time', 19)}</span>
              <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span></div>`
           : `<div class="row" style="margin-top:11px">
              <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair · ' + iconHTML('gold', 19) + repairCost(s)}</button>

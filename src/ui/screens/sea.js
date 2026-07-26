@@ -5,9 +5,10 @@ import { S } from '../../core/state.js';
 import { render } from '../../core/bus.js';
 import { actions } from '../../core/actions.js';
 import { VOY_MAX_ACTIVE } from '../../core/config.js';
+import { GOODS } from '../../data/goods.js';
 import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
-import { fmt, goodsLine } from '../format.js';
+import { chip, chipRow, bagChips } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -32,10 +33,12 @@ export function renderSea() {
     h += `<div class="card ${rdy ? 'ready' : 'atsea'}" style="--i:${i++}" data-voy="${v.id}">
       <div class="row"><h3>${esc(v.routeName)}</h3><span class="tag ${rdy ? 't0' : 'blu'}">${rdy ? 'MADE PORT' : 'AT SEA'}</span></div>
       <div class="sub">${esc(crew)}</div>
-      <div class="sub">${manifest(v)}</div>
+      ${manifest(v)}
       <div class="vbar ${rdy ? 'done' : ''}"><i style="width:${rdy ? 100 : pct}%"></i></div>
       <div class="row" style="margin-top:8px">
-        <span class="sub">${v.type === 'dive' ? 'No risk at this depth' : 'Arrives intact <b>' + v.odds + '%</b>'}</span>
+        ${chipRow([v.type === 'dive'
+          ? chip('target', '100%', 'ok', 'A dive is never a fight')
+          : chip('target', v.odds + '%', v.odds >= 85 ? 'ok' : v.odds >= 65 ? 'warn' : 'bad', 'Chance it arrives intact')], 'tight')}
         <span class="clock ${rdy ? 'done' : ''}" data-endsat="${v.endsAt}">${rdy ? 'READY' : fmtDur(left)}</span></div>
       <div class="row" style="margin-top:11px">
         ${rdy
@@ -48,14 +51,22 @@ export function renderSea() {
   $('main').innerHTML = h;
 }
 
-/* What this fleet is actually out there doing. */
+/* What this fleet is actually out there doing, as chips. */
 function manifest(v) {
   if (v.type === 'dive') {
     const takings = (v.chests || 0) * (v.chestValue || 0);
-    return `${iconHTML('chest', 20)} ${v.chests} chest${v.chests === 1 ? '' : 's'} raised · <b style="color:var(--goldhi)">${takings}</b> gold on landing`
-      + (fmt(v.rew) ? ` · ${fmt(v.rew)}` : '');
+    return chipRow([
+      chip('chest', v.chests, '', 'Chests raised'),
+      chip('gold', takings, 'gold', 'Sold on the quay when they land'),
+      bagChips(v.rew)
+    ]);
   }
-  return `${iconHTML(v.good, 20)} ${goodsLine(v.good, v.qty)} → <b>${esc(v.dest || '—')}</b> · <b style="color:var(--goldhi)">${fmt(v.rew)}</b>`;
+  const g = GOODS[v.good];
+  return chipRow([
+    chip(v.good, v.qty, '', g ? g.n + ' aboard' : 'Aboard'),
+    chip('dest', esc(v.dest || '—'), '', 'Destination'),
+    bagChips(v.rew)
+  ]);
 }
 
 function rushVoyage(id) {

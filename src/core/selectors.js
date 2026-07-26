@@ -3,7 +3,7 @@
 
 import { S, routes } from './state.js';
 import {
-  VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN,
+  VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN, CARGO_PER_CHEST,
   DANGER_RISE_MIN_DEFAULT, SWEEP_STEP
 } from './config.js';
 import { TYPES } from '../data/ships.js';
@@ -144,13 +144,16 @@ export const bellDepth = () => bellMaxDepth(S.bell);
 export const diveReachable = r => r.type !== 'dive' || bellDepth() >= r.depth;
 
 /* Chests a dive is expected to raise. Spare bell capability adds to the haul,
-   and the fleet's hold caps what can be brought up in one trip. */
+   and the ship's cargo space caps what can be brought up in one trip — a chest
+   takes CARGO_PER_CHEST of it, which is what makes a bigger hull worth having
+   on a dive as well as on a run. */
+export const chestCap = fleet => Math.max(1, Math.floor(holdCap(fleet) / CARGO_PER_CHEST));
+
 export function diveChests(r, fleet, roll) {
   const spare = Math.max(0, S.bell - (r.depth - 1));
   const spread = r.chestMax - r.chestMin;
   const base = r.chestMin + (roll === undefined ? spread / 2 : Math.floor(roll * (spread + 1)));
-  const cap = Math.max(1, Math.floor(holdCap(fleet) / 6));
-  return Math.max(1, Math.min(cap, Math.round(base + spare)));
+  return Math.max(1, Math.min(chestCap(fleet), Math.round(base + spare)));
 }
 export const chestValue = r => CHEST_VALUE[r.depth] || 0;
 

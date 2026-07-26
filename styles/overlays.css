@@ -333,13 +333,6 @@
   border:1px solid var(--brass);background:rgba(58,47,20,.22);border-radius:3px;
   padding:10px 12px;margin-bottom:11px;
 }
-.mrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0}
-.mrow + .mrow{border-top:1px solid rgba(138,121,62,.28)}
-.mrow span{
-  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:1.5px;
-  text-transform:uppercase;color:var(--dim);flex-shrink:0;
-}
-.mrow b{font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:.6px;text-align:right}
 
 /* ---- Ship's Stores sheet ---- */
 .storelist{display:flex;flex-direction:column;gap:6px}
@@ -376,3 +369,46 @@
 }
 .foe b{font-family:var(--ui);font-size:clamp(15px,1.1vw,19px);letter-spacing:1px;text-transform:uppercase;color:#f0b0a6}
 .foe span{font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:.6px;color:var(--dim)}
+
+/* ---- mission sheet, chip era ----
+   The picker carries each hull's four numbers as chips, so the right ship for a
+   consignment can be found by colour alone: the cargo chip is green when she
+   can take it and red when she cannot. */
+.picksub{
+  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--dim);margin-top:2px;
+}
+.picktail{display:flex;align-items:center;gap:8px}
+.pick .chips{margin-top:6px}
+
+.pickhint{
+  display:flex;align-items:center;gap:10px;margin:0 0 10px;
+  font-size:clamp(14.5px,1vw,18px);color:var(--dim);line-height:1.45;
+}
+.crewn{
+  display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
+  border:1px solid var(--brass);padding:3px 8px;border-radius:3px;
+  font-family:var(--ui);color:var(--goldhi);letter-spacing:1px;
+}
+.crewn .ic{width:20px;height:20px}
+
+/* the manifest is now a chip block, not a table of rows */
+.manifest .chips{margin-top:0}
+.manifest .chips + .chips{margin-top:9px;padding-top:8px;border-top:1px solid rgba(138,121,62,.28)}
+.manifest .sub{margin-top:8px}
+
+/* enemy line: name left, her numbers right */
+.foe{align-items:center}
+.foe .chips{margin-top:0}
+
+/* what a victory brought home */
+.spoils{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border-left:3px solid var(--brass);background:rgba(58,47,20,.22);
+  padding:7px 11px;margin-top:10px;
+}
+.spoilslbl{
+  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:1.8px;
+  text-transform:uppercase;color:var(--dim);flex-shrink:0;
+}
+.spoils .chips{margin-top:0}

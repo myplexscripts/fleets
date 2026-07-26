@@ -25,14 +25,21 @@ import { play } from '../fx/sound.js';
 import { showResult } from '../ui/result.js';
 
 export function launchVoyage(route, fleet) {
-  if (!fleet.length || !voyageOpen(route)) return false;
+  if (!voyageOpen(route)) return false;
+  /* One ship per voyage. The interesting question is whether any single hull in
+     the fleet is big enough for the job — pooling three of them would answer it
+     for free. */
+  if (fleet.length !== 1) {
+    toast('A voyage sails under one ship. Pick the hull for the job.', 'bad');
+    return false;
+  }
   if (S.voyages.length >= VOY_MAX_ACTIVE) {
     toast('You already have as many fleets at sea as you can manage.', 'bad');
     return false;
   }
   if (route.type === 'cargo') {
     if (holdCap(fleet) < route.qty) {
-      toast('Those ships cannot hold the whole consignment.', 'bad');
+      toast('That ship cannot hold the whole consignment.', 'bad');
       return false;
     }
     /* Goods leave the warehouse now — they are aboard. */

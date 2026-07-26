@@ -13,14 +13,16 @@ const SCRAP_GOLD = 200;
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
-import { fmt } from './format.js';
+import { fmt, chip, chipRow, shipChips } from './format.js';
+import { GOODS } from '../data/goods.js';
+import { MAT_KEYS } from '../data/materials.js';
 import { setSheet, openSheet } from './sheet.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
 import { toast } from '../fx/toast.js';
 import { tutEvent, refreshTut } from './tutorial.js';
 
-export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, fromVoyage = false }) {
+export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, spoils = null, fromVoyage = false }) {
   /* A dive's chest money is not part of the route reward, so fold it in for the
      payout line and the coin shower. */
   const paid = { ...(route.rew || {}) };
@@ -32,6 +34,7 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
 
   let h = `<div class="resulthead ${success ? 'good' : 'bad'}">${title}</div>
     <div class="sub center">${success && fmt(paid) ? '<b style="color:var(--goldhi)">' + fmt(paid) + '</b> paid into the strongbox. ' : ''}${esc(msg || '')}</div>
+    ${spoilsRow(spoils)}
     ${prizeMsg ? `<div class="evt prize">${esc(prizeMsg)}</div>` : ''}
     ${noto ? `<div class="evt noto">Your name carries further in ${REGIONS[route.region].n} — notoriety +${noto}, now ${S.noto[route.region] || 0} of ${BOSSES[route.region].noto}.</div>` : ''}
     ${evt ? `<div class="evt">${esc(evt)}</div>` : ''}`;
@@ -43,7 +46,8 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
       h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
         <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
         <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
-        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Break up: ${scrapLine(e.type)}.${e.derelict ? ' No crew aboard to ransom.' : ' Ransom: ' + t.ransom + ' gold.'}</div></div></div>
+        ${shipChips({ speed: t.speed, guns: t.guns, hull: Math.round(t.hull * 0.33), max: t.hull, cargo: t.cargo })}
+        <div class="sub">Keep her (needs a berth), break her up for ${scrapLine(e.type)}${e.derelict ? '' : ', or ransom the crew for ' + t.ransom + ' gold'}.</div></div></div>
         <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:7px">
           <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button>
           <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Break Up</button>
@@ -71,6 +75,16 @@ const scrapWords = type => {
   return `${y.wood} ${MATERIALS.wood.unit}, ${y.metal} ${MATERIALS.metal.unit} and ${y.cloth} ${MATERIALS.cloth.unit}`;
 };
 const scrapLine = type => scrapWords(type) + `, plus ${SCRAP_GOLD} gold`;
+
+/* What came off the enemy, as chips rather than a sentence. */
+function spoilsRow(sp) {
+  if (!sp) return '';
+  const list = [];
+  if (sp.goods && sp.goods.n) list.push(chip(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
+  if (sp.mats) MAT_KEYS.forEach(m => { if (sp.mats[m]) list.push(chip(m, sp.mats[m], 'gold', m)); });
+  if (!list.length) return '';
+  return `<div class="spoils"><span class="spoilslbl">Taken</span>${chipRow(list, 'tight')}</div>`;
+}
 
 function capAct(i, mode, type) {
   const t = TYPES[type], el = $('cap' + i);

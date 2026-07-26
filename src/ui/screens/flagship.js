@@ -19,6 +19,10 @@ import { play } from '../../fx/sound.js';
 import { promptDlg } from '../dialog.js';
 import { doRepair } from './port.js';
 
+/* Hero stat: the glyph carries the meaning, the word is only a caption. */
+const hstat = (icon, val, label) =>
+  `<div class="hstat">${iconHTML(icon, 0, 'hstatic')}<b>${val}</b><span>${label}</span></div>`;
+
 export function renderFlagship() {
   const f = S.flag, c = cond(f), bz = isBusy('FLAG');
   let i = 2;
@@ -28,11 +32,11 @@ export function renderFlagship() {
       <div class="hname">${esc(f.name)}</div>
       <div class="hsub">${bz ? 'Presently at sea under your colours' : 'Riding at anchor, awaiting your word'}</div>
       <div class="hstats">
-        <div class="hstat"><b>${f.speed}</b><span>Speed</span></div>
-        <div class="hstat"><b>${f.guns}</b><span>Guns</span></div>
-        <div class="hstat"><b>${Math.max(0, f.hull)}<span class="of">/${f.max}</span></b><span>Hull</span></div>
-        <div class="hstat"><b>${f.cargo}</b><span>Cargo</span></div>
-        <div class="hstat"><b>${power(f)}</b><span>Power</span></div>
+        ${hstat('speed', f.speed, 'Speed')}
+        ${hstat('guns', f.guns, 'Guns')}
+        ${hstat('hull', `${Math.max(0, f.hull)}<span class="of">/${f.max}</span>`, 'Hull')}
+        ${hstat('cargo', f.cargo, 'Cargo')}
+        ${hstat('power', power(f), 'Power')}
       </div></div>
     <div class="card flagcard" style="--i:1">
       <div class="row"><h3 style="color:var(--goldhi)">Condition</h3>

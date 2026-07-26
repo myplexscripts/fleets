@@ -13,7 +13,7 @@ import { BOONS } from '../data/flagship.js';
 import { fmtDur, bossAsRoute, grant, sweepLane, sweepRegion, effDanger } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
-import { goodsHaul, haulLine } from './loot.js';
+import { goodsHaul, matsHaul } from './loot.js';
 import { showResult } from '../ui/result.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
@@ -31,7 +31,7 @@ export function battleVictory(route, enemies) {
   grant(route.rew);
   S.done[route.id] = (S.done[route.id] || 0) + 1;
   const noto = addNoto(route);
-  const haul = goodsHaul(route.region, route.danger);
+  const spoils = { goods: goodsHaul(route.region, route.danger), mats: matsHaul(route.region, route.danger) };
 
   let msg = 'The water is yours. What was floating out here is not any more.';
 
@@ -50,7 +50,7 @@ export function battleVictory(route, enemies) {
   }
 
   showResult({
-    route, success: true, msg: msg + ' ' + haulLine(haul),
+    route, success: true, msg, spoils,
     captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
   });
 }
@@ -63,14 +63,13 @@ export function sweepVictory(route, enemies) {
   grant({ gold: 120 + 90 * before });
   S.done['sweep_' + route.id] = (S.done['sweep_' + route.id] || 0) + 1;
   const noto = addNoto(route);
-  const haul = goodsHaul(route.region, before);
+  const spoils = { goods: goodsHaul(route.region, before), mats: matsHaul(route.region, before) };
 
   let msg = `The lane is swept. ${route.n} drops from ${DNAMES[before].toLowerCase()} to ${DNAMES[after].toLowerCase()}.`;
   if (after === 0) msg += ' Nothing is working this water now.';
-  msg += ' ' + haulLine(haul);
 
   showResult({
-    route, success: true, msg,
+    route, success: true, msg, spoils,
     captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
   });
 }
@@ -117,8 +116,8 @@ export function charterVictory(route, enemies) {
     }
   }
 
-  const haul = goodsHaul(route.region, route.danger);
-  showResult({ route, success: true, msg: msg + ' ' + haulLine(haul), captives: prizesFrom(enemies), noto, prizeMsg });
+  const spoils = { goods: goodsHaul(route.region, route.danger), mats: matsHaul(route.region, route.danger) };
+  showResult({ route, success: true, msg, spoils, captives: prizesFrom(enemies), noto, prizeMsg });
 }
 
 export function bossVictory(boss, enemies) {
@@ -143,6 +142,7 @@ export function bossVictory(boss, enemies) {
 
   showResult({
     route: bossAsRoute(boss), success: true, msg,
+    spoils: { goods: goodsHaul(boss.region, 3), mats: matsHaul(boss.region, 3) },
     captives: enemies.filter(e => e.disabled && !e.isBoss), noto: 0,
     prizeMsg: dropLine(rollDrop('battle'))
   });

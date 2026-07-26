@@ -12,7 +12,7 @@ import { MAX_BELL, BELL_NAMES, bellCost, bellMaxDepth, DEPTH_NAMES } from '../..
 import { canPay, pay } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { costStr } from '../format.js';
+import { costStr, chip, chipRow } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 
@@ -64,8 +64,11 @@ export function renderMarket() {
   const bc = bellCost(S.bell);
   h += `<div class="card flagcard" style="--i:${i++}"><div class="row">
       <div style="flex:1"><h3>${iconHTML('bell', 30)} ${esc(BELL_NAMES[S.bell])}</h3>
-        <div class="sub">Reaches depth <b>${bellMaxDepth(S.bell)}</b> — ${DEPTH_NAMES[bellMaxDepth(S.bell)] || 'the abyss'}.
-        ${maxed ? 'Nothing on this ocean lies deeper than you can work.' : `Next: <b>${esc(BELL_NAMES[S.bell + 1])}</b>, down to depth ${bellMaxDepth(S.bell + 1)}. A bell deeper than a wreck needs also brings up more chests.`}
+        ${chipRow([
+          chip('depth', bellMaxDepth(S.bell), '', 'Deepest wreck you can work — ' + (DEPTH_NAMES[bellMaxDepth(S.bell)] || 'the abyss')),
+          maxed ? '' : chip('depth', bellMaxDepth(S.bell + 1), 'dim', 'Next bell: ' + BELL_NAMES[S.bell + 1])
+        ])}
+        <div class="sub">${maxed ? 'Nothing on this ocean lies deeper than you can work.' : 'A bell deeper than a wreck needs also brings up more chests.'}
         <br><span class="pips">${'●'.repeat(S.bell)}${'○'.repeat(MAX_BELL - S.bell)}</span></div></div>
       <button class="btn sm gold" ${!maxed && canPay(bc) ? '' : 'disabled'} data-act="buy-bell">${maxed ? 'MAX' : costStr(bc)}</button>
     </div></div>`;
@@ -104,7 +107,12 @@ function shipCard(t, price, attrs, ok, i) {
   return `<div class="card" style="--i:${i}"><div class="shiprow">
     <div class="fleetship">${shipHTML(t, 'player', 1.0)}</div>
     <div class="shipmeta"><h3>${d.n}</h3>
-      <div class="stats"><span>SPD <b>${d.speed}</b></span><span>GUNS <b>${d.guns}</b></span><span>HULL <b>${d.hull}</b></span><span>HOLD <b>${d.cargo}</b></span></div>
+      ${chipRow([
+        chip('speed', d.speed, '', 'Speed'),
+        chip('guns', d.guns, '', 'Guns'),
+        chip('hull', d.hull, '', 'Hull'),
+        chip('cargo', d.cargo, '', 'Cargo space')
+      ])}
       <div style="margin-top:10px"><button class="btn sm gold" ${ok ? '' : 'disabled'} ${attrs}>${price}</button></div>
     </div></div></div>`;
 }

@@ -155,8 +155,6 @@ h1,h2,h3{font-weight:500}
 .dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
 
 /* ---- small type ---- */
-.stats{display:flex;gap:14px;font-family:var(--ui);font-size:clamp(15px,1.05vw,18px);color:var(--dim);margin-top:7px;letter-spacing:.4px;flex-wrap:wrap}
-.stats b{color:var(--ink)}
 .pips{color:var(--gold);letter-spacing:2px;font-size:16px}
 
 .tag,.mtype,.slot,.statechip{font-family:var(--ui);font-size:clamp(15px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
@@ -227,3 +225,26 @@ h1,h2,h3{font-weight:500}
 @media (max-width:400px){
   main{padding:12px}
 }
+
+/* ---- stat chips: one glyph, one number ----
+   The house unit for anything numeric. Cards are meant to be read at a glance,
+   so these replace prose like "SPD 8 · GUNS 3" wherever a number will do. */
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:5px 12px;margin-top:7px}
+.chips.tight{gap:4px 9px;margin-top:5px}
+.chips.big{gap:7px 16px}
+
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--ui);font-size:clamp(15px,1.1vw,19px);letter-spacing:.6px;
+  color:var(--ink);line-height:1;white-space:nowrap;
+}
+.chip .chipic{width:1.35em;height:1.35em;flex-shrink:0;vertical-align:middle}
+.chip b{font-weight:500}
+.chip i{font-style:normal;color:var(--dim);margin:0 .1em}
+.chip.ok b{color:var(--grn)}
+.chip.bad b{color:#e88a7a}
+.chip.warn b{color:var(--yel)}
+.chip.dim,.chip.dim b{color:var(--dim)}
+.chip.gold b{color:var(--goldhi)}
+.chips.big .chip{font-size:clamp(17px,1.3vw,22px)}
+.chips.big .chip .chipic{width:1.5em;height:1.5em}

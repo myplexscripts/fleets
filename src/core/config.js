@@ -1,9 +1,18 @@
 /* Tuning knobs. Every number a designer might want to twist lives here. */
 
-/* Voyages — cargo runs and wreck dives */
+/* Voyages — cargo runs and wreck dives.
+
+   A voyage sails under exactly one ship. That is the whole trading puzzle:
+   whether any single hull you own is big enough for the job. Pooling three of
+   them would answer it for free. */
+export const VOY_SHIPS = 1;           // ships per voyage
 export const VOY_SEC_PER_DAY = 90;    // real seconds per unit of route length
 export const VOY_MAX_ACTIVE = 6;      // simultaneous fleets at sea
 export const RUSH_GOLD_PER_MIN = 200; // gold to skip one minute of sailing
+export const CARGO_PER_CHEST = 5;     // cargo space one salvaged chest takes up
+
+/* Ships in a battle line: front, centre, rear. */
+export const BATTLE_SHIPS = 3;
 
 /* Lane danger.
 

@@ -4,10 +4,15 @@ A fleet-command game set in the age of sail. Three things to do, and they are
 kept separate on purpose:
 
 - **Cargo runs** — buy goods, deliver X of them to port Z, get paid. No fighting.
+  A run sails under **one ship**, so the question every contract asks is whether
+  any single hull you own has the cargo space for it.
 - **Wreck dives** — send divers down; chests come up and sell on the quay. No
-  enemies either, only depth, and depth is what your diving bell is for.
-- **Battles** — patrols, escorts, raids, blockades, charters and admirals. These
-  pay in gold, materials, and trade goods taken off the enemy.
+  enemies either, only depth, and depth is what your diving bell is for. Also one
+  ship: her cargo space caps how many chests can come up in a trip.
+- **Battles** — patrols, escorts, raids, blockades, charters and admirals. A line
+  of up to three, and the tap order sets it. These pay in gold, materials, and
+  trade goods taken off the enemy — so a captain who runs out of money can fight
+  their way back to a full store of timber, metal and cloth.
 
 **Danger is alive.** Every cargo lane's danger climbs on its own in real time, at
 its own rate and up to its own ceiling — home water drifts slowly and never gets
@@ -15,8 +20,8 @@ worse than Hazardous; the Grand Fleet Route is Treacherous again within the hour
 Danger never blocks trade. It only decides how roughly a run is handled.
 
 Pushing it back down is the fight you choose to have. A lane above Safe offers a
-**sweep** on its own sheet — the same three ships, one battle, one step of danger
-off that lane. A **patrol** is the broad version: it steps every lane in its
+**sweep** on the same sheet — the sheet swaps over to a battle line of three, one
+battle, one step of danger off that lane. A **patrol** is the broad version: it steps every lane in its
 region down at once and keeps the water quiet for a while. A Safe lane offers
 nothing to fight, which is the point.
 
@@ -26,6 +31,14 @@ can stand off and look again for a different line-up as often as you like.
 Fill a region's notoriety bar and its admiral comes looking for you. Beat the
 admiral and the next region of the chart unlocks. Trade never unlocks anything —
 progression runs through notoriety and admirals.
+
+**Read it at a glance.** Anything numeric is a chip: one glyph, one number. Where
+a number is a test rather than a reading it is written have/need — the left figure
+is what you have, the right is what the job wants, green when you are covered and
+red when you are short. So a cargo chip reading `25/25` says this hull can take
+the consignment, and `10/25` says it cannot. Speed, guns, hull, cargo, time away,
+power, odds, depth and notoriety all read the same way, and the chart's key pairs
+each marker silhouette with the icon for the job it means rather than a word.
 
 Vanilla JavaScript ES modules, no build step, no runtime dependencies beyond a
 vendored copy of [Phaser 3](https://phaser.io/) for the battle renderer.
@@ -74,10 +87,10 @@ src/
     config.js         every tuning number
     state.js          the save object, migrations, persistence
     contracts.js      per-port cargo contracts (drawn, stored, redrawn)
-    selectors.js      also owns live lane danger: stored as (step, timestamp)
-                      and projected forward on read, so lanes keep drifting
-                      while the game is closed with no ticker running
-    selectors.js      derived facts (power, danger, voyages) — pure reads
+    selectors.js      derived facts (power, danger, voyages) — pure reads. Also
+                      owns live lane danger: stored as (step, timestamp) and
+                      projected forward on read, so lanes keep drifting while
+                      the game is closed with no ticker running
     settings.js       player options, stored separately from the save
     actions.js        data-act click delegation
     bus.js            tiny event bus, used to keep imports acyclic
@@ -92,6 +105,7 @@ src/
   ui/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
+    format.js         the chip vocabulary every screen reads numbers through
     mission.js        mission sheet and launch
     result.js         after-action report and prizes
     stores.js         Ship's Stores sheet (goods, materials, bell)
@@ -114,6 +128,20 @@ actions({ repair: d => doRepair(d.id) });
 
 The registry (`core/actions.js`) means a screen never has to expose globals, and
 it works on SVG nodes — which is how the chart's markers are wired.
+
+**Numbers are chips, not prose.** `ui/format.js` owns the vocabulary and every
+screen goes through it, so the same quantity looks the same everywhere:
+
+```js
+chip('speed', s.speed)          // one glyph, one number
+have('cargo', s.cargo, r.qty)   // 25/8 — green when covered, red when short
+outOf('hull', s.hull, s.max)    // a level, never red for being full
+shipChips(s, extra, need)        // speed, guns, hull, cargo in a fixed order
+```
+
+`have` is for a test and `outOf` is for a reading; keeping them apart is what
+stops a full hull bar from looking like a failure. Add a glyph to `art/icons.js`
+before reaching for a word.
 
 **The bus exists to break cycles.** `ui/shell.js` owns rendering and imports
 every screen, so screens cannot import it back. They call `render()` from

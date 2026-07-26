@@ -8,6 +8,7 @@
 import { S } from '../core/state.js';
 import { REGIONS } from '../data/world.js';
 import { GOODS, goodsForTier } from '../data/goods.js';
+import { MAT_KEYS } from '../data/materials.js';
 import { pick, rnd } from '../core/rng.js';
 
 /* Goods taken off a beaten enemy. Richer water carries richer cargo. */
@@ -21,3 +22,18 @@ export function goodsHaul(region, danger) {
 
 export const haulLine = h =>
   h ? `${h.n} ${h.unit} of ${h.name.toLowerCase()} came out of their holds.` : '';
+
+/* Timber, ingots and canvas stripped off a beaten hull. Every win yields some,
+   so a captain who has run out of gold can always fight their way back to a
+   refit instead of being stuck. */
+export function matsHaul(region, danger) {
+  const tier = REGIONS[region] ? REGIONS[region].tier : 1;
+  const total = Math.max(2, Math.round(rnd(2, 4 + tier * 1.6 + (danger || 0) * 1.2)));
+  const out = {};
+  for (let i = 0; i < total; i++) {
+    const m = pick(MAT_KEYS);
+    out[m] = (out[m] || 0) + 1;
+  }
+  MAT_KEYS.forEach(m => { if (out[m]) S.mats[m] += out[m]; });
+  return out;
+}

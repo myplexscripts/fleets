@@ -6,7 +6,8 @@ export const FLAGTIERS = {
   plate: { n: 'Hull Plating', icon: 'plate', desc: '+12 max hull per level. More hull means the flagship survives longer in a fight.' },
   guns:  { n: 'Gun Decks',    icon: 'guns',  desc: '+2 guns per level. Guns are the main source of damage you deal.' },
   rig:   { n: 'Rigging',      icon: 'rig',   desc: '+2 speed per level. Speed shortens trade runs and helps you escape a losing battle.' },
-  hold:  { n: 'Cargo Hold',   icon: 'hold',  desc: '+10 cargo per level. Cargo space limits how much a trade run can carry.' }
+  /* Keyed `hold` because saves store it that way; it is called cargo on screen. */
+  hold:  { n: 'Cargo Hold',   icon: 'cargo', desc: '+10 cargo per level. One ship sails a run, so her cargo space is what decides which contracts she can take at all.' }
 };
 
 /* Each track eats a different material, so a captain who only ever fights ends
