@@ -10,7 +10,7 @@ import {
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar, shipChips, chip } from '../format.js';
+import { hullBar, shipChips, chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -26,10 +26,10 @@ export function renderPort() {
       <div class="sub" style="color:${fBusy ? 'var(--blu)' : condColor(fc)}">${fBusy ? 'AT SEA' : fc}</div></div>
       <button class="btn sm gold" data-act="goto" data-tab="flag">Upgrade</button></div></div>`;
 
-  h += `<div class="sect" style="--i:${i++}">Your Ships — ${S.ships.length}/${S.docks} berths</div>`;
+  h += `<div class="sect" style="--i:${i++}">Your Ships ${outOf('crew', S.ships.length, S.docks, S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')}</div>`;
 
   if (!S.ships.length) {
-    h += `<div class="card sub" style="--i:${i++}">No ships in port. Buy one in the Market.</div>`;
+    h += `<div class="card sub" style="--i:${i++}">No ships in port.</div>`;
   }
 
   S.ships.forEach(s => {
@@ -47,8 +47,9 @@ export function renderPort() {
           ? `<div class="row" style="margin-top:11px"><span class="sub">${iconHTML('time', 19)}</span>
              <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span></div>`
           : `<div class="row" style="margin-top:11px">
-             <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair · ' + iconHTML('gold', 19) + repairCost(s)}</button>
-             <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Break Up</button></div>`}
+             <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair'}</button>
+             ${s.hull >= s.max ? '' : priceChips({ gold: repairCost(s) })}
+             <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Scuttle</button></div>`}
       </div></div></div>`;
   });
 
@@ -76,14 +77,15 @@ async function doScuttle(id) {
   if (!s) return;
   const yld = SCRAP_YIELD[s.type];
   const ok = await confirmDlg({
-    title: 'Break Her Up?',
-    text: `The ${s.name} comes apart for ${yld.wood} timber, ${yld.metal} ingots and ${yld.cloth} bolts of cloth, and is struck from the register. This cannot be undone.`,
-    ok: 'Break Her Up', cancel: 'Keep Her', danger: true
+    title: 'Scuttle the ' + s.name + '?',
+    text: `She is struck from the register. This cannot be undone.`,
+    chips: chipRow([bagChips(yld)], 'big'),
+    ok: 'Scuttle', cancel: 'Keep Her', danger: true
   });
   if (!ok) return;
   grant(yld);
   S.ships = S.ships.filter(x => x.id !== id);
-  toast('The ' + s.name + ' broken up for timber, metal and cloth.');
+  toast('The ' + s.name + ' scuttled.');
   render();
 }
 

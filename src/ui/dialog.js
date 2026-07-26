@@ -39,7 +39,8 @@ function show(kind, opts) {
     <div class="dlg ${opts.danger ? 'danger' : ''}" role="dialog" aria-modal="true">
       <div class="dlg-head">${esc(opts.title || '')}</div>
       <div class="dlg-body">
-        <p>${esc(opts.text || '')}</p>
+        ${opts.text ? `<p>${esc(opts.text)}</p>` : ''}
+        ${opts.chips || ''}
         ${isPrompt ? `<input id="dlgInput" class="dlg-input" maxlength="${opts.max || 20}"
             value="${esc(opts.value || '')}" spellcheck="false" autocomplete="off">` : ''}
       </div>

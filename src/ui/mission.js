@@ -141,7 +141,7 @@ function foesCard(r, fleet) {
       <div class="row"><h3>${iconHTML('target', 22)} Sails Sighted</h3>
         <span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span></div>
       <div class="foelist">${list}</div>
-      ${canReroll(r) ? `<button class="btn sm wide" style="margin-top:10px" data-act="reroll">Stand Off and Look Again</button>` : ''}
+      ${canReroll(r) ? `<button class="btn sm wide" style="margin-top:10px" data-act="reroll">Look Again</button>` : ''}
     </div>`;
 }
 
@@ -191,7 +191,7 @@ function drawMission() {
 /* One line of instruction above the picker, and the count it asks for. */
 function pickHint(n, extra) {
   return `<div class="pickhint"><span class="crewn">${iconHTML('crew', 20)}<b>${n}</b></span>`
-    + `<span>${n === 1 ? 'One ship sails this. Pick the hull for the job.' : 'Up to three, in line order — tap order sets the line.'}${extra || ''}</span></div>`;
+    + `<span>${n === 1 ? 'Pick one ship.' : 'Pick up to three — tap order sets the line.'}${extra || ''}</span></div>`;
 }
 
 /* ---- cargo runs and dives ---- */
@@ -227,9 +227,9 @@ function voyageBody(r) {
         ${chipRow([bagChips(r.rew)], 'tight')}
       </div>`;
 
-    if (!haveGoods) warn = `Buy ${g.n.toLowerCase()} in the Market — ${r.qty - held} short.`;
-    else if (!holdOK && fleet.length) warn = 'That hull is too small. Pick a bigger one, or add a cargo hold to the flagship.';
-    else if (already) warn = 'A ship is already running this contract.';
+    if (!haveGoods) warn = `${r.qty - held} short — buy ${g.n.toLowerCase()} in the Market.`;
+    else if (!holdOK && fleet.length) warn = 'That hull is too small.';
+    else if (already) warn = 'Already running this contract.';
   } else {
     const reach = diveReachable(r);
     const chests = fleet.length ? diveChests(r, fleet) : 0;
@@ -252,7 +252,7 @@ function voyageBody(r) {
         ${chipRow([bagChips(r.rew)], 'tight')}
       </div>`;
 
-    if (!reach) warn = `Your bell reaches depth ${bellDepth()}. Upgrade it in the Market.`;
+    if (!reach) warn = `Upgrade it in the Market — your bell reaches ${bellDepth()}.`;
   }
 
   return `${manifest}
@@ -263,7 +263,7 @@ function voyageBody(r) {
       <button class="btn" data-act="close-sheet">Cancel</button>
       <button class="btn blu" id="sailBtn" ${ready && slotOK && !already ? '' : 'disabled'} data-act="send-ships">${label}</button>
     </div>
-    ${!slotOK ? `<div class="sub center warnline">${VOY_MAX_ACTIVE} fleets are already at sea. Collect one first.</div>` : ''}
+    ${!slotOK ? `<div class="sub center warnline">All ${VOY_MAX_ACTIVE} fleets are at sea.</div>` : ''}
     ${sweepOffer(r)}`;
 }
 
@@ -280,7 +280,6 @@ function sweepOffer(r) {
         chip('danger', DNAMES[Math.max(0, d - 1)], 'ok', 'After a won sweep'),
         chip('crew', BATTLE_SHIPS, '', 'A sweep is a fight — it takes a line of three')
       ], 'big')}
-      <div class="sub">Trading it is allowed and always was — danger only decides how roughly a run is handled. Sweeping pushes it down a step, and what your line takes off the enemy comes home with them.</div>
       <button class="btn gold wide" style="margin-top:10px" data-act="sweep-mode">Sweep the Lane</button>
     </div>`;
 }
@@ -301,7 +300,7 @@ function sweepBody(r) {
     <div id="shipPicks">${shipPicks(false)}</div>
     ${foesCard(r, fleet)}
     <div class="grid2">
-      <button class="btn" data-act="run-mode">Back to the Run</button>
+      <button class="btn" data-act="run-mode">Back</button>
       <button class="btn gold" id="sweepBtn" ${fleet.length ? '' : 'disabled'} data-act="sweep">Sweep the Lane</button>
     </div>`;
 }
@@ -345,14 +344,13 @@ function battleBody(r, isBoss, isCh) {
         chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory — fills the bar that summons the admiral')
       ], 'big')}
       ${chipRow([bagChips(r.rew)], 'tight')}
-      ${r.type === 'patrol' ? `<div class="sub">Winning pushes every lane in ${esc(REGIONS[r.region].n)} down a step and holds the region quieter for a while.</div>` : ''}
-      ${isBoss && r.bossDef.unlocks ? `<div class="sub">${iconHTML('map', 18)} Opens ${esc(REGIONS[r.bossDef.unlocks].n)}.</div>` : ''}
+      ${isBoss && r.bossDef.unlocks ? chipRow([chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory')], 'tight') : ''}
     </div>
     <div class="grid2">
       <button class="btn" data-act="close-sheet">Cancel</button>
       <button class="btn ${isBoss ? 'red' : 'gold'}" id="sailBtn" ${sel.length && flagOK ? '' : 'disabled'} data-act="attack">${isCh ? 'Accept' : 'Attack'}</button>
     </div>
-    ${!flagOK ? '<div class="sub center warnline">Admirals only fight your flagship. Add it to the line.</div>' : ''}`;
+    ${!flagOK ? '<div class="sub center warnline">Add your flagship to the line.</div>' : ''}`;
 }
 
 /* ---- launching ---- */

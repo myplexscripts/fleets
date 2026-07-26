@@ -7,63 +7,67 @@
    opened during that step.
 
    The script teaches the two halves separately, because they are separate: a
-   cargo run first, then a fight. */
+   cargo run first, then a fight.
+
+   Keep every step to one or two short sentences. A tutorial card that has to be
+   studied is a card that gets dismissed unread — the screens carry the numbers
+   themselves, as chips. */
 
 export const TUTSTEPS = [
   { modal: 1, title: 'Welcome Aboard, Captain',
-    text: 'You have inherited a flagship, three worn-out ships, 500 gold and a chart of the Caribbean. Turn that into the most feared fleet on the ocean.',
+    text: 'A flagship, three worn-out ships and 500 gold. Make it the most feared fleet on the ocean.',
     btn: 'Begin' },
 
   { sel: '#main .card', lockTab: 'fleet', title: 'Your Ships',
-    text: 'This is Port. Every ship reads as four icons: speed, guns, hull and cargo. Hull is health — drop it to zero and the ship is crippled until you pay to repair it here. Cargo is how much she can carry, and it decides which contracts she can take.',
+    text: 'Four numbers each: speed, guns, hull, cargo. At zero hull a ship is crippled until you repair her here.',
     btn: 'Next' },
 
   { sel: '#tabRoutes', lockTab: 'routes', title: 'The Naval Map',
-    text: 'Everything you do happens out there. Open the Map.',
+    text: 'Everything happens out there. Open the Map.',
     wait: 'tab:routes' },
 
   { sel: '#node_c1', lockTab: 'routes', only: 'c1', title: 'A Cargo Run',
-    text: 'A solid disc is a cargo run — a delivery, not a fight. The one near home port wants sugar taken to Nassau, and you already have sugar in the warehouse. Tap it.',
+    text: 'A solid disc is a cargo run. This one wants sugar taken to Nassau, and you have sugar. Tap it.',
     wait: 'route:c1' },
 
   { modal: 1, title: 'How Trade Works',
-    text: "A contract names goods, a quantity and a destination, and pays on delivery. The goods come out of your warehouse when the ships leave, so buy what a contract asks for in the Market first. There is no fighting on a cargo run — danger only decides how roughly the fleet is handled on the way. Watch it, though: every lane's danger creeps upward on its own in real time.",
+    text: 'Goods leave your warehouse when the ship sails, and the contract pays on delivery. No fighting on a run — danger only decides how roughly she is handled.',
     btn: 'Understood' },
 
-  { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ships',
-    text: 'One ship sails a run, so pick a hull big enough for the whole consignment on its own. Look at the cargo chip on each ship: the left number is what she holds, the right is what this contract needs. Green means she can take it.',
+  { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ship',
+    text: 'One ship sails a run. Read her cargo chip: left is what she holds, right is what this contract needs. Green means she can take it.',
     wait: 'ships:1' },
 
-  { sel: '#sailBtn', lockTab: 'routes', title: 'Send Them',
-    text: 'Load and sail. They will be gone for a few real minutes and cannot fight while away.',
+  { sel: '#sailBtn', lockTab: 'routes', title: 'Send Her',
+    text: 'She will be gone a few real minutes and cannot fight while away.',
     wait: 'voyage:launch' },
 
   { sel: '#tabVoy', lockTab: 'voy', title: 'Ships at Sea',
-    text: 'Everything you have sent out shows here with a countdown. Collect the payment once a fleet docks.',
+    text: 'Everything you send out shows here with a countdown. Collect when she docks.',
     wait: 'tab:voy' },
 
   { modal: 1, title: 'Fighting Is Its Own Trade',
-    text: "You never have to fight to open a trade route — trade routes are always open. Fighting is how you push danger back down. A lane that has drifted above Safe offers a SWEEP on its own sheet: same ships, one battle, one step of danger off that lane. A PATROL is the broad version — it steps every lane in the region down at once and keeps the water quiet for a while. Both also come home with goods taken off the enemy.",
+    text: 'You never fight to open a trade route — routes are always open. You fight to push danger back down, and to take gold and materials off the enemy.',
     btn: 'Show Me' },
 
   { sel: '#node_c3', lockTab: 'routes', only: 'c3', title: 'A Patrol',
-    text: 'Open the Map and tap the diamond — the patrol in the Windward Passage. Diamonds, squares and spearheads are all fights.',
+    text: 'Open the Map and tap the diamond. Angular markers are fights.',
     wait: 'route:c3' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Form the Line',
-    text: 'A fight takes a line of up to three. Pick two ships and attack. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less. The card above shows who is out there and your estimated odds — if a match-up looks bad you can stand off and look again for a different one, as often as you like.',
+    text: 'Up to three, and tap order sets the line: first fires first, second deals +25%, third takes −25%. The odds above are a forecast — if they look bad, look again for a different line-up.',
     wait: 'launch' },
 
   { modal: 1, when: 'battle', title: 'Broadsides',
-    text: 'Tap an enemy to target it, then give one order per round. FOCUS FIRE — every ship shoots your target. SPREAD FIRE — each picks its own. FIRE BARRELS — 60% more damage, limited supply. BRACE — halves damage taken and dealt. BOARD — capture a ship once it is below 40% hull. On a keyboard the number keys give the same orders.',
+    text: 'Tap an enemy to target it, then one order per round: Focus, Spread, Fire Barrels, Brace, or Board below 40% hull. Number keys do the same.',
     btn: 'To Arms' },
 
   { sel: '#bcmds', when: 'battle', title: 'Send Them Under',
-    text: 'Sink them. Keep using Focus Fire on your target until it goes down.',
+    text: 'Keep firing on your target until it goes down.',
     wait: 'battle:end' },
 
   { sel: '#cap0', when: 'prize', title: 'Prizes of War',
-    text: 'A beaten ship is a choice. KEEP adds her to your fleet if you have a free berth — right now you do not. BREAK UP strips her for timber, metal and cloth, which is what refits are built from. RANSOM sells the crew back for coin.',
+    text: 'Each choice shows what it gives you. Keep needs a free berth; scuttling strips her for materials.',
     wait: ['prize', 'sheet:close'] },
 
   { sel: '#tabFlag', lockTab: 'flag', title: 'Your Flagship',
@@ -71,10 +75,10 @@ export const TUTSTEPS = [
     wait: 'tab:flag' },
 
   { sel: '#main .hero', lockTab: 'flag', title: 'She Is Yours Alone',
-    text: 'Your flagship uses no berth, cannot be broken up, and is the only ship you can upgrade. Hull, guns, rigging and cargo all cost materials — and each track wants a different one, so keep all three coming in. Her quarters also hold your collection.',
+    text: 'Uses no berth, cannot be scuttled, and is the only ship you can upgrade. Each upgrade track eats a different material.',
     btn: 'Next' },
 
   { modal: 1, title: 'Wrecks, Charters and Admirals',
-    text: "Rings on the chart are WRECK DIVES: no enemies at all, just depth. Chests come up and sell on the spot, and a better diving bell reaches deeper water and richer wrecks. Gold stars are CHARTERS — one-off jobs that permanently open a new port and often hand over a collectible. Everything you finish raises NOTORIETY in that region; fill the bar and its admiral sails out to fight you. Beat the admiral and the next region unlocks. The ship's wheel at the top left is your pause menu.",
+    text: 'Rings are wreck dives — no enemies, only depth, and a better bell reaches deeper. Stars are charters, which open ports for good. Everything you finish raises notoriety; fill a region’s bar and its admiral sails out. Beat her and the next region unlocks.',
     btn: 'Start Playing' }
 ];

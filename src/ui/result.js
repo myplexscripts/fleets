@@ -6,14 +6,14 @@ import { actions } from '../core/actions.js';
 import { rnd } from '../core/rng.js';
 import { grant } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
-import { SCRAP_YIELD, MATERIALS } from '../data/materials.js';
+import { SCRAP_YIELD } from '../data/materials.js';
 
 /* What the loose fittings off a broken-up prize fetch. */
 const SCRAP_GOLD = 200;
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
-import { fmt, chip, chipRow, shipChips } from './format.js';
+import { fmt, chip, have, chipRow, outOf, bagChips, shipChips } from './format.js';
 import { GOODS } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { setSheet, openSheet } from './sheet.js';
@@ -36,24 +36,32 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     <div class="sub center">${success && fmt(paid) ? '<b style="color:var(--goldhi)">' + fmt(paid) + '</b> paid into the strongbox. ' : ''}${esc(msg || '')}</div>
     ${spoilsRow(spoils)}
     ${prizeMsg ? `<div class="evt prize">${esc(prizeMsg)}</div>` : ''}
-    ${noto ? `<div class="evt noto">Your name carries further in ${REGIONS[route.region].n} — notoriety +${noto}, now ${S.noto[route.region] || 0} of ${BOSSES[route.region].noto}.</div>` : ''}
+    ${notoRow(route, noto)}
     ${evt ? `<div class="evt">${esc(evt)}</div>` : ''}`;
 
   if (captives.length) {
     h += `<div class="sect" style="margin-top:14px;--i:1">Prizes of War</div>`;
     captives.forEach((e, i) => {
       const t = TYPES[e.type], full = S.ships.length >= S.docks;
+      /* Each option shows what it gives you, so choosing needs no paragraph. */
       h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
         <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
         <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
         ${shipChips({ speed: t.speed, guns: t.guns, hull: Math.round(t.hull * 0.33), max: t.hull, cargo: t.cargo })}
-        <div class="sub">Keep her (needs a berth), break her up for ${scrapLine(e.type)}${e.derelict ? '' : ', or ransom the crew for ' + t.ransom + ' gold'}.</div></div></div>
-        <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:7px">
-          <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button>
-          <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Break Up</button>
-          ${e.derelict ? '' : `<button class="btn sm" data-act="cap" data-i="${i}" data-mode="ransom" data-type="${e.type}">Ransom</button>`}
-          <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ignore" data-type="${e.type}">Let Go</button>
-        </div>${full ? '<div class="sub" style="color:var(--yel);margin-top:8px">No free berth. Scuttle a ship in Port, or buy a berth in the Market, to keep her.</div>' : ''}</div>`;
+        <div class="sub"></div></div></div>
+        <div class="prizeopts">
+          <div class="prizeopt">
+            ${chipRow([outOf('crew', S.ships.length, S.docks, full ? 'bad' : 'ok', 'Berths in use')], 'tight')}
+            <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button></div>
+          <div class="prizeopt">
+            ${chipRow([bagChips({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD })], 'tight')}
+            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Scuttle</button></div>
+          ${e.derelict ? '' : `<div class="prizeopt">
+            ${chipRow([chip('gold', t.ransom, 'gold', 'Ransom')], 'tight')}
+            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ransom" data-type="${e.type}">Ransom</button></div>`}
+          <div class="prizeopt">
+            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ignore" data-type="${e.type}">Let Go</button></div>
+        </div></div>`;
     });
   }
 
@@ -70,11 +78,18 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   refreshTut();
 }
 
-const scrapWords = type => {
-  const y = SCRAP_YIELD[type];
-  return `${y.wood} ${MATERIALS.wood.unit}, ${y.metal} ${MATERIALS.metal.unit} and ${y.cloth} ${MATERIALS.cloth.unit}`;
-};
-const scrapLine = type => scrapWords(type) + `, plus ${SCRAP_GOLD} gold`;
+
+/* Notoriety, as a bar reading rather than a sentence: what this win added, and
+   where the region now stands against its admiral. */
+function notoRow(route, noto) {
+  if (!noto) return '';
+  const need = BOSSES[route.region] ? BOSSES[route.region].noto : 0;
+  const cur = S.noto[route.region] || 0;
+  return `<div class="spoils"><span class="spoilslbl">${esc(REGIONS[route.region].n)}</span>${chipRow([
+    chip('noto', '+' + noto, 'ok', 'Gained'),
+    need ? have('noto', cur, need, 'Notoriety toward the admiral') : ''
+  ], 'tight')}</div>`;
+}
 
 /* What came off the enemy, as chips rather than a sentence. */
 function spoilsRow(sp) {
@@ -94,23 +109,23 @@ function capAct(i, mode, type) {
   if (mode === 'capture') {
     if (S.ships.length >= S.docks) return toast('Every berth is full, Captain.', 'bad');
     S.ships.push(newShip(type, rnd(0.25, 0.45)));
-    sub.textContent = 'Added to your fleet, damaged. Repair her in Port.';
+    sub.textContent = 'Yours, damaged. Repair her in Port.';
     toast('The ' + t.n + ' flies your colours now.', 'gold');
   } else if (mode === 'salvage') {
     const yld = SCRAP_YIELD[type];
     grant(yld);
     S.gold += SCRAP_GOLD;
-    sub.textContent = `Broken up for ${scrapWords(type)}, and ${SCRAP_GOLD} gold for the fittings.`;
+    sub.textContent = 'Scuttled for materials.';
   } else if (mode === 'ransom') {
     S.gold += t.ransom;
     coinFly(6);
-    sub.textContent = `Crew ransomed back for ${t.ransom} gold.`;
+    sub.textContent = 'Crew ransomed.';
   } else {
-    sub.textContent = 'Left to drift. Nothing gained.';
+    sub.textContent = 'Left to drift.';
   }
 
-  const row = el.querySelector('.row');
-  if (row) row.remove();
+  const opts = el.querySelector('.prizeopts');
+  if (opts) opts.remove();
   updateRes();
   save();
   tutEvent('prize');

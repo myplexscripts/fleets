@@ -208,31 +208,26 @@ export function renderMap() {
   host.querySelector('#mapwrap').insertAdjacentHTML('afterbegin', svg);
 }
 
-/* The shape key.
-
-   Each marker silhouette is shown beside the icon for the thing it means, so
-   the key is a picture of the marker against a picture of the job — nothing to
-   read, and nothing that only works if you already know the words. Titles carry
-   the same information for anyone who wants it spelled out. */
+/* The map key: each marker silhouette against the word for what it is. A legend
+   names its symbols — that is the whole job — so the shape is the symbol and the
+   word is the name, and neither stands in for the other. */
 const KEY_ITEMS = [
-  ['cargo', 'cargo', '#63c06a', 'Cargo run — a delivery, never a fight'],
-  ['dive', 'chest', '#7ab0e0', 'Wreck dive — depth, no enemies'],
-  ['patrol', 'power', '#e0a03a', 'A fight'],
-  /* A charter's marker is already a star, so the key pairs it with what a
-     charter is for — a new port — rather than with a second star. */
-  ['charter', 'port', '#efe3ae', 'Charter — a one-off commission that opens a port']
+  ['cargo', '#63c06a', 'Cargo'],
+  ['dive', '#7ab0e0', 'Wreck'],
+  ['patrol', '#e0a03a', 'Fight'],
+  ['charter', '#efe3ae', 'Charter']
 ];
 
 function keySwatch(type, col) {
   const inner = type === 'charter'
-    ? `<path d="${starPath(11, 11, 8)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
-    : nodeShape({ type, x: 11, y: 11 }, col, 1.45);
-  return `<svg class="keysh" viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">${inner}</svg>`;
+    ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
+    : nodeShape({ type, x: 12, y: 12 }, col, 1.6);
+  return `<svg class="keysh" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${inner}</svg>`;
 }
 
 function shapeKey() {
-  return KEY_ITEMS.map(([type, icon, col, title]) =>
-    `<span class="key" title="${esc(title)}">${keySwatch(type, col)}${iconHTML(icon, 20)}</span>`).join('');
+  return KEY_ITEMS.map(([type, col, word]) =>
+    `<span class="key">${keySwatch(type, col)}<span>${word}</span></span>`).join('');
 }
 
 function buildLegend(rs) {

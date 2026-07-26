@@ -37,8 +37,14 @@ a number is a test rather than a reading it is written have/need — the left fi
 is what you have, the right is what the job wants, green when you are covered and
 red when you are short. So a cargo chip reading `25/25` says this hull can take
 the consignment, and `10/25` says it cannot. Speed, guns, hull, cargo, time away,
-power, odds, depth and notoriety all read the same way, and the chart's key pairs
-each marker silhouette with the icon for the job it means rather than a word.
+power, odds, depth and notoriety all read the same way, and **every price in the
+game** is written have/need too — repairs, upgrades, fittings, hulls, berths, the
+diving bell — so "can I afford this" is never a question you have to work out.
+
+**No text below 16px, ever**, and no icon either. Screens carry numbers, not
+paragraphs: a mission tip is one clause, an upgrade says `+10` and its price, and
+an empty screen says "No ships at sea." rather than explaining what a ship is
+for.
 
 Vanilla JavaScript ES modules, no build step, no runtime dependencies beyond a
 vendored copy of [Phaser 3](https://phaser.io/) for the battle renderer.
@@ -81,6 +87,8 @@ styles/
   screens.css         port, flagship hero, relics, chart
   battle.css          battle view
   overlays.css        sheet, dialogs, pause, title, loading, toasts, tutorial
+tools/
+  check-min-size.js   fails on any text or icon that renders under 16px
 src/
   main.js             boot sequence
   core/
@@ -140,8 +148,22 @@ shipChips(s, extra, need)        // speed, guns, hull, cargo in a fixed order
 ```
 
 `have` is for a test and `outOf` is for a reading; keeping them apart is what
-stops a full hull bar from looking like a failure. Add a glyph to `art/icons.js`
+stops a full hull bar from looking like a failure. `priceChips(cost)` is the one
+to reach for on anything the player pays for. Add a glyph to `art/icons.js`
 before reaching for a word.
+
+**16px is the floor.** `tools/check-min-size.js` fails on any authored
+`font-size` below it — including a `clamp()` minimum, an inverted `clamp()`, or a
+relative size with no `max(16px, …)` floor — and on any `iconHTML()` call asking
+for fewer pixels. Run it with plain node for those:
+
+```sh
+node tools/check-min-size.js
+```
+
+With `playwright-core` on hand and the game being served it also measures what
+the browser actually computes, across three viewports and nine surfaces — screens
+and overlays alike — which is how a `0.5em` sub-label got caught.
 
 **The bus exists to break cycles.** `ui/shell.js` owns rendering and imports
 every screen, so screens cannot import it back. They call `render()` from

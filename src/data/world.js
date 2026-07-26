@@ -23,13 +23,15 @@ export const NOTO_BONUS = {
 export const VOYAGE_TYPES = ['cargo', 'dive'];
 export const BATTLE_TYPES = ['patrol', 'escort', 'raid', 'blockade', 'charter', 'boss'];
 
+/* One clause each. The chips carry the numbers; the tip only says what the
+   mission is for. */
 export const MTYPE = {
-  cargo:    { n: 'Cargo Run',       tip: 'Load the goods named below and deliver them. A cargo run is a delivery, never a battle — danger here only decides how roughly the fleet is handled on the way.' },
-  dive:     { n: 'Wreck Dive',      tip: 'Nobody guards a wreck, so there is no fight here. What stops you is depth: your diving bell has to reach it. Chests are sold as they come up.' },
-  patrol:   { n: 'Patrol',          tip: 'A fight for modest money that clears every lane in the region at once and keeps the water quiet for a while. The broad version of sweeping a single lane.' },
-  raid:     { n: 'Raid',            tip: 'A fight for a large one-off payout in gold and materials.' },
-  escort:   { n: 'Escort',          tip: 'A fight where you must also keep the merchant ship alive. If she sinks you lose, however well you are doing. Pays in cloth and timber.' },
-  blockade: { n: 'Blockade Break',  tip: 'The hardest ordinary fight on the chart, and the largest ordinary reward. Bring your best three ships.' },
-  boss:     { n: 'Admiral',         tip: 'The region admiral. Your flagship must be in the line. Beating one unlocks the next region of the map.' },
-  charter:  { n: 'Charter',         tip: 'A one-off commission you can only take once. Winning permanently opens a new port, and often hands you a collectible or a flagship refit.' }
+  cargo:    { n: 'Cargo Run',       tip: 'Deliver the goods. Never a fight.' },
+  dive:     { n: 'Wreck Dive',      tip: 'Chests sell as they come up. Never a fight.' },
+  patrol:   { n: 'Patrol',          tip: 'Clears every lane in the region a step.' },
+  raid:     { n: 'Raid',            tip: 'One large payout.' },
+  escort:   { n: 'Escort',          tip: 'Keep the merchant alive or lose.' },
+  blockade: { n: 'Blockade Break',  tip: 'The hardest fight on the chart.' },
+  boss:     { n: 'Admiral',         tip: 'Flagship must sail. Opens the next region.' },
+  charter:  { n: 'Charter',         tip: 'One-off. Opens a port for good.' }
 };

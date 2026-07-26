@@ -7,8 +7,7 @@ import { actions } from '../../core/actions.js';
 import { VOY_MAX_ACTIVE } from '../../core/config.js';
 import { GOODS } from '../../data/goods.js';
 import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
-import { iconHTML } from '../../art/icons.js';
-import { chip, chipRow, bagChips } from '../format.js';
+import { chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -16,10 +15,11 @@ import { collectVoyage } from '../../systems/voyages.js';
 
 export function renderSea() {
   let i = 0;
-  let h = `<div class="sect" style="--i:${i++}">Ships at Sea — ${S.voyages.length}/${VOY_MAX_ACTIVE}</div>`;
+  let h = `<div class="sect" style="--i:${i++}">Ships at Sea ${chipRow([
+    outOf('sea', S.voyages.length, VOY_MAX_ACTIVE, '', 'Fleets at sea')], 'tight')}</div>`;
 
   if (!S.voyages.length) {
-    h += `<div class="card" style="--i:${i++}"><div class="sub">Nothing at sea. Ships only sail for two reasons: to carry a <b>cargo contract</b> to its destination, or to <b>dive a wreck</b>. Both are on the Map — buy the goods a contract asks for in the Market first.</div></div>`;
+    h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships at sea.</div></div>`;
     $('main').innerHTML = h;
     return;
   }
@@ -43,7 +43,8 @@ export function renderSea() {
       <div class="row" style="margin-top:11px">
         ${rdy
           ? `<button class="btn sm grn" data-act="collect-voy" data-id="${v.id}">Collect</button>`
-          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up · ${iconHTML('gold', 19)}${rushCost(v)}</button>
+          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up</button>
+             ${priceChips({ gold: rushCost(v) })}
              <button class="btn sm red" data-act="recall-voy" data-id="${v.id}">Call Back</button>`}
       </div></div>`;
   });
@@ -86,7 +87,7 @@ async function recallVoyage(id) {
   if (!v) return;
   const ok = await confirmDlg({
     title: 'Signal Them Home?',
-    text: `The ${v.routeName} run is abandoned where it stands. You lose the cargo and there is no payment.`,
+    text: 'The cargo is lost and there is no payment.',
     ok: 'Recall', cancel: 'Let Them Sail', danger: true
   });
   if (!ok) return;

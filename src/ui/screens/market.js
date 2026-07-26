@@ -12,7 +12,7 @@ import { MAX_BELL, BELL_NAMES, bellCost, bellMaxDepth, DEPTH_NAMES } from '../..
 import { canPay, pay } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { costStr, chip, chipRow } from '../format.js';
+import { chip, chipRow, have, outOf, priceChips } from '../format.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 
@@ -25,16 +25,18 @@ const dockCost = () => ({ gold: 350 + (S.docks - 2) * 250 + (S.docks >= 6 ? 400 
 
 export function renderMarket() {
   let i = 0;
-  let h = `<div class="sect" style="--i:${i++}">Trade Goods</div>
-    <div class="card" style="--i:${i++}"><div class="sub">Bought here, delivered under contract. A delivery pays several times what this counter will give you back for the same crates, so buy to fill a contract — not to speculate.</div></div>`;
+  let h = `<div class="sect" style="--i:${i++}">Trade Goods</div>`;
 
   h += `<div class="goodsgrid" style="--i:${i++}">`;
   GOOD_KEYS.forEach(k => {
     const g = GOODS[k];
     const can1 = S.gold >= g.buy, can10 = S.gold >= g.buy * 10;
     h += `<div class="goodcard">
-      <div class="ghead">${iconHTML(k, 34)}<div><b>${g.n}</b><i>${S.goods[k]} ${g.unit}</i></div></div>
-      <div class="gprice">buy ${g.buy}${iconHTML('gold', 16)} · sell ${g.sell}${iconHTML('gold', 16)}</div>
+      <div class="ghead">${iconHTML(k, 34)}<div><b>${g.n}</b>${chipRow([chip(k, S.goods[k], '', g.n + ' in store')], 'tight')}</div></div>
+      ${chipRow([
+        have('gold', S.gold, g.buy, 'Buy price, each'),
+        chip('gold', g.sell, 'dim', 'Sell price, each')
+      ], 'tight')}
       <div class="btnset">
         <button class="btn sm" ${can1 ? '' : 'disabled'} data-act="buy-good" data-good="${k}" data-n="1">+1</button>
         <button class="btn sm" ${can10 ? '' : 'disabled'} data-act="buy-good" data-good="${k}" data-n="10">+10</button>
@@ -43,14 +45,13 @@ export function renderMarket() {
   });
   h += `</div>`;
 
-  h += `<div class="sect" style="--i:${i++}">Materials</div>
-    <div class="card" style="--i:${i++}"><div class="sub">Refits are built from these. Fighting, breaking up captured hulls and diving wrecks all yield them — buying is the expensive shortcut.</div></div>`;
+  h += `<div class="sect" style="--i:${i++}">Materials</div>`;
   h += `<div class="goodsgrid" style="--i:${i++}">`;
   MAT_KEYS.forEach(k => {
     const m = MATERIALS[k];
     h += `<div class="goodcard">
-      <div class="ghead">${iconHTML(k, 34)}<div><b>${m.n}</b><i>${S.mats[k]} ${m.unit}</i></div></div>
-      <div class="gprice">buy ${m.buy}${iconHTML('gold', 16)}</div>
+      <div class="ghead">${iconHTML(k, 34)}<div><b>${m.n}</b>${chipRow([chip(k, S.mats[k], '', m.n + ' in store')], 'tight')}</div></div>
+      ${chipRow([have('gold', S.gold, m.buy, 'Buy price, each')], 'tight')}
       <div class="btnset">
         <button class="btn sm" ${S.gold >= m.buy ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="1">+1</button>
         <button class="btn sm" ${S.gold >= m.buy * 5 ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="5">+5</button>
@@ -62,30 +63,31 @@ export function renderMarket() {
   h += `<div class="sect" style="--i:${i++}">Salvage Gear</div>`;
   const maxed = S.bell >= MAX_BELL;
   const bc = bellCost(S.bell);
-  h += `<div class="card flagcard" style="--i:${i++}"><div class="row">
-      <div style="flex:1"><h3>${iconHTML('bell', 30)} ${esc(BELL_NAMES[S.bell])}</h3>
+  h += `<div class="card uprow flagcard" style="--i:${i++}">
+      <div class="row"><h3>${iconHTML('bell', 30)} ${esc(BELL_NAMES[S.bell])}</h3>
+        <span class="pips">${'●'.repeat(S.bell)}${'○'.repeat(MAX_BELL - S.bell)}</span></div>
+      <div class="row">
         ${chipRow([
-          chip('depth', bellMaxDepth(S.bell), '', 'Deepest wreck you can work — ' + (DEPTH_NAMES[bellMaxDepth(S.bell)] || 'the abyss')),
-          maxed ? '' : chip('depth', bellMaxDepth(S.bell + 1), 'dim', 'Next bell: ' + BELL_NAMES[S.bell + 1])
-        ])}
-        <div class="sub">${maxed ? 'Nothing on this ocean lies deeper than you can work.' : 'A bell deeper than a wreck needs also brings up more chests.'}
-        <br><span class="pips">${'●'.repeat(S.bell)}${'○'.repeat(MAX_BELL - S.bell)}</span></div></div>
-      <button class="btn sm gold" ${!maxed && canPay(bc) ? '' : 'disabled'} data-act="buy-bell">${maxed ? 'MAX' : costStr(bc)}</button>
-    </div></div>`;
+          chip('depth', bellMaxDepth(S.bell), '', 'Reaches — ' + (DEPTH_NAMES[bellMaxDepth(S.bell)] || 'the abyss')),
+          maxed ? '' : chip('depth', '+1', 'ok', 'Next bell: ' + BELL_NAMES[S.bell + 1])
+        ], 'tight')}
+        <button class="btn sm gold" ${!maxed && canPay(bc) ? '' : 'disabled'} data-act="buy-bell">${maxed ? 'MAX' : 'Upgrade'}</button>
+      </div>
+      ${maxed ? '' : priceChips(bc)}</div>`;
 
   /* ---- ships ---- */
   h += `<div class="sect" style="--i:${i++}">Buy a Ship</div>`;
   ['schooner', 'brig'].forEach(t => {
-    h += shipCard(t, `Buy · ${iconHTML('gold', 19)}${TYPES[t].cost}`,
+    h += shipCard(t, 'Buy', { gold: TYPES[t].cost },
       `data-act="buy-ship" data-type="${t}"`, S.gold >= TYPES[t].cost, i++);
   });
 
   if (S.unlocked.includes('gulf')) {
     h += `<div class="sect" style="--i:${i++}">Shipyard</div>`;
-    h += shipCard('frigate', `Build · ${costStr(SHIP_BUILD.frigate)}`,
+    h += shipCard('frigate', 'Build', SHIP_BUILD.frigate,
       `data-act="build-ship" data-type="frigate"`, canPay(SHIP_BUILD.frigate), i++);
     if (S.unlocked.includes('atlantic')) {
-      h += shipCard('manowar', `Build · ${costStr(SHIP_BUILD.manowar)}`,
+      h += shipCard('manowar', 'Build', SHIP_BUILD.manowar,
         `data-act="build-ship" data-type="manowar"`, canPay(SHIP_BUILD.manowar), i++);
     }
   }
@@ -93,27 +95,35 @@ export function renderMarket() {
   /* ---- harbour ---- */
   const dc = dockCost();
   h += `<div class="sect" style="--i:${i++}">Harbour</div>
-    <div class="card" style="--i:${i++}"><div class="row"><div><h3>Extra Berth</h3>
-      <div class="sub">Each berth holds one ship. You are using ${S.ships.length} of ${S.docks}.</div></div>
-      <button class="btn sm gold" ${canPay(dc) ? '' : 'disabled'} data-act="buy-dock">Buy · ${costStr(dc)}</button></div></div>
-    <div class="card" style="--i:${i++}"><h3>Charted Ports — ${S.ports.length}/${Object.keys(PORTS).length}</h3>
-      <div class="sub">Every charted port keeps a cargo contract open for you.<br>${S.ports.map(p => PORTS[p].n).join(' · ')}</div></div>`;
+    <div class="card uprow" style="--i:${i++}">
+      <div class="row"><h3>Extra Berth</h3>
+        ${chipRow([outOf('crew', S.ships.length, S.docks, S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')], 'tight')}</div>
+      <div class="row">
+        ${chipRow([chip('crew', '+1', 'ok', 'Berths gained')], 'tight')}
+        <button class="btn sm gold" ${canPay(dc) ? '' : 'disabled'} data-act="buy-dock">Buy</button></div>
+      ${priceChips(dc)}</div>
+    <div class="card" style="--i:${i++}">
+      <div class="row"><h3>Charted Ports</h3>
+        ${chipRow([outOf('port', S.ports.length, Object.keys(PORTS).length, '', 'Ports charted')], 'tight')}</div>
+      <div class="sub">${S.ports.map(p => esc(PORTS[p].n)).join(' · ')}</div></div>`;
 
   $('main').innerHTML = h;
 }
 
-function shipCard(t, price, attrs, ok, i) {
+function shipCard(t, label, cost, attrs, ok, i) {
   const d = TYPES[t];
   return `<div class="card" style="--i:${i}"><div class="shiprow">
     <div class="fleetship">${shipHTML(t, 'player', 1.0)}</div>
-    <div class="shipmeta"><h3>${d.n}</h3>
+    <div class="shipmeta">
+      <div class="row"><h3>${d.n}</h3>
+        <button class="btn sm gold" ${ok ? '' : 'disabled'} ${attrs}>${label}</button></div>
       ${chipRow([
         chip('speed', d.speed, '', 'Speed'),
         chip('guns', d.guns, '', 'Guns'),
         chip('hull', d.hull, '', 'Hull'),
         chip('cargo', d.cargo, '', 'Cargo space')
       ])}
-      <div style="margin-top:10px"><button class="btn sm gold" ${ok ? '' : 'disabled'} ${attrs}>${price}</button></div>
+      ${priceChips(cost)}
     </div></div></div>`;
 }
 

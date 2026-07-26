@@ -5,6 +5,7 @@
    `chip` or `have` rather than being spelled out in prose. */
 
 import { esc } from '../core/dom.js';
+import { S } from '../core/state.js';
 import { iconHTML } from '../art/icons.js';
 import { GOODS } from '../data/goods.js';
 import { MATERIALS } from '../data/materials.js';
@@ -28,6 +29,15 @@ export const costStr = bag;
 export function bagChips(o, cls) {
   if (!o) return '';
   return BAG_ORDER.filter(k => o[k]).map(k => chip(k, o[k], cls == null ? 'gold' : cls)).join('');
+}
+
+/* A price, as what you hold over what it costs — one chip per part, green where
+   you are covered and red where you are short. Every transaction in the game
+   shows its cost this way, so "can I afford this" is never a question. */
+export function priceChips(cost) {
+  if (!cost) return '';
+  return chipRow(BAG_ORDER.filter(k => cost[k]).map(k =>
+    have(k, k === 'gold' ? S.gold : S.mats[k], cost[k], k === 'gold' ? 'Gold' : matName(k))), 'tight');
 }
 
 /* One glyph, one value. `cls` tints it: ok / bad / warn / dim. */

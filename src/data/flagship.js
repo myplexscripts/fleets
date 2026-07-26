@@ -2,12 +2,14 @@
 
 export const FLAGBASE = { speed: 5, guns: 6, hull: 45, cargo: 25 };
 
+/* `eff` is the whole description: what one more level does, as a stat and a
+   glyph. No prose — the row is meant to be read, not studied. */
 export const FLAGTIERS = {
-  plate: { n: 'Hull Plating', icon: 'plate', desc: '+12 max hull per level. More hull means the flagship survives longer in a fight.' },
-  guns:  { n: 'Gun Decks',    icon: 'guns',  desc: '+2 guns per level. Guns are the main source of damage you deal.' },
-  rig:   { n: 'Rigging',      icon: 'rig',   desc: '+2 speed per level. Speed shortens trade runs and helps you escape a losing battle.' },
+  plate: { n: 'Hull Plating', icon: 'plate', eff: '+12', stat: 'hull' },
+  guns:  { n: 'Gun Decks',    icon: 'guns',  eff: '+2',  stat: 'guns' },
+  rig:   { n: 'Rigging',      icon: 'rig',   eff: '+2',  stat: 'speed' },
   /* Keyed `hold` because saves store it that way; it is called cargo on screen. */
-  hold:  { n: 'Cargo Hold',   icon: 'cargo', desc: '+10 cargo per level. One ship sails a run, so her cargo space is what decides which contracts she can take at all.' }
+  hold:  { n: 'Cargo Hold',   icon: 'cargo', eff: '+10', stat: 'cargo' }
 };
 
 /* Each track eats a different material, so a captain who only ever fights ends
@@ -28,10 +30,10 @@ export function tierCost(key, t) {
 }
 
 export const FITTINGS = {
-  grapple:  { n: 'Grappling Hooks',  desc: 'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.', cost: { gold: 800,  metal: 16, cloth: 8 } },
-  magazine: { n: 'Powder Magazine',  desc: 'Start every battle with one extra fire barrel.',                                               cost: { gold: 1600, metal: 18, wood: 12 } },
-  copper:   { n: 'Copper Sheathing', desc: 'The flagship takes no damage from storms or from a cargo run gone wrong.',                     cost: { gold: 1900, metal: 30 } },
-  chase:    { n: 'Chase Guns',       desc: 'The flagship fires twice each round. The second shot deals 60% damage.',                       cost: { gold: 3000, metal: 34, wood: 16 } }
+  grapple:  { n: 'Grappling Hooks',  desc: 'Board at 55% hull, not 40%',   cost: { gold: 800,  metal: 16, cloth: 8 } },
+  magazine: { n: 'Powder Magazine',  desc: '+1 fire barrel every battle',  cost: { gold: 1600, metal: 18, wood: 12 } },
+  copper:   { n: 'Copper Sheathing', desc: 'No storm or raid damage',      cost: { gold: 1900, metal: 30 } },
+  chase:    { n: 'Chase Guns',       desc: 'Fires twice — second at 60%',  cost: { gold: 3000, metal: 34, wood: 16 } }
 };
 
 /* Permanent refits awarded by charters. */

@@ -61,14 +61,14 @@ h1,h2,h3{font-weight:500}
   font-family:var(--ui);font-size:clamp(19px,1.4vw,25px);font-weight:500;
   letter-spacing:1.5px;text-transform:uppercase;
 }
-.sub{font-size:clamp(15.5px,1.1vw,19px);color:var(--dim);line-height:1.6}
+.sub{font-size:clamp(16px,1.1vw,19px);color:var(--dim);line-height:1.6}
 .sub b{color:var(--ink)}
 .sub.quote{font-style:italic}
 .center{text-align:center}
 .warnline{margin-top:10px;color:var(--yel)}
 
 .sect{
-  font-family:var(--display);font-size:clamp(15px,1.1vw,19px);font-weight:600;
+  font-family:var(--display);font-size:clamp(16px,1.1vw,19px);font-weight:600;
   letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;
   margin:18px 0 10px;display:flex;align-items:center;gap:10px;
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
@@ -128,7 +128,7 @@ h1,h2,h3{font-weight:500}
 .btn.blu{background:linear-gradient(180deg,#173c5e,#0d2338);border-color:#2c5a8a;color:#bcd8f0}
 .btn.grn{background:linear-gradient(180deg,#1d4a22,#102e14);border-color:#3f7a44;color:#bce8bf}
 .btn.sm{
-  font-size:clamp(15px,1.05vw,18px);letter-spacing:1px;
+  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;
   padding:clamp(9px,.7vw,13px) clamp(11px,.9vw,17px);min-height:clamp(42px,3.2vw,52px);
 }
 .btn.wide{width:100%;font-size:clamp(18px,1.3vw,23px);padding:clamp(14px,1.1vw,20px)}
@@ -157,7 +157,7 @@ h1,h2,h3{font-weight:500}
 /* ---- small type ---- */
 .pips{color:var(--gold);letter-spacing:2px;font-size:16px}
 
-.tag,.mtype,.slot,.statechip{font-family:var(--ui);font-size:clamp(15px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
+.tag,.mtype,.slot,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
 .tag{padding:3px 9px;border-left:3px solid;color:var(--ink);background:rgba(0,0,0,.4)}
 .t0{border-color:var(--grn);color:var(--grn)}
 .t1{border-color:var(--yel);color:var(--yel)}
@@ -174,12 +174,12 @@ h1,h2,h3{font-weight:500}
 
 .clock{font-family:var(--ui);font-size:clamp(18px,1.35vw,25px);letter-spacing:2px;color:#bcd8f0}
 .clock.done{color:var(--grn)}
-.drift{color:var(--org);font-size:14px;font-style:italic;margin-top:5px}
+.drift{color:var(--org);font-size:16px;font-style:italic;margin-top:5px}
 
 /* flavour blockquotes in sheets and results */
 .evt{
   border-left:3px solid var(--line2);background:rgba(12,34,40,.6);
-  padding:9px 12px;margin-top:10px;font-size:clamp(15.5px,1.1vw,19px);
+  padding:9px 12px;margin-top:10px;font-size:clamp(16px,1.1vw,19px);
   font-style:italic;color:#a8c8ca;line-height:1.6;
 }
 .evt.noto{border-color:var(--gold);color:var(--gold)}
@@ -235,7 +235,7 @@ h1,h2,h3{font-weight:500}
 
 .chip{
   display:inline-flex;align-items:center;gap:5px;
-  font-family:var(--ui);font-size:clamp(15px,1.1vw,19px);letter-spacing:.6px;
+  font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
 }
 .chip .chipic{width:1.35em;height:1.35em;flex-shrink:0;vertical-align:middle}

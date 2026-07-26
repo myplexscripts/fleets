@@ -10,6 +10,7 @@ import { MATERIALS, MAT_KEYS } from '../data/materials.js';
 import { BELL_NAMES, bellMaxDepth } from '../data/salvage.js';
 import { totalGoods, totalMats } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
+import { chip, chipRow } from './format.js';
 import { setSheet, openSheet, sheetOpen } from './sheet.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
@@ -22,36 +23,38 @@ export function openStores() {
 
 function drawStores() {
   const goodsRows = GOOD_KEYS.map(k => {
-    const g = GOODS[k], have = S.goods[k];
-    return `<div class="storerow ${have ? '' : 'empty'}">
-      <span class="sname">${iconHTML(k, 26)}<b>${g.n}</b><i>${have} ${g.unit}</i></span>
+    const g = GOODS[k], held = S.goods[k];
+    return `<div class="storerow ${held ? '' : 'empty'}">
+      <span class="sname">${iconHTML(k, 26)}<b>${g.n}</b>${chipRow([chip(k, held, '', 'In store')], 'tight')}</span>
       <span class="sright">
-        <span class="sub">${g.sell}${iconHTML('gold', 16)} ea</span>
-        <button class="btn sm" ${have ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="1">Sell 1</button>
-        <button class="btn sm" ${have ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="all">All</button>
+        ${chipRow([chip('gold', g.sell, 'dim', 'Sells for, each')], 'tight')}
+        <button class="btn sm" ${held ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="1">Sell 1</button>
+        <button class="btn sm" ${held ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="all">All</button>
       </span></div>`;
   }).join('');
 
   const matRows = MAT_KEYS.map(k => {
     const m = MATERIALS[k];
     return `<div class="storerow ${S.mats[k] ? '' : 'empty'}">
-      <span class="sname">${iconHTML(k, 26)}<b>${m.n}</b><i>${S.mats[k]} ${m.unit}</i></span>
+      <span class="sname">${iconHTML(k, 26)}<b>${m.n}</b>${chipRow([chip(k, S.mats[k], '', 'In store')], 'tight')}</span>
       </div>`;
   }).join('');
 
   setSheet(
     `<div class="row"><h3>Ship's Stores</h3>
-       <span class="tag gold">${totalGoods()} GOODS · ${totalMats()} MATERIALS</span></div>
-     <div class="sub quote" style="margin-top:6px">Goods are for contracts — a delivery pays several times what the market will give you for the same crates. Sell only what you cannot place.</div>`,
+       ${chipRow([
+         chip('cargo', totalGoods(), 'gold', 'Goods in store'),
+         chip('mats', totalMats(), 'gold', 'Materials in store')
+       ], 'tight')}</div>
+     <div class="sub quote" style="margin-top:6px">A delivery pays several times what this counter will.</div>`,
     `<div class="sect" style="--i:0">Trade Goods</div>
      <div class="storelist">${goodsRows}</div>
      <div class="sect" style="--i:1">Materials</div>
-     <div class="sub" style="margin-bottom:8px">Spent on refits and the diving bell. Won by fighting, breaking up hulls, and diving — never handed over as contract pay.</div>
      <div class="storelist">${matRows}</div>
      <div class="sect" style="--i:2">Salvage Gear</div>
      <div class="card" style="--i:3"><div class="row">
-       <div style="flex:1"><h3>${iconHTML('bell', 26)} ${esc(BELL_NAMES[S.bell])}</h3>
-         <div class="sub">Reaches depth ${bellMaxDepth(S.bell)}. Upgrade it in the Market to work deeper wrecks.</div></div>
+       <h3>${iconHTML('bell', 26)} ${esc(BELL_NAMES[S.bell])}</h3>
+       ${chipRow([chip('depth', bellMaxDepth(S.bell), '', 'Reaches')], 'tight')}
      </div></div>
      <button class="btn gold wide" style="margin-top:12px" data-act="close-sheet">Close</button>`
   );

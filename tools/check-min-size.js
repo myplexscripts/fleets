@@ -1,0 +1,142 @@
+/* Nothing readable may render below 16px: no text, no icon.
+
+   Three passes: the authored CSS, every iconHTML() call with an explicit pixel
+   size, then what the browser actually computes across three viewports and nine
+   surfaces — because a relative unit or a clamp() can land anywhere.
+
+   The static passes run on plain node. The measuring pass needs playwright-core
+   and a server already serving the game; without either it is skipped loudly
+   rather than passing quietly. */
+const fs = require('fs'), path = require('path');
+let chromium = null;
+for (const where of ['playwright-core', require('path').join(process.cwd(), 'node_modules', 'playwright-core')]) {
+  try { chromium = require(where).chromium; break; } catch (e) { /* try the next */ }
+}
+const ROOT = path.resolve(__dirname, '..');
+const MIN = 16;
+const errors = [];
+
+/* ---- 1. authored CSS ---- */
+for (const f of fs.readdirSync(path.join(ROOT, 'styles')).filter(n => n.endsWith('.css'))) {
+  const s = fs.readFileSync(path.join(ROOT, 'styles', f), 'utf8');
+  s.split('\n').forEach((line, i) => {
+    const where = 'styles/' + f + ':' + (i + 1);
+    for (const m of line.matchAll(/font-size:\s*clamp\(\s*([0-9.]+)px\s*,[^,]+,\s*([0-9.]+)px/g)) {
+      if (+m[1] < MIN) errors.push(where + ' clamp min ' + m[1] + 'px');
+      if (+m[2] < +m[1]) errors.push(where + ' clamp max ' + m[2] + 'px below min ' + m[1] + 'px');
+    }
+    for (const m of line.matchAll(/font-size:\s*([0-9.]+)px/g)) {
+      if (+m[1] < MIN) errors.push(where + ' font-size ' + m[1] + 'px');
+    }
+    /* a relative font-size can land anywhere, so it must carry a max() floor */
+    for (const m of line.matchAll(/font-size:\s*([0-9.]+)(em|rem|%)/g)) {
+      if (!/max\(/.test(line)) errors.push(where + ' relative font-size ' + m[1] + m[2] + ' with no 16px floor');
+    }
+  });
+}
+
+/* ---- 2. iconHTML() calls with an explicit pixel size ---- */
+const jsFiles = [];
+(function walk(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+  const p = path.join(d, e.name);
+  if (e.isDirectory()) walk(p); else if (e.name.endsWith('.js')) jsFiles.push(p);
+}})(path.join(ROOT, 'src'));
+for (const f of jsFiles) {
+  const s = fs.readFileSync(f, 'utf8');
+  s.split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(/iconHTML\([^,)]+,\s*([0-9]+)/g)) {
+      /* 0 means "size it from CSS", which rule 3 measures. */
+      if (+m[1] !== 0 && +m[1] < MIN) errors.push(path.relative(ROOT, f) + ':' + (i + 1) + ' iconHTML size ' + m[1]);
+    }
+  });
+}
+
+/* ---- 3. measure what actually renders ---- */
+const done = () => {
+  const uniq = [...new Set(errors)];
+  uniq.forEach(e => console.log(' * ' + e));
+  console.log(uniq.length ? '=== ' + uniq.length + ' under ' + MIN + 'px ===' : 'nothing under ' + MIN + 'px');
+  process.exit(uniq.length ? 1 : 0);
+};
+
+(async () => {
+  if (!chromium) {
+    console.log('authored CSS and iconHTML() checked; browser pass skipped '
+      + '(needs playwright-core and the game served — see README)');
+    return done();
+  }
+  const b = await chromium.launch({ executablePath: process.env.SP_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  for (const vp of [{ width: 360, height: 780 }, { width: 430, height: 920 }, { width: 1440, height: 900 }]) {
+    const p = await b.newPage({ viewport: vp });
+    await p.goto((process.env.SP_URL || 'http://127.0.0.1:8137/index.html'), { waitUntil: 'networkidle' });
+    await p.evaluate(() => localStorage.clear());
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForSelector('#titleScr.on');
+    await p.click('[data-act="title-new"]');
+    await p.waitForTimeout(900);
+    if (await p.locator('[data-act="tut-skip"]').count()) await p.click('[data-act="tut-skip"]');
+    await p.waitForTimeout(500);
+    await p.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem('saltpowder'));
+      s.gold = 90000; s.docks = 6; s.bell = 3; s.unlocked = ['caribbean', 'gulf', 'atlantic'];
+      ['wood', 'metal', 'cloth'].forEach(k => s.mats[k] = 120);
+      localStorage.setItem('saltpowder', JSON.stringify(s));
+    });
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForSelector('#titleScr.on');
+    await p.click('[data-act="title-continue"]');
+    await p.waitForSelector('#app.on'); await p.waitForTimeout(800);
+
+    const measure = async label => {
+      const bad = await p.evaluate(min => {
+        const out = [];
+        document.querySelectorAll('body *').forEach(el => {
+          const cs = getComputedStyle(el);
+          if (cs.display === 'none' || cs.visibility === 'hidden') return;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) return;
+          /* text nodes of their own */
+          const own = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+          if (own) {
+            const fs = parseFloat(cs.fontSize);
+            if (fs < min) out.push('text ' + fs.toFixed(1) + 'px <' + el.tagName.toLowerCase()
+              + '.' + (el.className || '') + '> "' + el.textContent.trim().slice(0, 24) + '"');
+          }
+          if (el.tagName === 'IMG' && el.classList.contains('ic')) {
+            if (r.width < min || r.height < min) out.push('icon ' + r.width.toFixed(1) + 'x'
+              + r.height.toFixed(1) + ' .' + (el.className || ''));
+          }
+        });
+        return [...new Set(out)];
+      }, MIN);
+      bad.forEach(x => errors.push(vp.width + 'px ' + label + ': ' + x));
+    };
+
+    for (const tab of ['tabFleet', 'tabFlag', 'tabRoutes', 'tabVoy', 'tabPort']) {
+      await p.click('#' + tab);
+      await p.waitForTimeout(1500);
+      await measure(tab);
+    }
+
+    /* Overlays carry as much text as the screens do. */
+    await p.click('[data-act="stores"]').catch(() => {});
+    await p.waitForTimeout(900); await measure('stores');
+    await p.click('[data-act="close-sheet"]').catch(() => {});
+    await p.waitForTimeout(500);
+
+    await p.click('#tabRoutes'); await p.waitForTimeout(1300);
+    await p.click('#node_c1'); await p.waitForTimeout(900); await measure('cargo sheet');
+    await p.locator('#shipPicks .pick.flag').click(); await p.waitForTimeout(600);
+    await measure('cargo sheet picked');
+    await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
+    await p.click('#node_c3'); await p.waitForTimeout(900); await measure('battle sheet');
+    await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
+
+    await p.click('[data-act="pause-open"]').catch(() => {});
+    await p.waitForTimeout(700); await measure('pause');
+
+    await p.close();
+  }
+  await b.close();
+  done();
+})();

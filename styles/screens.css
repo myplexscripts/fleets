@@ -39,15 +39,15 @@
   font-size:clamp(26px,2.6vw,48px);letter-spacing:4px;text-transform:uppercase;
   color:var(--goldhi);text-shadow:0 2px 10px rgba(0,0,0,.8);margin-top:6px;
 }
-.hero .hsub{position:relative;font-size:clamp(14.5px,1vw,19px);color:var(--dim);font-style:italic;margin-top:3px}
+.hero .hsub{position:relative;font-size:clamp(16px,1vw,19px);color:var(--dim);font-style:italic;margin-top:3px}
 .hero .hstats{
   position:relative;display:flex;justify-content:center;flex-wrap:wrap;
   gap:clamp(18px,2vw,46px);margin-top:clamp(12px,1.2vw,24px);
 }
 .hero .hstat{text-align:center}
 .hero .hstat b{display:block;font-family:var(--ui);font-size:clamp(24px,2.2vw,42px);color:var(--ink)}
-.hero .hstat b .of{font-size:.5em;color:var(--dim)}
-.hero .hstat span{font-family:var(--ui);font-size:clamp(14px,.95vw,17px);color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+.hero .hstat b .of{font-size:max(16px,.46em);color:var(--dim)}
+.hero .hstat span{font-family:var(--ui);font-size:clamp(16px,.95vw,17px);color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
 
 @media (min-width:900px) and (orientation:landscape){
   .hero{padding:30px 16px 24px}
@@ -57,7 +57,7 @@
 .relicgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;animation:cardIn .4s ease both}
 .relic{
   border:1px solid var(--brass);background:rgba(58,47,20,.35);
-  padding:8px 10px;font-family:var(--ui);font-size:clamp(15.5px,1.1vw,19px);
+  padding:8px 10px;font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);
   color:var(--goldhi);letter-spacing:.8px;display:flex;align-items:center;gap:8px;
 }
 
@@ -76,13 +76,13 @@
 }
 .legrow{
   display:flex;align-items:center;gap:7px;font-family:var(--ui);
-  font-size:clamp(15px,1.05vw,18px);letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);
+  font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);
 }
-.legrow i{width:12px;height:12px;display:inline-block;flex-shrink:0}
-.legmeta{display:flex;gap:10px;align-items:center;margin-top:4px;font-family:var(--ui);font-size:13px;letter-spacing:1px;color:var(--dim)}
+.legrow i{width:16px;height:16px;display:inline-block;flex-shrink:0}
+.legmeta{display:flex;gap:10px;align-items:center;margin-top:4px;font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim)}
 .legmeta span{display:flex;align-items:center;gap:3px}
 .leg.lock .legrow{color:#5b787b}
-.legdone{font-family:var(--ui);font-size:clamp(15px,1.05vw,18px);color:var(--gold);letter-spacing:1px;margin-top:4px}
+.legdone{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);color:var(--gold);letter-spacing:1px;margin-top:4px}
 
 .notobar{height:6px;margin-top:5px}
 .notobar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
@@ -90,7 +90,7 @@
 
 .maphint{
   position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
-  font-size:clamp(15px,1.05vw,18px);color:var(--ink);
+  font-size:clamp(16px,1.05vw,18px);color:var(--ink);
   background:rgba(3,12,15,.85);padding:7px 14px;border:1px solid rgba(30,80,88,.5);
   letter-spacing:.6px;width:max-content;max-width:calc(100% - 24px);text-align:center;line-height:1.5;
 }
@@ -125,8 +125,8 @@
 }
 .ghead{display:flex;align-items:center;gap:9px}
 .ghead b{font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:1px;text-transform:uppercase;display:block}
-.ghead i{font-family:var(--ui);font-style:normal;font-size:clamp(14px,1vw,17px);color:var(--dim);display:block}
-.gprice{font-family:var(--ui);font-size:clamp(13px,.95vw,16px);letter-spacing:.6px;color:var(--dim)}
+.ghead i{font-family:var(--ui);font-style:normal;font-size:clamp(16px,1vw,17px);color:var(--dim);display:block}
+.gprice{font-family:var(--ui);font-size:clamp(16px,.95vw,16px);letter-spacing:.6px;color:var(--dim)}
 .goodcard .btnset{gap:6px}
 .goodcard .btn.sm{flex:1;min-width:0;padding:8px 4px;min-height:40px;letter-spacing:.5px}
 
@@ -140,7 +140,7 @@
 .piece{
   display:flex;align-items:center;gap:7px;padding:5px 8px;
   border:1px solid rgba(30,80,88,.5);background:rgba(0,0,0,.24);
-  font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:.5px;color:#5b787b;
+  font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.5px;color:#5b787b;
 }
 .piece .ic{opacity:.35}
 .piece.got{border-color:var(--brass);background:rgba(58,47,20,.32);color:var(--goldhi)}
@@ -156,19 +156,20 @@
 }
 .legend.narrow::-webkit-scrollbar{display:none}
 .legend.narrow .leg{flex:0 0 auto;min-width:126px;max-width:190px;padding:5px 9px 6px}
-.legend.narrow .legrow{font-size:14px;letter-spacing:.8px}
+.legend.narrow .legrow{letter-spacing:.8px}
 .legend.narrow .legrow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.legend.narrow .legmeta{font-size:12px;margin-top:3px;gap:7px}
-.legend.narrow .legdone{font-size:12px;margin-top:3px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend.narrow .legmeta{margin-top:3px;gap:9px}
+.legend.narrow .legdone{margin-top:3px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .legend.narrow .notobar{margin-top:4px}
 
-/* ---- iconographic map key ----
-   A shape against a picture: the marker silhouette beside the icon for the job
-   it means, so nothing has to be read to use the chart. */
-.maphint{display:flex;gap:clamp(12px,2vw,30px);align-items:center;justify-content:center;flex-wrap:wrap}
-.key{display:inline-flex;align-items:center;gap:5px}
+/* ---- map key: symbol then name ---- */
+.maphint{display:flex;gap:clamp(12px,2vw,28px);align-items:center;justify-content:center;flex-wrap:wrap}
+.key{display:inline-flex;align-items:center;gap:6px}
 .key .keysh{flex-shrink:0;opacity:.95}
-.key .ic{width:20px;height:20px}
+.key span{
+  font-family:var(--ui);font-size:16px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--ink);
+}
 
 /* legend: glyph plus number, not a sentence */
 .legdone{display:flex;align-items:center;gap:5px}
@@ -182,3 +183,22 @@
 
 /* Ship rows carry five chips; keep them on one line where the width allows. */
 .shipmeta .chips,.flagcard .chips{gap:4px 10px;margin-top:6px}
+
+/* ---- upgrade rows ----
+   Modelled on a console upgrade panel: name and level on the top line, what one
+   more level gives and the button on the second, the price underneath as
+   have/need so affordability is never in doubt. */
+.uprow .row{gap:10px}
+.uprow .row + .row{margin-top:9px}
+.uprow .chips{margin-top:0}
+.uprow > .chips{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.upline{
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:6px;
+  font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;color:var(--dim);
+}
+.upline b{color:var(--goldhi);letter-spacing:1px;text-transform:uppercase}
+.card.owned .upline{color:var(--ink)}
+
+/* store rows carry their count as a chip, so the name needs no unit word */
+.sname{flex-wrap:wrap}
+.sname .chips{margin-top:0}
