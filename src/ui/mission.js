@@ -7,11 +7,12 @@
    single hull you own can take the consignment, and pooling three of them would
    answer it for free. A fight takes a line of up to three.
 
-   A cargo lane whose danger has drifted above Safe also offers a SWEEP — take a
-   battle line out and push that lane's danger back down a step. It is an escort
-   job you choose to do, not a toll you have to pay: the lane was always open,
-   sweeping just makes the next run through it a better bet. A Safe lane offers
-   nothing to fight, which is the whole point.
+   A cargo lane whose danger has drifted above Safe is two jobs, and the sheet
+   offers both as tabs at the top: run it as it stands, or sweep it first — take a
+   battle line out and push that lane's danger back down a step. Sweeping is an
+   escort job you choose to do, not a toll you have to pay: the lane was always
+   open, sweeping just makes the next run through it a better bet. A Safe lane
+   has no second tab, because there is nothing out there to fight.
 
    Everything numeric on this sheet is a chip: one glyph, one number. Where a
    number is a test rather than a reading it is written have/need, so the
@@ -29,7 +30,7 @@ import {
   routeById, allShips, findShip, busyIds, tname, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
-  chestCap, bellDepth, laneRiseIn, needsSweep, battleOdds
+  chestCap, bellDepth, laneRiseIn, needsSweep, sweepPay, battleOdds
 } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 import { chip, have, chipRow, bagChips, shipChips } from './format.js';
@@ -177,8 +178,20 @@ function drawMission() {
         : ''
     ], 'tight');
   }
-  head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>
-    <div class="sub quote" style="margin-top:6px">${esc(isBoss ? r.bossDef.desc : MTYPE[r.type].tip)}</div>`;
+  /* A bad lane is two jobs, not one job with a footnote: run it as it stands, or
+     fight it quieter first. Both are offered up front as tabs, because a choice
+     the player has to scroll to find is a choice they never knew they had. */
+  if (canVoyage(r) && needsSweep(r)) {
+    head += `<div class="mtabs">
+      <button class="mtab ${sweeping ? '' : 'on'}" data-act="run-mode">${iconHTML(r.type === 'dive' ? 'chest' : 'cargo', 20)}${MTYPE[r.type].n}</button>
+      <button class="mtab ${sweeping ? 'on' : ''}" data-act="sweep-mode">${iconHTML('danger', 20)}Sweep</button>
+    </div>`;
+  } else {
+    head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
+  }
+  head += `<div class="sub quote" style="margin-top:6px">${esc(
+    sweeping ? 'Beat them and this lane drops a step. What they carry comes home with you.'
+      : isBoss ? r.bossDef.desc : MTYPE[r.type].tip)}</div>`;
   $('sheetHead').innerHTML = head;
 
   /* ---- body ---- */
@@ -263,46 +276,26 @@ function voyageBody(r) {
       <button class="btn" data-act="close-sheet">Cancel</button>
       <button class="btn blu" id="sailBtn" ${ready && slotOK && !already ? '' : 'disabled'} data-act="send-ships">${label}</button>
     </div>
-    ${!slotOK ? `<div class="sub center warnline">All ${VOY_MAX_ACTIVE} fleets are at sea.</div>` : ''}
-    ${sweepOffer(r)}`;
+    ${!slotOK ? `<div class="sub center warnline">All ${VOY_MAX_ACTIVE} fleets are at sea.</div>` : ''}`;
 }
 
-/* The offer to sweep, shown under a run on a lane that has gone bad. Tapping it
-   swaps the sheet over to the fight — a different job with a different crew
-   size, so it gets its own picker rather than sharing the run's one seat. */
-function sweepOffer(r) {
-  if (!needsSweep(r)) return '';
-  const d = effDanger(r);
-  return `<div class="sect" style="--i:2">Or Sweep It First</div>
-    <div class="card" style="--i:3">
-      ${chipRow([
-        chip('danger', DNAMES[d], d >= 2 ? 'bad' : 'warn', 'This lane now'),
-        chip('danger', DNAMES[Math.max(0, d - 1)], 'ok', 'After a won sweep'),
-        chip('crew', BATTLE_SHIPS, '', 'A sweep is a fight — it takes a line of three')
-      ], 'big')}
-      <button class="btn gold wide" style="margin-top:10px" data-act="sweep-mode">Sweep the Lane</button>
-    </div>`;
-}
-
-/* The sweep itself: a battle line against whatever is working this water. */
+/* The sweep: a battle line against whatever is working this water. What it does
+   is shown as a transition — this lane now, this lane after — because two danger
+   names side by side never say which is which. */
 function sweepBody(r) {
   const fleet = sel.map(findShip).filter(Boolean);
   const d = effDanger(r);
-  return `<div class="card" style="--i:0">
+  return `<div class="card manifest" style="--i:0">
       ${chipRow([
-        chip('danger', DNAMES[d], d >= 2 ? 'bad' : 'warn', 'This lane now'),
-        chip('danger', DNAMES[Math.max(0, d - 1)], 'ok', 'After a won sweep'),
-        chip('power', fleetPower(fleet), '', 'Fleet power of the line you have picked'),
+        chip('danger', `${DNAMES[d]} <em>→</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok', 'What a won sweep does to this lane'),
         chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory')
       ], 'big')}
+      ${chipRow([bagChips(sweepPay(r))], 'tight')}
     </div>
     ${pickHint(BATTLE_SHIPS)}
     <div id="shipPicks">${shipPicks(false)}</div>
     ${foesCard(r, fleet)}
-    <div class="grid2">
-      <button class="btn" data-act="run-mode">Back</button>
-      <button class="btn gold" id="sweepBtn" ${fleet.length ? '' : 'disabled'} data-act="sweep">Sweep the Lane</button>
-    </div>`;
+    <button class="btn gold wide" id="sweepBtn" ${fleet.length ? '' : 'disabled'} data-act="sweep">Sweep the Lane</button>`;
 }
 
 /* ---- battle missions ---- */

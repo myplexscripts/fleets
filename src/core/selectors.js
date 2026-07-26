@@ -127,6 +127,10 @@ export function effDanger(r) {
 /* Lanes worth sweeping right now. A Safe lane needs no escort. */
 export const needsSweep = r => hasLane(r) && effDanger(r) > 0;
 
+/* What a won sweep pays. Worse water pays better, so the lane you least want to
+   run is the one worth clearing. The sheet quotes this before you commit. */
+export const sweepPay = r => ({ gold: 120 + 90 * laneDanger(r) });
+
 /* ---- mission shape ---- */
 export const canVoyage = r => VOYAGE_TYPES.includes(r.type);
 export const isBattle = r => !canVoyage(r);

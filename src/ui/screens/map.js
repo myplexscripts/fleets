@@ -19,8 +19,10 @@ function starPath(x, y, r) {
          `L${x},${y + r} L${x - r * 0.35},${y + r * 0.35} L${x - r},${y} L${x - r * 0.35},${y - r * 0.35} Z`;
 }
 
-/* Mission type reads from the marker's silhouette, not just its colour, and the
-   two voyage shapes read differently from the four fighting shapes. */
+/* Mission type reads from the marker's silhouette, not just its colour.
+
+   One shape per mission type, no sharing — the legend names every symbol on the
+   chart, and it can only do that if no two types wear the same one. */
 function nodeShape(r, col, k) {
   const { x, y } = r, s = 5.5 * k;
   if (r.type === 'dive')                            // ring: something below
@@ -28,8 +30,11 @@ function nodeShape(r, col, k) {
          + `<circle cx="${x}" cy="${y}" r="${s * 0.34}" fill="${col}"/>`;
   if (r.type === 'patrol')                          // rotated square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" transform="rotate(45 ${x} ${y})" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'raid' || r.type === 'blockade')    // spearhead
+  if (r.type === 'raid')                            // spearhead
     return `<path d="M${x},${y - s * 1.35} L${x + s * 1.2},${y + s * 0.85} L${x - s * 1.2},${y + s * 0.85} Z" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  if (r.type === 'blockade')                        // a line held: barred circle
+    return `<circle cx="${x}" cy="${y}" r="${s * 1.1}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
+         + `<rect x="${x - s * 1.7}" y="${y - s * 0.3}" width="${s * 3.4}" height="${s * 0.6}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1"/>`;
   if (r.type === 'escort')                          // square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
   /* cargo run: filled disc with a bright centre */
@@ -55,7 +60,7 @@ export function renderMap() {
      SVG (inserted afterwards) lands behind it. */
   $('main').innerHTML = `<div id="mapwrap">
     <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
-    <div class="maphint">${shapeKey()}</div>
+    <div class="maphint">${shapeKey(rs, bossKeys.some(rk => !S.bossBeaten[rk]))}</div>
   </div>`;
   const legendEl = host.querySelector('.legend');
   const hintEl = host.querySelector('.maphint');
@@ -210,24 +215,33 @@ export function renderMap() {
 
 /* The map key: each marker silhouette against the word for what it is. A legend
    names its symbols — that is the whole job — so the shape is the symbol and the
-   word is the name, and neither stands in for the other. */
-const KEY_ITEMS = [
-  ['cargo', '#63c06a', 'Cargo'],
-  ['dive', '#7ab0e0', 'Wreck'],
-  ['patrol', '#e0a03a', 'Fight'],
-  ['charter', '#efe3ae', 'Charter']
-];
+   word is the name, and neither stands in for the other.
+
+   It lists only what is actually drawn right now, which is what keeps it both
+   complete and short: the Caribbean alone needs five entries, an admiral adds
+   hers the moment she sails, and a shape can never appear unnamed. */
+const KEY_ORDER = ['cargo', 'dive', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss'];
+const KEY_WORD = {
+  cargo: 'Cargo', dive: 'Wreck', patrol: 'Patrol', escort: 'Escort',
+  raid: 'Raid', blockade: 'Blockade', charter: 'Charter', boss: 'Admiral'
+};
+const KEY_COL = {
+  cargo: '#63c06a', dive: '#7ab0e0', patrol: '#e0a03a', escort: '#e0a03a',
+  raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae', boss: '#f0b0a6'
+};
 
 function keySwatch(type, col) {
-  const inner = type === 'charter'
-    ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
-    : nodeShape({ type, x: 12, y: 12 }, col, 1.6);
+  const inner = (type === 'charter' || type === 'boss')
+    ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="${type === 'boss' ? '#5e1a1a' : '#8a793e'}" stroke-width="1.2"/>`
+    : nodeShape({ type, x: 12, y: 12 }, col, 1.5);
   return `<svg class="keysh" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${inner}</svg>`;
 }
 
-function shapeKey() {
-  return KEY_ITEMS.map(([type, col, word]) =>
-    `<span class="key">${keySwatch(type, col)}<span>${word}</span></span>`).join('');
+function shapeKey(rs, liveBosses) {
+  const kinds = new Set(rs.map(r => r.type));
+  if (liveBosses) kinds.add('boss');
+  return KEY_ORDER.filter(k => kinds.has(k)).map(k =>
+    `<span class="key">${keySwatch(k, KEY_COL[k])}<span>${KEY_WORD[k]}</span></span>`).join('');
 }
 
 function buildLegend(rs) {

@@ -425,3 +425,23 @@
 
 /* a dialog can show what a choice costs or yields, not just describe it */
 .dlg-body .chips{justify-content:center;margin-top:10px}
+
+/* ---- mission tabs ----
+   A lane that has gone bad is two jobs. They sit side by side at the top of the
+   sheet so the choice is visible before anything is scrolled. */
+.mtabs{display:flex;gap:0;margin-top:10px;border:1px solid var(--line2);border-radius:3px;overflow:hidden}
+.mtab{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  background:var(--panel2);border:none;border-right:1px solid var(--line2);
+  color:var(--dim);font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);
+  letter-spacing:1.6px;text-transform:uppercase;padding:10px 8px;cursor:pointer;
+  transition:background .2s,color .2s;min-height:44px;
+}
+.mtab:last-child{border-right:none}
+.mtab .ic{opacity:.6;transition:opacity .2s}
+.mtab.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi)}
+.mtab.on .ic{opacity:1}
+.mtab:active{transform:none;background:#123a41}
+
+/* a before/after inside one chip: "HAZARDOUS → SAFE" */
+.chip em{font-style:normal;color:var(--dim);margin:0 .35em;font-size:max(16px,1.1em)}

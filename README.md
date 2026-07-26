@@ -19,9 +19,12 @@ its own rate and up to its own ceiling — home water drifts slowly and never ge
 worse than Hazardous; the Grand Fleet Route is Treacherous again within the hour.
 Danger never blocks trade. It only decides how roughly a run is handled.
 
-Pushing it back down is the fight you choose to have. A lane above Safe offers a
-**sweep** on the same sheet — the sheet swaps over to a battle line of three, one
-battle, one step of danger off that lane. A **patrol** is the broad version: it steps every lane in its
+Pushing it back down is the fight you choose to have. A lane above Safe is two
+jobs, and its sheet says so with two tabs: **run it** as it stands under one
+hull, or **sweep it** with a battle line of three and take a step of danger off
+it first. Both tabs show their own numbers — the sweep quotes what it pays, what
+the lane becomes, and who is waiting, with the same look-again reroll as any
+other fight. A **patrol** is the broad version: it steps every lane in its
 region down at once and keeps the water quiet for a while. A Safe lane offers
 nothing to fight, which is the point.
 
@@ -40,6 +43,10 @@ the consignment, and `10/25` says it cannot. Speed, guns, hull, cargo, time away
 power, odds, depth and notoriety all read the same way, and **every price in the
 game** is written have/need too — repairs, upgrades, fittings, hulls, berths, the
 diving bell — so "can I afford this" is never a question you have to work out.
+
+**The chart's key names every symbol on it.** One shape per mission type, no
+sharing, and the key lists exactly the shapes currently drawn — so it grows an
+Admiral entry the moment she sails and can never leave a shape unexplained.
 
 **No text below 16px, ever**, and no icon either. Screens carry numbers, not
 paragraphs: a mission tip is one clause, an upgrade says `+10` and its price, and

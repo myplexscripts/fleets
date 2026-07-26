@@ -10,7 +10,7 @@ import { now } from '../core/dom.js';
 import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
-import { fmtDur, bossAsRoute, grant, sweepLane, sweepRegion, effDanger } from '../core/selectors.js';
+import { fmtDur, bossAsRoute, grant, sweepLane, sweepRegion, effDanger, sweepPay } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { goodsHaul, matsHaul } from './loot.js';
@@ -59,8 +59,11 @@ export function battleVictory(route, enemies) {
    step. It never opens the lane — the lane was always open — it just makes the
    next run through it a safer bet. */
 export function sweepVictory(route, enemies) {
+  /* Quoted on the sheet before the fight, so read the pay before the sweep
+     moves the lane out from under it. */
+  const pay = sweepPay(route);
   const { before, after } = sweepLane(route);
-  grant({ gold: 120 + 90 * before });
+  grant(pay);
   S.done['sweep_' + route.id] = (S.done['sweep_' + route.id] || 0) + 1;
   const noto = addNoto(route);
   const spoils = { goods: goodsHaul(route.region, before), mats: matsHaul(route.region, before) };
