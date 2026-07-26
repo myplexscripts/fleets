@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Salt &amp; Powder</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#05161a;--panel:rgba(7,22,27,.88);--panel2:rgba(12,34,40,.9);--line:#164a52;--line2:#2a6b70;
+--ink:#cfe3e4;--dim:#8fb0b3;--gold:#d9c98a;--goldhi:#efe3ae;--grn:#63c06a;--yel:#d9c34a;--org:#d9883a;--red:#d94a3a;--blu:#7ab0e0}
+html,body{height:100%}
+body{background:#020a0c;color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15px;
+height:100dvh;display:flex;flex-direction:column;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#mist{position:fixed;inset:0;z-index:0}
+header,main,nav{position:relative;z-index:1}
+header{padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:linear-gradient(180deg,rgba(3,10,12,.95),rgba(6,20,24,.85));border-bottom:1px solid var(--line)}
+.hrow{display:flex;justify-content:space-between;align-items:baseline}
+h1{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;letter-spacing:3px;color:var(--ink)}
+h1 small{color:var(--dim);font-size:14px;letter-spacing:1.5px;display:block;font-weight:400}
+/* resource strip */
+.ic{display:inline-block;vertical-align:-.25em;image-rendering:auto}
+.btn .ic{margin-right:0;vertical-align:middle}
+.res{display:flex;gap:5px;margin-top:9px}
+.resitem{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+background:rgba(0,0,0,.34);border:1px solid var(--line);border-radius:3px;padding:8px 2px 6px;
+transition:transform .16s cubic-bezier(.2,2,.4,1),border-color .16s}
+.resitem .ic{width:clamp(40px,11vw,58px);height:auto;margin-bottom:1px}
+.resitem b{font-family:'Oswald',sans-serif;font-weight:500;color:var(--ink);line-height:1.15}
+.resitem span{color:var(--dim);letter-spacing:1px;text-transform:uppercase;line-height:1.15;white-space:nowrap}
+.resitem.bump{transform:scale(1.12);border-color:var(--gold)}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:22px;position:relative;background:var(--bg)}
+main.nopad{padding:0;overflow:hidden}
+nav{display:flex;justify-content:center;background:linear-gradient(0deg,rgba(2,8,10,.97),rgba(5,16,19,.9));
+border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 8px)}
+nav button{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:.5px;text-transform:uppercase;
+background:rgba(10,28,33,.8);border:1px solid var(--line);color:var(--dim);padding:11px 2px;flex:1;transition:color .2s;position:relative}
+nav button:first-child{border-radius:3px 0 0 3px}
+nav button:last-child{border-radius:0 3px 3px 0}
+nav button:not(:first-child){border-left:none}
+nav button.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi);box-shadow:inset 0 0 12px rgba(120,220,230,.12);border-color:var(--line2)}
+nav button.alert{color:var(--red);animation:navpulse 1.4s ease-in-out infinite}
+@keyframes navpulse{50%{color:#ff9080;text-shadow:0 0 10px rgba(217,74,58,.8)}}
+nav .badge{position:absolute;top:2px;right:6px;background:var(--gold);color:#0b1a1e;border-radius:10px;font-size:12px;padding:0 6px;line-height:17px;font-weight:600}
+nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinite}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:13px 15px;margin-bottom:11px;
+box-shadow:0 3px 10px rgba(0,0,0,.45);animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms)}
+.card::before{content:'';position:absolute;top:0;left:0;width:15px;height:15px;border-top:1px solid var(--line2);border-left:1px solid var(--line2)}
+.card::after{content:'';position:absolute;bottom:0;right:0;width:15px;height:15px;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2)}
+.card.flagcard{border-color:#8a793e;box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(217,201,138,.07)}
+.card.flagcard::before,.card.flagcard::after{border-color:var(--gold)}
+.card.bosscard{border-color:#8a463e;box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(217,74,58,.08)}
+.card.chartercard{border-color:#8a793e}
+.card.atsea{border-color:#2c5a8a;opacity:.92}
+.card.atsea::before,.card.atsea::after{border-color:var(--blu)}
+.card.ready{border-color:#3f7a44;box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(99,192,106,.09)}
+.card h3{font-family:'Oswald',sans-serif;font-size:17px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase}
+.sub{font-size:14.5px;color:var(--dim);line-height:1.6}
+.sub b{color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
+.btnset{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.sect{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;
+margin:18px 0 10px;display:flex;align-items:center;gap:10px;animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms)}
+.sect::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.btn{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);
+background:linear-gradient(180deg,#123a41,#0b262c);border:1px solid var(--line2);border-radius:2px;padding:10px 16px;
+display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;line-height:1.15;
+transition:transform .12s cubic-bezier(.2,2,.4,1)}
+.btn:active{transform:scale(.93)}
+.btn.gold{background:linear-gradient(180deg,#4a4023,#332b14);border-color:#8a793e;color:var(--goldhi)}
+.btn.red{background:linear-gradient(180deg,#4a1d18,#2e110d);border-color:#8a463e;color:#f0b0a6}
+.btn.blu{background:linear-gradient(180deg,#173c5e,#0d2338);border-color:#2c5a8a;color:#bcd8f0}
+.btn.grn{background:linear-gradient(180deg,#1d4a22,#102e14);border-color:#3f7a44;color:#bce8bf}
+.btn:disabled{opacity:.4}
+.btn.sm{font-size:14px;padding:8px 12px}
+.btn.wide{width:100%;padding:13px;font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+.relicgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.relic{border:1px solid #8a793e;background:rgba(58,47,20,.35);padding:8px 10px;font-size:14.5px;color:var(--goldhi);font-family:'Oswald';letter-spacing:.8px;
+display:flex;align-items:center;gap:8px}
+.bar{height:7px;background:#03181c;border:1px solid #0e3a40;overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.bar i.low{background:var(--yel)}.bar i.crit{background:var(--red)}
+.vbar{height:11px;background:#03181c;border:1px solid #0e3a40;overflow:hidden;margin-top:7px}
+.vbar i{display:block;height:100%;background:linear-gradient(90deg,#2c5a8a,#7ab0e0);transition:width 1s linear}
+.vbar.done i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
+.secbar{height:8px;background:#03181c;border:1px solid #0e3a40;overflow:hidden;margin-top:6px}
+.secbar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
+.secbar.clear i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
+.stats{display:flex;gap:14px;font-size:14px;color:var(--dim);margin-top:7px;letter-spacing:.4px;flex-wrap:wrap}
+.stats b{color:var(--ink)}
+.pips{color:var(--gold);letter-spacing:2px;font-size:16px}
+.tag{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;border-left:3px solid;color:var(--ink);background:rgba(0,0,0,.4)}
+.t0{border-color:var(--grn);color:var(--grn)}.t1{border-color:var(--yel);color:var(--yel)}
+.t2{border-color:var(--org);color:var(--org)}.t3{border-color:var(--red);color:var(--red)}
+.tag.gold{border-color:var(--gold);color:var(--goldhi)}
+.tag.blu{border-color:var(--blu);color:#bcd8f0}
+.dbar{height:8px;background:#03181c;border:1px solid #0e3a40;margin-top:5px}
+.dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
+.mtype{font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--dim);border:1px solid var(--line);padding:2px 9px;text-transform:uppercase}
+.mtype.boss{color:#f0b0a6;border-color:#8a463e}
+.mtype.gold{color:var(--goldhi);border-color:#8a793e}
+.drift{color:var(--org);font-size:14px;font-style:italic;margin-top:5px}
+.clock{font-family:'Oswald',sans-serif;font-size:17px;letter-spacing:2px;color:#bcd8f0}
+.clock.done{color:var(--grn)}
+/* hero */
+.hero{position:relative;text-align:center;padding:22px 16px 18px;margin-bottom:12px;
+background:radial-gradient(ellipse at 50% 60%,rgba(28,74,84,.55),rgba(4,14,17,.9) 70%);
+border:1px solid #8a793e;border-radius:4px;overflow:hidden;animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both}
+.hero::before{content:'';position:absolute;left:-20%;right:-20%;bottom:-40px;height:120px;background:radial-gradient(ellipse at 50% 0,rgba(120,220,230,.16),transparent 70%)}
+.hero img{position:relative;width:min(78%,340px);height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.7));animation:heroBob 4.2s ease-in-out infinite;margin:0 auto}
+@keyframes heroBob{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-9px) rotate(.6deg)}}
+.hero .hname{position:relative;font-family:'Oswald',sans-serif;font-size:26px;letter-spacing:4px;text-transform:uppercase;color:var(--goldhi);text-shadow:0 2px 10px rgba(0,0,0,.8);margin-top:6px}
+.hero .hsub{position:relative;font-size:14.5px;color:var(--dim);font-style:italic;margin-top:3px}
+.hero .hstats{position:relative;display:flex;justify-content:center;gap:22px;margin-top:14px;flex-wrap:wrap}
+.hero .hstat{text-align:center}
+.hero .hstat b{display:block;font-family:'Oswald',sans-serif;font-size:24px;color:var(--ink)}
+.hero .hstat span{font-size:14px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+/* map */
+#mapwrap{position:absolute;inset:0;background:#04161c}
+#mapsvg{width:100%;height:100%;display:block}
+.legend{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;width:210px}
+.leg{background:rgba(3,12,15,.85);padding:6px 10px 7px;border:1px solid rgba(30,80,88,.5);animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*80ms)}
+.legrow{display:flex;align-items:center;gap:7px;font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink)}
+.legrow i{width:12px;height:12px;display:inline-block;flex-shrink:0}
+.legmeta{display:flex;gap:10px;align-items:center;margin-top:4px;font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:1px;color:var(--dim)}
+.legmeta span{display:flex;align-items:center;gap:3px}
+.leg.lock .legrow{color:#5b787b}
+.notobar{height:6px;background:#03181c;border:1px solid #0e3a40;margin-top:5px;overflow:hidden}
+.notobar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
+.notobar.full i{background:linear-gradient(90deg,#a02c22,#e06a5a)}
+.legdone{font-size:14px;color:var(--gold);font-family:'Oswald';letter-spacing:1px;margin-top:4px}
+.maphint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:14px;color:var(--ink);
+background:rgba(3,12,15,.85);padding:7px 14px;border:1px solid rgba(30,80,88,.5);letter-spacing:.6px;
+width:max-content;max-width:calc(100% - 24px);text-align:center;line-height:1.5}
+@keyframes dashmove{to{stroke-dashoffset:-40}}
+.routeline{stroke-dasharray:3 7;animation:dashmove 3s linear infinite;fill:none}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.7}}
+.nodeglow{animation:pulse 2.4s ease-in-out infinite}
+@keyframes bosspulse{0%,100%{opacity:.3}50%{opacity:.85}}
+.bossglow{animation:bosspulse 1.3s ease-in-out infinite}
+@keyframes starpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+.charterstar{animation:starpulse 1.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes sailmove{to{stroke-dashoffset:-24}}
+.voyline{stroke-dasharray:6 5;animation:sailmove 1.1s linear infinite;fill:none}
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(2,8,10,0);backdrop-filter:blur(0);display:none;align-items:flex-end;justify-content:center;z-index:10;transition:background .3s,backdrop-filter .3s}
+.overlay.on{display:flex}
+.overlay.vis{background:rgba(2,8,10,.7);backdrop-filter:blur(2px)}
+.sheet{width:100%;max-width:580px;max-height:88dvh;display:flex;flex-direction:column;
+background:linear-gradient(180deg,rgba(9,28,33,.97),rgba(4,14,17,.98));border-top:2px solid var(--line2);border-radius:6px 6px 0 0;
+box-shadow:0 -8px 40px rgba(0,0,0,.8);transform:translateY(105%);transition:transform .42s cubic-bezier(.2,.9,.25,1.05)}
+.overlay.vis .sheet{transform:none}
+.sheet-head{padding:15px 18px 12px;border-bottom:1px solid var(--line)}
+.sheet-head h3{font-family:'Oswald',sans-serif;font-size:19px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--goldhi)}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px calc(env(safe-area-inset-bottom) + 18px)}
+.modetabs{display:flex;margin-bottom:12px}
+.modetabs button{flex:1;font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;
+background:rgba(10,28,33,.8);border:1px solid var(--line);color:var(--dim);padding:10px 0}
+.modetabs button:first-child{border-radius:3px 0 0 3px}
+.modetabs button:last-child{border-radius:0 3px 3px 0;border-left:none}
+.modetabs button.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi);border-color:var(--line2)}
+.pick{border:1px solid var(--line);border-radius:3px;padding:10px 12px;margin-bottom:9px;background:var(--panel2);transition:border-color .2s,box-shadow .2s,transform .15s}
+.pick:active{transform:scale(.98)}
+.pick.sel{border-color:var(--gold);box-shadow:0 0 10px rgba(217,201,138,.25),inset 0 0 10px rgba(217,201,138,.08)}
+.pick.dis{opacity:.35}
+.pick.flag{border-left:3px solid var(--gold)}
+.pick b{font-family:'Oswald',sans-serif;font-weight:500;letter-spacing:1px;font-size:16px;text-transform:uppercase}
+.slot{font-family:'Oswald',sans-serif;font-size:14px;color:var(--gold);letter-spacing:1.5px;border:1px solid #8a793e;padding:2px 8px}
+.slot.blu{color:#bcd8f0;border-color:#2c5a8a}
+.evt{border-left:3px solid var(--line2);background:rgba(12,34,40,.6);padding:9px 12px;margin-top:10px;font-size:14.5px;font-style:italic;color:#a8c8ca;line-height:1.6}
+.evt.noto{border-color:var(--gold);color:var(--gold)}
+.evt.prize{border-color:#8a793e;color:var(--goldhi);font-style:normal}
+.shipsvg{display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+.fleetship{flex-shrink:0}
+.shipsvg.sea{filter:grayscale(.45) brightness(.75) drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+/* battle */
+#battleScr{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;background:radial-gradient(ellipse at 50% 30%,#12383e 0%,#0a2328 45%,#04141a 100%)}
+#battleScr.on{display:flex}
+#battleScr.boss{background:radial-gradient(ellipse at 50% 30%,#3a1c1c 0%,#1e1012 45%,#0a0507 100%)}
+#phaserHost{position:relative;flex:1;min-height:0}
+#phaserHost canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+.bhead{position:relative;text-align:center;padding:calc(env(safe-area-inset-top) + 12px) 14px 5px;z-index:2}
+.bhead .h{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;font-size:18px;color:var(--goldhi);letter-spacing:3px}
+.bhead .sub{font-size:14px;letter-spacing:1px}
+.bhead .warn{color:#ff9080;font-family:'Oswald';font-size:15px;letter-spacing:2px;text-transform:uppercase;animation:navpulse 1s ease-in-out infinite}
+.blog{position:relative;padding:6px 16px;font-size:14.5px;font-style:italic;color:#a8c8ca;line-height:1.6;text-align:center;min-height:64px;text-shadow:0 1px 3px #000;z-index:2}
+.blog .good{color:var(--grn)}.blog .bad{color:#e88a7a}
+.bcmds{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:6px 14px calc(env(safe-area-inset-bottom) + 14px);z-index:2}
+.bcmds.busy{pointer-events:none;opacity:.55}
+.banner{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;
+background:rgba(3,10,12,.72);backdrop-filter:blur(2px);text-align:center;padding:22px}
+.banner.on{display:flex}
+@keyframes bigIn{0%{transform:scale(2.4);opacity:0}60%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
+.banner .big{font-family:'Oswald',sans-serif;font-size:34px;font-weight:600;letter-spacing:5px;text-transform:uppercase;text-shadow:0 0 24px currentColor;animation:bigIn .55s cubic-bezier(.2,.9,.3,1.2) both}
+.banner .stat{width:min(320px,82%);margin-top:16px}
+.banner .stat .lbl{display:flex;justify-content:space-between;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-family:'Oswald',sans-serif}
+.rewrow{display:flex;gap:16px;margin-top:14px;font-family:'Oswald',sans-serif;font-size:17px;color:var(--goldhi);letter-spacing:1px;animation:cardIn .5s .25s ease both;flex-wrap:wrap;justify-content:center}
+.rewrow span{display:flex;align-items:center;gap:5px}
+.center{text-align:center}
+/* single sweep wipe */
+#wipe{position:fixed;inset:0;z-index:40;pointer-events:none;visibility:hidden}
+#wipe.go{visibility:visible}
+#wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg);transition:none}
+#wipe .p1{background:linear-gradient(90deg,#0d3138,#0a2328)}
+#wipe .p2{background:linear-gradient(90deg,#164a52,#0d3138)}
+#wipe.go .p1{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1)}
+#wipe.go .p2{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1) .07s}
+/* toasts */
+#toasts{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;width:min(92vw,460px)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-16px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px)}}
+.toast{background:linear-gradient(180deg,rgba(12,34,40,.97),rgba(5,16,20,.97));border:1px solid var(--line2);border-radius:3px;
+padding:10px 16px;font-size:14.5px;box-shadow:0 6px 20px rgba(0,0,0,.6);animation:toastIn .3s cubic-bezier(.2,.9,.3,1.3) both;max-width:100%;text-align:center}
+.toast.gold{border-color:#8a793e;color:var(--goldhi)}
+.toast.bad{border-color:#8a463e;color:#f0b0a6}
+.toast.blu{border-color:#2c5a8a;color:#bcd8f0}
+.toast.bye{animation:toastOut .25s ease both}
+.coin{position:fixed;z-index:45;width:15px;height:15px;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 35% 30%,#f5e2a0,#b8863b);box-shadow:0 0 6px rgba(240,200,100,.8)}
+/* tutorial */
+#tutHi{position:fixed;z-index:29;display:none;pointer-events:none;border:2px solid var(--gold);border-radius:6px;
+box-shadow:0 0 0 9999px rgba(2,8,10,.62),0 0 14px rgba(217,201,138,.55);animation:tutpulse 1.8s ease-in-out infinite}
+#tutHi.full{border:none;border-radius:0;box-shadow:none;background:rgba(2,8,10,.66);animation:none;inset:0;left:0!important;top:0!important;width:100%!important;height:100%!important}
+@keyframes tutpulse{50%{box-shadow:0 0 0 9999px rgba(2,8,10,.62),0 0 26px rgba(217,201,138,.9)}}
+/* centred with auto margins, NOT translateX — the cardIn animation ends on
+   transform:none with fill-mode both, which would permanently clobber a transform */
+#tutTip{position:fixed;z-index:30;display:none;flex-direction:column;
+left:0;right:0;margin-left:auto;margin-right:auto;width:min(520px,calc(100vw - 16px));
+background:linear-gradient(180deg,rgba(12,34,40,.985),rgba(5,16,20,.99));border:1px solid #8a793e;border-radius:6px;
+box-shadow:0 10px 40px rgba(0,0,0,.85);animation:cardIn .3s ease both;overflow:hidden}
+#tutTip .ttbody{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px 12px}
+#tutTip .ttfoot{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;gap:12px;
+padding:10px 14px;border-top:1px solid rgba(138,121,62,.4);background:rgba(4,14,17,.75)}
+#safeProbe{position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;visibility:hidden;
+border-top:env(safe-area-inset-top) solid transparent;border-bottom:env(safe-area-inset-bottom) solid transparent}
+#tutTip .tt{font-family:'Oswald',sans-serif;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:var(--goldhi);margin-bottom:6px}
+#tutTip .tx{font-size:14.5px;color:var(--ink);line-height:1.6}
+#tutTip .skiplink{background:none;border:none;color:var(--dim);font-size:14px;letter-spacing:1px;text-transform:uppercase;font-family:'Oswald',sans-serif;text-decoration:underline;padding:6px 0}
+/* WIDE / LANDSCAPE */
+@media (min-width:900px) and (orientation:landscape){
+  body{max-width:none;border:none;box-shadow:none;font-size:16px}
+  nav{order:1;border-top:none;border-bottom:1px solid var(--line);padding:7px 18px}
+  nav button{max-width:200px;font-size:15px;letter-spacing:2px;padding:12px 0}
+  main{order:2}
+  main:not(.nopad){display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:0 18px;align-content:start;padding:18px 26px}
+  .sect,.hero{grid-column:1/-1}
+  .hero{padding:30px 16px 24px}
+  .hero img{width:min(60%,420px)}
+  .hero .hname{font-size:32px}
+  header{padding:12px 26px 10px}
+  h1{font-size:21px}
+  .res{max-width:760px;margin-left:auto;gap:7px}
+  .sub,.evt,.toast,#tutTip .tx,.relic{font-size:15.5px}
+  .stats,.tag,.mtype,.slot,.legrow,.legdone,.maphint{font-size:15px}
+  .btn,.btn.sm,.modetabs button{font-size:15px}
+  .card h3{font-size:18px}
+  .sect{font-size:15px}
+  .blog{font-size:15.5px;max-width:900px;margin:0 auto}
+  .legend{width:250px}
+  .overlay{align-items:stretch;justify-content:flex-end}
+  .sheet{max-width:520px;height:100%;max-height:100%;border-radius:0;border-top:none;border-left:2px solid var(--line2);
+    transform:translateX(105%);transition:transform .38s cubic-bezier(.2,.9,.25,1.02)}
+  .overlay.vis .sheet{transform:none}
+  #phaserHost{max-width:1500px;width:100%;margin:0 auto}
+  .bcmds{grid-template-columns:repeat(6,1fr);max-width:1000px;width:100%;margin:0 auto;gap:10px}
+  .bhead .h{font-size:21px}
+  .banner .big{font-size:46px}
+}
+@media (min-width:700px) and (orientation:portrait){
+  body{max-width:660px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:0 0 60px rgba(0,0,0,.8)}
+}
+/* ============ FLUID SCALE (continuous, floor 14px) ============ */
+body{font-size:clamp(16px,1.15vw,20px)}
+.sub,.evt,.toast,.blog,#tutTip .tx,.relic{font-size:clamp(15.5px,1.1vw,19px);line-height:1.6}
+.stats,.tag,.mtype,.slot,.legrow,.legdone,.maphint,.bhead .sub,#tutTip .skiplink{font-size:clamp(15px,1.05vw,18px)}
+.btn,.btn.sm,.modetabs button{font-size:clamp(16px,1.1vw,19px)}
+.btn{padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);min-height:clamp(46px,3.6vw,58px)}
+.btn.sm{padding:clamp(9px,.7vw,13px) clamp(13px,1vw,19px);min-height:clamp(42px,3.2vw,52px)}
+.btn.wide{font-size:clamp(18px,1.3vw,23px);padding:clamp(14px,1.1vw,20px)}
+.sect{font-size:clamp(15px,1.1vw,19px)}
+.card h3{font-size:clamp(19px,1.4vw,25px)}
+.card{padding:clamp(13px,1vw,21px) clamp(15px,1.15vw,23px);margin-bottom:clamp(11px,.85vw,17px)}
+.pick b{font-size:clamp(17px,1.2vw,22px)}
+.pick{padding:clamp(11px,.85vw,16px) clamp(13px,1vw,19px)}
+.sheet-head h3{font-size:clamp(21px,1.6vw,29px)}
+#tutTip .tt{font-size:clamp(17px,1.2vw,22px)}
+#tutTip{width:min(clamp(320px,34vw,560px),calc(100vw - 16px))}
+.clock{font-size:clamp(18px,1.35vw,25px)}
+h1{font-size:clamp(19px,1.55vw,29px)}
+h1 small{font-size:clamp(14px,.95vw,17px)}
+.resitem b{font-size:clamp(20px,1.7vw,30px)}
+.resitem span{font-size:clamp(11px,2.8vw,15px)}
+nav button{font-size:clamp(15px,1.15vw,20px);padding:clamp(12px,.95vw,18px) 2px;min-height:54px}
+.bcmds .btn{min-height:56px;padding:10px 4px;letter-spacing:.8px}
+.bhead .h{font-size:clamp(19px,1.55vw,27px)}
+.banner .big{font-size:clamp(36px,3.5vw,66px)}
+.rewrow{font-size:clamp(18px,1.35vw,25px)}
+.legend{width:clamp(200px,17vw,320px)}
+@media (min-width:900px) and (orientation:landscape){
+  main:not(.nopad){grid-template-columns:repeat(auto-fill,minmax(clamp(340px,26vw,540px),1fr));
+    gap:0 clamp(14px,1.2vw,26px);padding:clamp(14px,1.3vw,30px) clamp(18px,1.8vw,44px)}
+  .sheet{max-width:clamp(440px,32vw,640px)}
+  nav button{max-width:clamp(150px,14vw,260px)}
+}
+@media (max-width:400px){
+  .res{gap:3px}
+  .resitem{padding:7px 1px 5px}
+  .resitem span{letter-spacing:.2px}
+  main{padding:12px}
+}
+/* ---- hero stage: cannot collapse or clip ---- */
+.hero{display:flex;flex-direction:column;align-items:center;overflow:visible;
+  padding:clamp(18px,1.6vw,34px) clamp(14px,1.2vw,26px) clamp(16px,1.4vw,30px)}
+.heroStage{position:relative;width:100%;height:clamp(190px,26vh,430px);
+  display:flex;align-items:center;justify-content:center}
+.heroStage img{width:auto!important;height:auto;max-width:min(72%,560px);max-height:100%;
+  object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.75));
+  animation:heroBob 4.2s ease-in-out infinite}
+.hero .hname{font-size:clamp(26px,2.6vw,48px)}
+.hero .hsub{font-size:clamp(14.5px,1vw,19px)}
+.hero .hstats{gap:clamp(18px,2vw,46px);margin-top:clamp(12px,1.2vw,24px)}
+.hero .hstat b{font-size:clamp(24px,2.2vw,42px)}
+.hero .hstat span{font-size:clamp(14px,.95vw,17px)}
+</style>
+</head>
+<body>
+<canvas id="mist"></canvas>
+<header>
+  <div class="hrow">
+    <h1>SALT &amp; POWDER<small>Build the most feared fleet in the Caribbean</small></h1>
+  </div>
+  <div class="res" id="resStrip"></div>
+</header>
+<main id="main"></main>
+<nav>
+  <button id="tabFleet" class="on">Port</button>
+  <button id="tabFlag">Flagship</button>
+  <button id="tabRoutes">Map</button>
+  <button id="tabVoy">At Sea<span class="badge" id="voyBadge" style="display:none">0</span></button>
+  <button id="tabPort">Market</button>
+</nav>
+<div class="overlay" id="overlay"><div class="sheet">
+  <div class="sheet-head" id="sheetHead"></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div></div>
+<div id="battleScr">
+  <div class="bhead"><div class="h" id="bTitle">Broadsides — Round 1</div>
+    <div class="sub" id="bHint">Tap an enemy to target it, then choose one order below</div></div>
+  <div id="phaserHost"></div>
+  <div class="blog" id="blog"></div>
+  <div class="bcmds" id="bcmds"></div>
+  <div class="banner" id="banner"></div>
+</div>
+<div id="wipe"><div class="p p1"></div><div class="p p2"></div></div>
+<div id="toasts"></div>
+<div id="tutHi"></div>
+<div id="tutTip"></div>
+<div id="safeProbe"></div>
+
+<script>
+'use strict';
+/* ============ TUNING ============ */
+const SEC_PER_WIN=45, SEC_DECAY_PER_MIN=1.0, VOY_SEC_PER_DAY=90, VOY_MAX_ACTIVE=6, RUSH_GEM_PER_MIN=1;
+const CARGO_PRICE=12;
+
+/* ============ ASSETS ============ */
+const ART_COMBOS=[['schooner','player'],['brig','player'],['frigate','player'],['manowar','player'],
+ ['schooner','enemy'],['brig','enemy'],['frigate','enemy'],['manowar','enemy'],
+ ['schooner','boss'],['brig','boss'],['frigate','boss'],['manowar','boss'],
+ ['merchant','merchant'],['flagship','flag']];
+const IMG_PATHS={};
+ART_COMBOS.forEach(([t,p])=>{IMG_PATHS[t+'_'+p]='img/ship_'+t+'_'+p+'.png';});
+const SND_PATHS={ui_tap:'audio/ui_tap.mp3',cannon:'audio/cannon.mp3',impact:'audio/impact.mp3',
+  explosion:'audio/explosion.mp3',splash:'audio/splash.mp3',coin:'audio/coin.mp3',sail:'audio/sail.mp3',
+  victory:'audio/victory.mp3',defeat:'audio/defeat.mp3',board:'audio/board.mp3',repair:'audio/repair.mp3',
+  toast:'audio/toast.mp3',ambience:'audio/ambience.mp3',boss_horn:'audio/boss_horn.mp3',
+  upgrade:'audio/upgrade.mp3',telegraph:'audio/telegraph.mp3',relic:'audio/relic.mp3',
+  depart:'audio/depart.mp3',arrive:'audio/arrive.mp3'};
+
+/* ============ ICON ART (placeholder images) ============
+   Drop real artwork at img/icon_<name>.png and it replaces the
+   generated placeholder automatically — same pattern as ship art. */
+const ICON_COLOR={reales:'#efe3ae',cargo:'#c8a97a',parts:'#9fb8bd',barrels:'#d9883a',gems:'#8fd8e8',
+  sea:'#7ab0e0',plate:'#9fb8bd',guns:'#d9883a',rig:'#cfe3e4',hold:'#c8a97a',relic:'#d9c98a',
+  flag:'#efe3ae',star:'#efe3ae',anchor:'#63c06a'};
+const ICONS={
+ reales:c=>`<circle cx="12" cy="12" r="8.5" fill="${c}"/><circle cx="12" cy="12" r="5.4" fill="none" stroke="#3a2f14" stroke-width="1.5"/><path d="M9.4 12h5.2" stroke="#3a2f14" stroke-width="1.5"/>`,
+ cargo:c=>`<rect x="3.5" y="6.5" width="17" height="12" rx="1.5" fill="${c}"/><path d="M3.5 10.6h17M3.5 14.6h17M8.6 6.5v12M15.4 6.5v12" stroke="#2a1f12" stroke-width="1.2"/>`,
+ parts:c=>`<path d="M12 3.2l1.9 1.2 2.2-.5.9 2 2 .9-.5 2.2L19.7 12l-1.2 2 .5 2.2-2 .9-.9 2-2.2-.5L12 20.8 10 19.6l-2.2.5-.9-2-2-.9.5-2.2L4.3 12l1.2-2-.5-2.2 2-.9.9-2 2.2.5z" fill="${c}"/><circle cx="12" cy="12" r="3.2" fill="#05161a"/>`,
+ barrels:c=>`<path d="M7 4.5h10c1.3 2.3 1.8 4.6 1.8 7.5s-.5 5.2-1.8 7.5H7c-1.3-2.3-1.8-4.6-1.8-7.5S5.7 6.8 7 4.5z" fill="${c}"/><path d="M5.4 9.2h13.2M5.4 14.8h13.2" stroke="#2a1408" stroke-width="1.5"/>`,
+ gems:c=>`<path d="M12 3l7.2 5.6L12 21 4.8 8.6z" fill="${c}"/><path d="M4.8 8.6h14.4M12 3v18" stroke="#04161c" stroke-width="1.1" opacity=".55"/>`,
+ sea:c=>`<path d="M12.6 4l6 10.2h-6z" fill="${c}"/><path d="M11.2 4v10.2" stroke="${c}" stroke-width="1.7"/><path d="M10.4 6.5l-4.6 7.7h4.6z" fill="${c}" opacity=".7"/><path d="M3.4 16.4h17.2l-2.6 4.2H6z" fill="${c}" opacity=".8"/>`,
+ plate:c=>`<path d="M12 3l7.5 2.6v5.7c0 4.4-3 7.9-7.5 9.4-4.5-1.5-7.5-5-7.5-9.4V5.6z" fill="${c}"/><path d="M12 6.6v11" stroke="#05161a" stroke-width="1.3" opacity=".5"/>`,
+ guns:c=>`<rect x="3.5" y="8.6" width="13" height="4.6" rx="1" fill="${c}"/><circle cx="18.4" cy="10.9" r="2.3" fill="${c}"/><circle cx="8.4" cy="17.2" r="3.1" fill="none" stroke="${c}" stroke-width="1.8"/>`,
+ rig:c=>`<path d="M11.4 2.6v18.8" stroke="${c}" stroke-width="1.7"/><path d="M12.7 4.4l5.9 6h-5.9zM12.7 12l5.9 6.4h-5.9z" fill="${c}"/><path d="M10.1 5.2l-4.7 5.2h4.7zM10.1 12.6l-4.7 5.8h4.7z" fill="${c}" opacity=".68"/>`,
+ hold:c=>`<rect x="3.5" y="6.5" width="17" height="12" rx="1.5" fill="${c}"/><path d="M3.5 10.6h17M3.5 14.6h17M8.6 6.5v12M15.4 6.5v12" stroke="#2a1f12" stroke-width="1.2"/>`,
+ relic:c=>`<path d="M8.2 3h7.6v2h-2.1c2.9 1.5 4.6 4.1 4.6 7.1 0 4.4-3.1 7.9-6.3 7.9s-6.3-3.5-6.3-7.9c0-3 1.7-5.6 4.6-7.1H8.2z" fill="${c}"/><path d="M9 20.6h6" stroke="${c}" stroke-width="1.8"/>`,
+ flag:c=>`<path d="M6.2 2.4v19.2" stroke="${c}" stroke-width="1.9"/><path d="M7.6 4h11l-3 4 3 4h-11z" fill="${c}"/>`,
+ star:c=>`<path d="M12 2.4l2.7 6.4 6.9.5-5.3 4.5 1.7 6.8L12 16.9 6 20.6l1.7-6.8-5.3-4.5 6.9-.5z" fill="${c}"/>`,
+ anchor:c=>`<circle cx="12" cy="4.4" r="2.2" fill="none" stroke="${c}" stroke-width="1.8"/><path d="M12 6.6v14M7 10.2h10" stroke="${c}" stroke-width="1.8"/><path d="M4.4 14.2c0 4 3.6 6.3 7.6 6.3s7.6-2.3 7.6-6.3" fill="none" stroke="${c}" stroke-width="1.8"/>`};
+const ICON_URL={};
+function svgIcon(name){const c=ICON_COLOR[name]||'#cfe3e4';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="160" height="160">${(ICONS[name]||ICONS.reales)(c)}</svg>`;}
+function iconHTML(name,size,cls){
+  const st=size?`style="width:${size}px;height:${size}px"`:'';
+  return `<img class="ic ${cls||''}" alt="" ${st} src="${ICON_URL[name]||('data:image/svg+xml;utf8,'+encodeURIComponent(svgIcon(name)))}">`;}
+function loadIconArt(){
+  return Promise.all(Object.keys(ICONS).map(name=>new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>{ICON_URL[name]='img/icon_'+name+'.png';res();};
+    im.onerror=()=>res();
+    im.src='img/icon_'+name+'.png';})));}
+
+/* ============ SOUND ============ */
+const Snd=(()=>{
+  let ctx=null,files={},amb=null;
+  function ac(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();return ctx;}
+  Object.entries(SND_PATHS).forEach(([k,src])=>{const a=new Audio();
+    a.addEventListener('canplaythrough',()=>files[k]=src,{once:true});
+    a.addEventListener('error',()=>{},{once:true});a.src=src;});
+  function env(g,t,a,d,v){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(0.001,t+a+d);}
+  function osc(type,f0,f1,a,d,v){const c=ac(),o=c.createOscillator(),g=c.createGain();
+    o.type=type;o.frequency.setValueAtTime(f0,c.currentTime);
+    if(f1)o.frequency.exponentialRampToValueAtTime(f1,c.currentTime+a+d);
+    env(g,c.currentTime,a,d,v);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+a+d+.05);}
+  function noise(d,ft,f,v){const c=ac(),len=c.sampleRate*d,buf=c.createBuffer(1,len,c.sampleRate),ch=buf.getChannelData(0);
+    for(let i=0;i<len;i++)ch[i]=(Math.random()*2-1)*(1-i/len);
+    const s=c.createBufferSource();s.buffer=buf;const fl=c.createBiquadFilter();fl.type=ft;fl.frequency.value=f;
+    const g=c.createGain();g.gain.value=v;s.connect(fl).connect(g).connect(c.destination);s.start();}
+  const synth={
+    ui_tap:()=>osc('square',880,660,.005,.05,.06),
+    cannon:()=>{noise(.35,'lowpass',420,.5);osc('sine',90,42,.01,.3,.5);},
+    impact:()=>{noise(.12,'bandpass',900,.35);osc('sine',140,70,.005,.1,.3);},
+    explosion:()=>{noise(.5,'lowpass',600,.6);osc('sine',70,30,.01,.45,.55);},
+    splash:()=>noise(.45,'bandpass',700,.3),
+    coin:()=>{osc('sine',1320,0,.005,.09,.18);setTimeout(()=>osc('sine',1760,0,.005,.12,.18),70);},
+    sail:()=>noise(.6,'bandpass',500,.22),
+    victory:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>osc('square',f,0,.01,.22,.14),i*110));},
+    defeat:()=>{osc('sawtooth',220,110,.02,.6,.2);setTimeout(()=>osc('sawtooth',165,82,.02,.8,.2),250);},
+    board:()=>{noise(.2,'highpass',1500,.25);osc('square',330,220,.01,.15,.12);},
+    repair:()=>{[440,440,520].forEach((f,i)=>setTimeout(()=>osc('triangle',f,0,.005,.08,.15),i*90));},
+    toast:()=>osc('triangle',990,1180,.01,.12,.1),
+    upgrade:()=>{[440,554,659,880].forEach((f,i)=>setTimeout(()=>osc('triangle',f,0,.005,.16,.13),i*80));},
+    boss_horn:()=>{osc('sawtooth',110,82,.08,1.1,.22);setTimeout(()=>osc('sawtooth',82,62,.08,1.4,.2),340);},
+    telegraph:()=>{[880,880,880].forEach((f,i)=>setTimeout(()=>osc('square',f,0,.005,.1,.12),i*150));},
+    relic:()=>{[660,880,1100,1320,1760].forEach((f,i)=>setTimeout(()=>osc('sine',f,0,.005,.25,.12),i*90));},
+    depart:()=>{noise(.7,'bandpass',420,.24);setTimeout(()=>osc('sine',196,262,.05,.5,.1),120);},
+    arrive:()=>{[392,523,659].forEach((f,i)=>setTimeout(()=>osc('triangle',f,0,.01,.2,.13),i*110));},
+  };
+  function play(k){try{
+    if(files[k]){const a=new Audio(files[k]);a.volume=.7;a.play().catch(()=>{});}
+    else if(synth[k]){ac();synth[k]();}}catch(e){}}
+  function ambience(on){
+    if(on&&files.ambience&&!amb){amb=new Audio(files.ambience);amb.loop=true;amb.volume=.35;amb.play().catch(()=>{});}
+    if(!on&&amb){amb.pause();amb=null;}}
+  addEventListener('pointerdown',()=>{try{ac().resume();}catch(e){}},{once:true});
+  return {play,ambience};
+})();
+document.addEventListener('pointerdown',e=>{if(e.target.closest('.btn,nav button,.pick,.modetabs button'))Snd.play('ui_tap');});
+
+/* ============ UI FX ============ */
+function toast(msg,type){
+  const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;
+  document.getElementById('toasts').appendChild(t);
+  Snd.play(type==='gold'?'coin':'toast');
+  setTimeout(()=>{t.classList.add('bye');setTimeout(()=>t.remove(),260);},3000);}
+let wiping=false;
+function wipe(mid){
+  if(wiping){mid&&mid();return;}
+  wiping=true;const w=document.getElementById('wipe');Snd.play('sail');
+  w.classList.remove('go');void w.offsetWidth;
+  w.classList.add('go');
+  setTimeout(()=>{mid&&mid();},330);
+  setTimeout(()=>{w.classList.remove('go');wiping=false;},700);}
+function coinFly(n){
+  const tgt=document.getElementById('rReales').getBoundingClientRect();
+  for(let i=0;i<Math.min(n,12);i++){
+    const c=document.createElement('div');c.className='coin';
+    const sx=innerWidth/2+(Math.random()-.5)*140,sy=innerHeight*0.55+(Math.random()-.5)*80;
+    c.style.left=sx+'px';c.style.top=sy+'px';document.body.appendChild(c);
+    const dx=tgt.left+8-sx,dy=tgt.top+8-sy;
+    c.animate([{transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${dx*.4}px,${dy*.4-60}px) scale(1.15)`,opacity:1,offset:.45},
+      {transform:`translate(${dx}px,${dy}px) scale(.5)`,opacity:.9}],
+      {duration:650+i*60,easing:'cubic-bezier(.3,.6,.4,1)',fill:'forwards'});
+    setTimeout(()=>{c.remove();if(i===0)Snd.play('coin');bump('wReales');},650+i*60);}}
+function bump(id){const el=document.getElementById(id);if(!el)return;
+  el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),180);}
+(function(){const cv=document.getElementById('mist'),cx=cv.getContext('2d');let W,H;
+  function rs(){W=cv.width=innerWidth*devicePixelRatio;H=cv.height=innerHeight*devicePixelRatio;}
+  rs();addEventListener('resize',rs);
+  const blobs=Array.from({length:9},()=>({x:Math.random(),y:Math.random(),r:0.2+Math.random()*0.35,
+    dx:(Math.random()-.5)*0.0004,dy:(Math.random()-.5)*0.0003,a:0.04+Math.random()*0.07}));
+  (function frame(){cx.clearRect(0,0,W,H);
+    blobs.forEach(b=>{b.x=(b.x+b.dx+1)%1;b.y=(b.y+b.dy+1)%1;
+      const g=cx.createRadialGradient(b.x*W,b.y*H,0,b.x*W,b.y*H,b.r*W);
+      g.addColorStop(0,`rgba(90,200,210,${b.a})`);g.addColorStop(1,'rgba(0,0,0,0)');
+      cx.fillStyle=g;cx.fillRect(0,0,W,H);});
+    requestAnimationFrame(frame);})();
+})();
+
+/* ============ SHIP ART ============ */
+const SHIPCFG={schooner:{L:64,H:40,masts:[24,42],rig:'fore'},brig:{L:78,H:48,masts:[24,50],rig:'sq'},
+  frigate:{L:94,H:56,masts:[22,48,72],rig:'sq'},manowar:{L:112,H:66,masts:[24,54,86],rig:'sq'},
+  merchant:{L:84,H:50,masts:[26,56],rig:'sq'},flagship:{L:100,H:62,masts:[22,52,80],rig:'sq'}};
+const PALETTES={player:['#d6cfba','#bdb49b','#c8b060','#171310'],enemy:['#6f8ba0','#5a7386','#a03028','#171310'],
+  boss:['#8a2a2a','#5e1a1a','#e8d89a','#0d0808'],merchant:['#a8c4d8','#8aa8bd','#3a7ab0','#171310'],
+  flag:['#efe3ae','#d9c98a','#d94a3a','#120e0a']};
+function svgShip(type,palette){
+  const c=SHIPCFG[type],W=c.L+18,Ht=c.H+30,hy=Ht-16;
+  const [sail,sail2,flag,hull]=PALETTES[palette];const trim='#3d3020';
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Ht}" width="${W*3}" height="${Ht*3}">`;
+  c.masts.forEach(mx=>{
+    s+=`<line x1="${mx}" y1="${hy}" x2="${mx}" y2="${hy-c.H}" stroke="${hull}" stroke-width="2"/>`;
+    if(c.rig==='sq'){
+      const w1=c.L*0.30,w2=c.L*0.24,h1=c.H*0.34,h2=c.H*0.28,y1=hy-c.H*0.42,y2=hy-c.H*0.82;
+      s+=`<path d="M${mx-w1/2},${y1} Q${mx},${y1+5} ${mx+w1/2},${y1} L${mx+w1/2},${y1-h1} Q${mx},${y1-h1+4} ${mx-w1/2},${y1-h1} Z" fill="${sail}"/>`;
+      s+=`<path d="M${mx-w2/2},${y2} Q${mx},${y2+4} ${mx+w2/2},${y2} L${mx+w2/2},${y2-h2} Q${mx},${y2-h2+3} ${mx-w2/2},${y2-h2} Z" fill="${sail2}"/>`;
+    }else{
+      s+=`<path d="M${mx+1},${hy-4} L${mx+1},${hy-c.H+4} L${mx+c.L*0.30},${hy-8} Z" fill="${sail}"/>`;
+      s+=`<path d="M${mx-1},${hy-c.H*0.45} L${mx-1},${hy-c.H+2} L${mx-c.L*0.20},${hy-c.H*0.45} Z" fill="${sail2}"/>`;}
+    s+=`<path d="M${mx},${hy-c.H} l6,2 l-6,2 Z" fill="${flag}"/>`;});
+  s+=`<path d="M4,${hy-6} L${W-14},${hy-6} L${W-3},${hy-13} L${W-11},${hy+4} Q${W/2},${hy+11} 12,${hy+4} Z" fill="${hull}" stroke="${trim}" stroke-width="1"/>`;
+  const n=type==='manowar'?7:(type==='flagship'?6:(type==='frigate'?5:(type==='brig'?4:0)));
+  for(let i=0;i<n;i++)s+=`<rect x="${16+i*(c.L-26)/Math.max(1,n-1)}" y="${hy-3}" width="2.6" height="2.6" fill="${palette==='flag'?'#d9c98a':'#4a3a22'}"/>`;
+  return s+'</svg>';}
+const SHIP_URL={},SHIP_CANVAS={},SHIP_DIM={};
+function shipHTML(type,palette,scale,cls){
+  const key=type+'_'+palette,c=SHIPCFG[type],W=c.L+18;
+  return `<img class="shipsvg ${cls||''}" style="width:${Math.round(W*(scale||1))}px" alt=""
+    src="${SHIP_URL[key]||('data:image/svg+xml;utf8,'+encodeURIComponent(svgShip(type,palette)))}">`;}
+function loadShipArt(){
+  return Promise.all(ART_COMBOS.map(([type,pal])=>new Promise(res=>{
+    const key=type+'_'+pal,c=SHIPCFG[type],W=c.L+18,H=c.H+30;SHIP_DIM[key]={w:W,h:H};
+    const user=new Image();
+    user.onload=()=>{SHIP_URL[key]=IMG_PATHS[key];fin(user);};
+    user.onerror=()=>{const im=new Image();im.onload=()=>fin(im);
+      im.src='data:image/svg+xml;utf8,'+encodeURIComponent(svgShip(type,pal));};
+    user.src=IMG_PATHS[key];
+    function fin(im){const cv=document.createElement('canvas');cv.width=W*3;cv.height=H*3;
+      cv.getContext('2d').drawImage(im,0,0,W*3,H*3);SHIP_CANVAS[key]=cv;res();}})));}
+
+/* ============ DATA ============ */
+const TYPES={schooner:{n:'Schooner',speed:8,guns:3,hull:20,cargo:10,cost:320,rep:3,salv:6,ransom:150},
+  brig:{n:'Brig',speed:5,guns:5,hull:35,cargo:20,cost:680,rep:4,salv:10,ransom:300},
+  frigate:{n:'Frigate',speed:4,guns:8,hull:55,cargo:30,cost:1500,rep:6,salv:16,ransom:600},
+  manowar:{n:"Man o' War",speed:2,guns:12,hull:90,cargo:50,cost:3200,rep:8,salv:26,ransom:1200}};
+const NAMES=['Adder','Tempest','Marigold','Vixen','Corsair','Reliant','Sea Wolf','Fortune','Kestrel','Gallant','Widow','Petrel','Avarice','Dauntless','Sparrow','Grim Tide','Halcyon','Red Wake','Serpent','Osprey'];
+const ENAMES=['HMS Fortress','San Cristobal','San Juan Bautista','HMS Defiance','La Dama Negra','HMS Sovereign','El Halcón','HMS Vigilant','Santa Lucía','HMS Ardent','El Conquistador','HMS Resolute'];
+const DNAMES=['SAFE','HAZARDOUS','DANGEROUS','TREACHEROUS'];
+const DCOLORS=['var(--grn)','var(--yel)','var(--org)','var(--red)'];
+const DHEX=['#63c06a','#d9c34a','#d9883a','#d94a3a'];
+const MTYPE={
+  trade:{n:'Trade Lane',tip:'Attack it to clear the raiders, then run cargo along it for the best steady money in the game. Needs goods from the Market.'},
+  port:{n:'Supply Lane',tip:'A standing contract with a port you have charted. Same as a trade lane — clear it, then run goods along it for a reliable payout.'},
+  patrol:{n:'Patrol',tip:'A pure fight for little money. Winning drops the danger of every lane in this region by one step for a while.'},
+  raid:{n:'Raid',tip:'Always a fight, never a trade run. Hard enemies, big one-off payout in reales and parts.'},
+  escort:{n:'Escort',tip:'A fight where you must also keep the merchant ship alive. If she sinks you lose, however well you are doing.'},
+  salvage:{n:'Salvage',tip:'No enemies — send ships to haul up a wreck. Success depends on your fleet\'s total hull, not its guns. Sometimes you recover a free ship.'},
+  blockade:{n:'Blockade Break',tip:'The hardest ordinary fight on the chart, and the largest ordinary reward. Bring your best three ships.'},
+  boss:{n:'Admiral',tip:'The region boss. Your flagship must be in the line. Beating one unlocks the next region of the map.'},
+  charter:{n:'Charter',tip:'A one-off job you can only do once. Winning permanently opens a new port, and often hands you a relic or a flagship upgrade.'}};
+const REGIONS={caribbean:{n:'Caribbean',tier:1},gulf:{n:'Gulf Coast',tier:2},atlantic:{n:'Atlantic',tier:3},grand:{n:'Grand Fleet Route',tier:4}};
+const HOME={x:196,y:452};
+const NOTO_BONUS={trade:0,port:0,salvage:2,patrol:4,escort:6,raid:10,blockade:14,charter:8};
+const BOSSES={
+ caribbean:{id:'boss_caribbean',region:'caribbean',n:'Commodore Vane',title:'The Ironclad',x:238,y:406,unlocks:'gulf',noto:100,power:70,gimmicks:['ironclad'],
+  desc:'Vane sheathed her decks in iron after the last man tried to board her, and the man before that. Grapples find no purchase; hooks skid and fall away. Her guns are light for a ship of that weight — but she does not need heavy guns. She only needs to still be floating when you are not.',
+  rew:{reales:1400,parts:24,gems:3},
+  ships:[{type:'manowar',name:'HMS Bulwark',hull:130,guns:7,speed:2,isBoss:1},{type:'brig',name:'HMS Tenacious',hull:46,guns:6,speed:5}]},
+ gulf:{id:'boss_gulf',region:'gulf',n:'Almirante Sombra',title:'The Wolfpack',x:14,y:150,unlocks:'atlantic',noto:140,power:130,gimmicks:['wolfpack'],reinforce:2,
+  desc:'Sombra does not fight alone and never has. Send one of her wolves to the bottom and another slides out of the fog before the water has closed over the first. Pouring everything into a single target is how captains die here — spread your fire and finish it fast.',
+  rew:{reales:2600,parts:32,gems:4},
+  ships:[{type:'brig',name:'Lobo Negro',hull:56,guns:10,speed:8,isBoss:1},{type:'brig',name:'Sombra Segunda',hull:48,guns:9,speed:7},{type:'schooner',name:'Sombra Tercera',hull:36,guns:8,speed:9}],
+  reinforcements:[{type:'brig',name:'Lobo Cuarto',hull:46,guns:9,speed:7},{type:'brig',name:'Lobo Quinto',hull:46,guns:9,speed:7}]},
+ atlantic:{id:'boss_atlantic',region:'atlantic',n:'Lord Ashgrave',title:'The Broadside',x:344,y:132,unlocks:'grand',noto:180,power:215,gimmicks:['broadside'],
+  desc:'Every third round Ashgrave has his people roll out the lower deck and put everything he owns into a single volley. You will hear the gunports come up a full round before it lands. Brace when they do, or write a letter to somebody\'s family.',
+  rew:{reales:4200,parts:40,gems:6},
+  ships:[{type:'manowar',name:'HMS Cataclysm',hull:170,guns:15,speed:3,isBoss:1},{type:'frigate',name:'HMS Perdition',hull:74,guns:11,speed:4},{type:'frigate',name:'HMS Rampart',hull:74,guns:11,speed:4}]},
+ grand:{id:'boss_grand',region:'grand',n:'The Ghost Fleet',title:'All Three Curses',x:36,y:52,unlocks:null,noto:200,power:310,final:1,gimmicks:['ironclad','wolfpack','broadside'],reinforce:2,
+  desc:'Barnacled hulls that no grapple will hold. Wolves that rise out of the fog where nothing was. A broadside that splits the sky open. Every lesson this ocean has beaten into you, arriving at once and all together.',
+  rew:{reales:9000,parts:60,gems:12},
+  ships:[{type:'manowar',name:'The Drowned King',hull:195,guns:17,speed:3,isBoss:1},{type:'frigate',name:'Pale Lantern',hull:90,guns:14,speed:5},{type:'frigate',name:'Cold Meridian',hull:90,guns:14,speed:5}],
+  reinforcements:[{type:'frigate',name:'Revenant',hull:82,guns:13,speed:5},{type:'frigate',name:'Wake of Ash',hull:82,guns:13,speed:5}]}};
+function makeRoutes(){return [
+ {id:'c1',region:'caribbean',n:'Havana → Nassau',type:'trade',danger:0,cargo:8,len:1,power:15,rew:{reales:260,parts:2},x:150,y:392},
+ {id:'c6',region:'caribbean',n:'Wreck of the Santa Ana',type:'salvage',danger:0,len:1,hullreq:50,rew:{reales:150,parts:6},ship:{type:'schooner',chance:0.3},x:132,y:440},
+ {id:'c2',region:'caribbean',n:'Nassau → Tortuga',type:'trade',danger:1,cargo:12,len:2,power:30,rew:{reales:480,parts:4},x:98,y:420},
+ {id:'c3',region:'caribbean',n:'Patrol Windward Passage',type:'patrol',danger:1,len:1,power:30,rew:{reales:120,parts:2},x:128,y:346},
+ {id:'c5',region:'caribbean',n:'Escort the Merchant Rose',type:'escort',danger:1,len:2,power:35,rew:{reales:420,parts:3},x:176,y:352},
+ {id:'c4',region:'caribbean',n:'Raid Smuggler Cove',type:'raid',danger:2,len:2,power:45,rew:{reales:650,parts:8},x:72,y:368},
+ {id:'g1',region:'gulf',n:'Tortuga → New Orleans',type:'trade',danger:1,cargo:20,len:3,power:55,rew:{reales:900,parts:5},x:60,y:286},
+ {id:'g5',region:'gulf',n:'Graveyard Shoals',type:'salvage',danger:1,len:2,hullreq:110,rew:{reales:300,parts:10,gems:1},ship:{type:'brig',chance:0.35},x:28,y:262},
+ {id:'g2',region:'gulf',n:'Patrol Gulf Lanes',type:'patrol',danger:2,len:2,power:60,rew:{reales:200,parts:4,gems:1},x:98,y:244},
+ {id:'g6',region:'gulf',n:'Escort the Silver Barge',type:'escort',danger:2,len:3,power:70,rew:{reales:1100,parts:6},x:146,y:222},
+ {id:'g3',region:'gulf',n:'Veracruz Silver Run',type:'trade',danger:2,cargo:28,len:3,power:80,rew:{reales:1500,parts:8,gems:1},x:54,y:206},
+ {id:'g4',region:'gulf',n:'Raid Navy Convoy',type:'raid',danger:3,len:3,power:100,rew:{reales:1400,parts:14,gems:2},x:112,y:180},
+ {id:'a1',region:'atlantic',n:'Charleston Tobacco Run',type:'trade',danger:2,cargo:40,len:4,power:120,rew:{reales:2400,parts:10,gems:1},x:238,y:300},
+ {id:'a4',region:'atlantic',n:'Bermuda Deeps',type:'salvage',danger:2,len:3,hullreq:160,rew:{reales:500,parts:14,gems:1},ship:{type:'frigate',chance:0.35},x:308,y:296},
+ {id:'a2',region:'atlantic',n:'Patrol Bermuda Waters',type:'patrol',danger:2,len:2,power:110,rew:{reales:350,parts:6,gems:1},x:274,y:242},
+ {id:'a3',region:'atlantic',n:'Azores Blockade Break',type:'blockade',danger:3,len:5,power:160,rew:{reales:3200,parts:20,gems:3},x:328,y:212},
+ {id:'gr1',region:'grand',n:'The Grand Fleet Route',type:'trade',danger:3,cargo:60,len:6,power:210,rew:{reales:8000,parts:30,gems:6},final:true,requiresBoss:'grand',x:314,y:96}];}
+const PORTS={
+ staug:{n:'St. Augustine',region:'caribbean',x:226,y:368,t:1},charlestowne:{n:'Charles-Towne',region:'caribbean',x:254,y:344,t:1},
+ jamestown:{n:'Jamestown',region:'caribbean',x:268,y:382,t:2},veracruz:{n:'Veracruz',region:'caribbean',x:84,y:336,t:2},
+ philadelphia:{n:'Philadelphia',region:'caribbean',x:292,y:398,t:2},riodejaneiro:{n:'Rio de Janeiro',region:'caribbean',x:300,y:436,t:2},
+ boston:{n:'Boston',region:'gulf',x:152,y:262,t:3},newyork:{n:'New York',region:'gulf',x:190,y:238,t:3},
+ montevideo:{n:'Monte Video',region:'gulf',x:22,y:300,t:3},stjohns:{n:"St-John's",region:'gulf',x:236,y:266,t:4},
+ oporto:{n:'Oporto',region:'gulf',x:296,y:238,t:4},canary:{n:'Canary Islands',region:'gulf',x:318,y:262,t:4},
+ lisbon:{n:'Lisbon',region:'gulf',x:268,y:210,t:4},elsalvador:{n:'El Salvador',region:'gulf',x:34,y:222,t:4},
+ annapolis:{n:'Annapolis Royal',region:'gulf',x:130,y:206,t:5},casablanca:{n:'Casablanca',region:'gulf',x:66,y:168,t:5},
+ quebec:{n:'Quebec',region:'gulf',x:160,y:178,t:5},capetown:{n:'Cape Town',region:'gulf',x:40,y:164,t:5},
+ stmalo:{n:'St-Malo',region:'gulf',x:214,y:168,t:5},agadir:{n:'Agadir',region:'gulf',x:330,y:176,t:5},
+ benguela:{n:'Benguela',region:'atlantic',x:70,y:120,t:6},brest:{n:'Brest',region:'atlantic',x:214,y:120,t:6},
+ larochelle:{n:'La Rochelle',region:'atlantic',x:300,y:112,t:6},bissau:{n:'Bissau',region:'atlantic',x:118,y:142,t:7},
+ bristol:{n:'Bristol',region:'grand',x:150,y:80,t:7},ziguinchor:{n:'Ziguinchor',region:'grand',x:100,y:52,t:8},
+ galway:{n:'Galway',region:'grand',x:156,y:34,t:8},london:{n:'London',region:'grand',x:204,y:32,t:9},
+ barcelona:{n:'Barcelona',region:'grand',x:264,y:30,t:9},marseille:{n:'Marseille',region:'grand',x:322,y:44,t:10}};
+const CHARTERS=[
+ {id:'fb',n:'First Business',loc:'staug',dest:'charlestowne',t:1,req:[]},
+ {id:'ad',n:'American Dreams',loc:'charlestowne',dest:'veracruz',t:2,req:['fb']},
+ {id:'nh',n:'New Horizon',loc:'charlestowne',dest:'jamestown',t:2,req:['fb']},
+ {id:'d1',n:'Diplomacy I',loc:'veracruz',dest:'riodejaneiro',t:2,req:['ad']},
+ {id:'gd',n:'A Good Deed',loc:'veracruz',dest:'philadelphia',t:2,req:['ad']},
+ {id:'sm',n:'The Sail Mates',loc:'jamestown',t:3,req:['nh'],prize:{relic:'Kast Cupboard'}},
+ {id:'d2',n:'Diplomacy II',loc:'riodejaneiro',dest:'montevideo',t:3,req:['d1']},
+ {id:'o3',n:'Outlaws III',loc:'riodejaneiro',t:3,req:['d1'],prize:{boon:'gilded'}},
+ {id:'ff',n:"Fortune's Favor",loc:'philadelphia',dest:'boston',t:3,req:['gd']},
+ {id:'gs',n:'The General Store',loc:'philadelphia',dest:'newyork',t:3,req:['gd'],prize:{relic:'Jar with Four Faces'}},
+ {id:'stc',n:'Save the Children',loc:'boston',dest:'stjohns',t:4,req:['ff']},
+ {id:'tom',n:'Taste of Money',loc:'boston',dest:'oporto',t:4,req:['ff'],prize:{relic:'Joined Armchair'}},
+ {id:'ec2',n:'The Empty Cellar',loc:'newyork',t:4,req:['gs'],prize:{gems:3}},
+ {id:'b1',n:'Brethren of the Coast I',loc:'montevideo',dest:'elsalvador',t:4,req:['d2']},
+ {id:'ptk',n:'Promises to Keep',loc:'stjohns',t:4,req:['stc'],prize:{relic:'Commode'}},
+ {id:'le1',n:'The Lost Expedition I',loc:'stjohns',dest:'canary',t:4,req:['stc'],prize:{boon:'diamond'}},
+ {id:'sca',n:'Scarlatina',loc:'stjohns',dest:'lisbon',t:4,req:['stc']},
+ {id:'bs',n:'The Big Smoke',loc:'elsalvador',dest:'annapolis',t:5,req:['b1']},
+ {id:'omo',n:"The Old Man's Order",loc:'oporto',dest:'casablanca',t:5,req:['tom']},
+ {id:'ps',n:'A Popular Stop',loc:'canary',dest:'quebec',t:5,req:['le1']},
+ {id:'st',n:'The Sweet Tooth',loc:'canary',dest:'capetown',t:5,req:['le1'],prize:{gems:3}},
+ {id:'cn',n:'Cursed Night',loc:'lisbon',dest:'stmalo',t:5,req:['sca'],prize:{relic:'Goa Stone Container'}},
+ {id:'dnh',n:'Do No Harm',loc:'lisbon',dest:'agadir',t:5,req:['sca']},
+ {id:'tbl',n:"Table Bay's Luck",loc:'capetown',dest:'benguela',t:6,req:['st']},
+ {id:'mus',n:'The Musicians',loc:'agadir',dest:'brest',t:6,req:['dnh'],prize:{relic:'Drum'}},
+ {id:'bts',n:'Before the Storm',loc:'agadir',dest:'larochelle',t:6,req:['dnh']},
+ {id:'a1c',n:'Alliance I',loc:'stmalo',t:6,req:['cn'],prize:{relic:'Cabinet'}},
+ {id:'dte',n:'Door to Europe',loc:'benguela',dest:'bristol',t:7,req:['tbl']},
+ {id:'a2c',n:'Alliance II',loc:'brest',dest:'bissau',t:7,req:['mus']},
+ {id:'sj',n:'A Sweet Journey',loc:'larochelle',t:7,req:['bts'],prize:{relic:'Harbor Scene at Sunset'}},
+ {id:'hb',n:'Homeward Bound',loc:'bristol',t:8,req:['dte'],prize:{boon:'figurehead'}},
+ {id:'wti',n:'Welcoming the Irish',loc:'bristol',dest:'ziguinchor',t:8,req:['dte']},
+ {id:'ga',n:'Giant Appetites',loc:'ziguinchor',dest:'galway',t:8,req:['wti'],prize:{relic:'Statue of St. Livertin'}},
+ {id:'mt1',n:'Meet the Tributes I',loc:'galway',dest:'london',t:9,req:['ga']},
+ {id:'pa',n:'A Piece of the Action',loc:'galway',t:9,req:['ga'],prize:{gems:4}},
+ {id:'alv',n:'A Long Voyage',loc:'london',dest:'barcelona',t:9,req:['mt1'],prize:{relic:'Oboe'}},
+ {id:'anc',n:'A New Cathedral',loc:'london',t:10,req:['mt1'],prize:{relic:'Merry Company'}},
+ {id:'poet',n:'The Poet',loc:'barcelona',dest:'marseille',t:10,req:['alv']},
+ {id:'gr3',n:'Great Reputation III',loc:'marseille',t:11,req:['poet'],prize:{relic:"Officer's Outfit"}},
+ {id:'nm',n:'A New Medicine',loc:'marseille',t:11,req:['poet'],prize:{relic:'Turkins Copper Field Flask'}}];
+const BOONS={diamond:{n:'Diamond Sails',desc:'+2 flagship speed',apply:f=>f.speed+=2},
+  figurehead:{n:'Royal Fortune Figurehead',desc:'+2 flagship guns',apply:f=>f.guns+=2},
+  gilded:{n:'Gilded Wheel',desc:'+14 flagship max hull',apply:f=>f.max+=14}};
+const FLAGBASE={speed:5,guns:6,hull:45,cargo:25},MAXTIER=5;
+const FLAGTIERS={plate:{n:'Hull Plating',icon:'plate',desc:'+12 max hull per level. More hull means the flagship survives longer in a fight.'},
+  guns:{n:'Gun Decks',icon:'guns',desc:'+2 guns per level. Guns are the main source of damage you deal.'},
+  rig:{n:'Rigging',icon:'rig',desc:'+2 speed per level. Speed shortens trade runs and helps you escape a losing battle.'},
+  hold:{n:'Cargo Hold',icon:'hold',desc:'+10 cargo per level. Cargo space limits how much a trade run can carry.'}};
+function tierCost(t){return {reales:300*(t+1),parts:8*(t+1),gems:t>=3?(t-2):0};}
+const FITTINGS={
+  grapple:{n:'Grappling Hooks',desc:'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.',cost:{reales:800,parts:20,gems:0}},
+  magazine:{n:'Powder Magazine',desc:'Start every battle with one extra fire barrel.',cost:{reales:1200,parts:25,gems:2}},
+  copper:{n:'Copper Sheathing',desc:'The flagship takes no damage from storms or failed trade runs.',cost:{reales:1500,parts:30,gems:2}},
+  chase:{n:'Chase Guns',desc:'The flagship fires twice each round. The second shot deals 60% damage.',cost:{reales:2200,parts:40,gems:4}}};
+function newFlag(){return {id:'FLAG',type:'flagship',name:'Wraith',tiers:{plate:0,guns:0,rig:0,hold:0},fittings:[],
+  hull:FLAGBASE.hull,max:FLAGBASE.hull,speed:FLAGBASE.speed,guns:FLAGBASE.guns,cargo:FLAGBASE.cargo};}
+function syncFlag(){const f=S.flag,oldMax=f.max;
+  f.max=FLAGBASE.hull+f.tiers.plate*12;f.guns=FLAGBASE.guns+f.tiers.guns*2;
+  f.speed=FLAGBASE.speed+f.tiers.rig*2;f.cargo=FLAGBASE.cargo+f.tiers.hold*10;
+  (S.flagBoons||[]).forEach(b=>{if(BOONS[b])BOONS[b].apply(f);});
+  if(f.max>oldMax)f.hull=Math.min(f.max,f.hull+(f.max-oldMax));
+  f.hull=Math.min(f.hull,f.max);}
+function hasFit(k){return S.flag&&S.flag.fittings.includes(k);}
+
+/* ============ STATE ============ */
+let S=null,shipSeq=1,voySeq=1,routes=[];
+function newShip(type,hullPct){const t=TYPES[type];
+  return {id:'s'+(shipSeq++)+'_'+(Date.now()%100000),type,name:NAMES[Math.floor(Math.random()*NAMES.length)],
+    hull:Math.max(1,Math.round(t.hull*(hullPct??1))),max:t.hull,speed:t.speed,guns:t.guns,cargo:t.cargo};}
+function newGame(){S={reales:500,cargo:20,parts:10,gems:0,barrels:3,docks:3,
+  ships:[newShip('schooner'),newShip('schooner'),newShip('brig')],flag:newFlag(),
+  unlocked:['caribbean'],done:{},patrol:{},noto:{},bossBeaten:{},rt:{},voyages:[],
+  ports:['staug'],charters:{},relics:[],flagBoons:[],won:false,
+  tut:localStorage.getItem('sp_tutdone')?'done':0};
+  routes=makeRoutes();save();render();}
+function save(){localStorage.setItem('saltpowder',JSON.stringify(S));}
+function load(){try{const d=localStorage.getItem('saltpowder');
+  if(d){S=JSON.parse(d);
+    if(S.barrels==null)S.barrels=3;if(S.tut===undefined)S.tut='done';
+    if(!S.flag)S.flag=newFlag();
+    if(!S.flag.tiers)S.flag.tiers={plate:0,guns:0,rig:0,hold:0};
+    if(!S.flag.fittings)S.flag.fittings=[];
+    S.noto=S.noto||{};S.bossBeaten=S.bossBeaten||{};S.rt=S.rt||{};S.voyages=S.voyages||[];
+    S.ports=S.ports||['staug'];S.charters=S.charters||{};S.relics=S.relics||[];S.flagBoons=S.flagBoons||[];
+    S.patrol=S.patrol||{};S.done=S.done||{};
+    if(!S.ports.includes('staug'))S.ports.push('staug');
+    delete S.routes;delete S.day;delete S.lastSail;
+    routes=makeRoutes();syncFlag();
+    S.voyages.forEach(v=>{const n=parseInt((v.id||'v0').replace(/\D/g,''),10);if(n>=voySeq)voySeq=n+1;});
+    return true}}catch(e){}return false;}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const now=()=>Date.now();
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+function fx(tpl,...a){let i=0;return tpl.replace(/%[sd]/g,()=>a[i++]);}
+function allShips(){return [S.flag,...S.ships];}
+function findShip(id){return id==='FLAG'?S.flag:S.ships.find(s=>s.id===id);}
+function tname(s){return s.type==='flagship'?'Flagship':TYPES[s.type].n;}
+function repRate(s){return s.type==='flagship'?6:TYPES[s.type].rep;}
+function cond(s){return s.hull<=0?'CRIPPLED':(s.hull<s.max*0.6?'DAMAGED':'SEAWORTHY');}
+function condColor(c){return c==='CRIPPLED'?'var(--red)':(c==='DAMAGED'?'var(--yel)':'var(--grn)');}
+function power(s){return Math.round(s.guns*2+s.speed+s.hull/5);}
+function fleetPower(l){return l.reduce((a,s)=>a+power(s),0);}
+function fleetHull(l){return l.reduce((a,s)=>a+Math.max(0,s.hull),0);}
+function rtOf(id){if(!S.rt[id])S.rt[id]={sec:0,ts:now()};return S.rt[id];}
+function secNow(id){const r=rtOf(id);return Math.max(0,Math.min(100,r.sec-(now()-r.ts)/60000*SEC_DECAY_PER_MIN));}
+function addSec(id,n){const r=rtOf(id);r.sec=Math.max(0,Math.min(100,secNow(id)+n));r.ts=now();}
+function effDanger(r){const base=r.danger||0,red=Math.floor(secNow(r.id)/40),pat=(S.patrol[r.region]||0)>0?1:0;
+  return Math.max(0,Math.min(3,base-red-pat));}
+function canVoyage(r){return ['trade','port','salvage'].includes(r.type);}
+function voyageOpen(r){return canVoyage(r)&&effDanger(r)<=1;}
+function battleChance(r){const d=effDanger(r);
+  if(['raid','blockade','boss','charter'].includes(r.type))return 1;
+  if(r.type==='escort')return Math.min(0.9,[0.05,0.35,0.72,1.0][d]+0.3);
+  return [0.05,0.35,0.72,1.0][d];}
+function tradeChance(r,fp){const d=effDanger(r),ratio=r.power?fp/r.power:1;
+  return Math.max(20,Math.min(97,Math.round(100*(0.55+0.35*Math.min(ratio,1.4)-0.09*d))));}
+function salvageChance(r,fh){return Math.max(20,Math.min(95,Math.round(100*(0.35+0.5*Math.min(fh/r.hullreq,1.3)))));}
+function repairCost(s){return Math.ceil((s.max-s.hull)*repRate(s));}
+function fmt(o){const p=[];
+  if(o.reales)p.push(iconHTML('reales',19)+o.reales);
+  if(o.parts)p.push(iconHTML('parts',19)+o.parts);
+  if(o.gems)p.push(iconHTML('gems',19)+o.gems);
+  return p.join('  ');}
+function costStr(c){return `${iconHTML('reales',19)}${c.reales}${c.parts?' '+iconHTML('parts',19)+c.parts:''}${c.gems?' '+iconHTML('gems',19)+c.gems:''}`;}
+function canPay(c){return S.reales>=c.reales&&S.parts>=(c.parts||0)&&S.gems>=(c.gems||0);}
+function pay(c){S.reales-=c.reales;S.parts-=(c.parts||0);S.gems-=(c.gems||0);}
+function hullBar(s){const p=Math.max(0,s.hull/s.max*100);const c=p<26?'crit':(p<60?'low':'');
+  return `<div class="bar"><i class="${c}" style="width:${p}%"></i></div>`;}
+function notoGain(r){let n=8+effDanger(r)*5+(NOTO_BONUS[r.type]||0);
+  if((S.done[r.id]||0)>=3)n=Math.ceil(n/2);return Math.max(3,n);}
+function bossReady(rk){const b=BOSSES[rk];return b&&!S.bossBeaten[rk]&&(S.noto[rk]||0)>=b.noto;}
+function anyBossReady(){return Object.keys(REGIONS).some(rk=>S.unlocked.includes(rk)&&bossReady(rk));}
+function charterDone(id){return !!S.charters[id];}
+function charterAvailable(c){if(charterDone(c.id))return false;
+  const p=PORTS[c.loc];
+  if(!S.unlocked.includes(p.region)||!S.ports.includes(c.loc))return false;
+  return c.req.every(charterDone);}
+function chartersAt(pid){return CHARTERS.filter(c=>c.loc===pid&&charterAvailable(c));}
+function portRoute(pid){const p=PORTS[pid],t=p.t;
+  return {id:'pt_'+pid,region:p.region,n:p.n+' Lane',type:'port',danger:Math.min(3,Math.floor((t-1)/3)),
+    cargo:6+3*t,len:Math.max(1,Math.ceil(t/2)),power:16*t,
+    rew:{reales:110*t,parts:Math.ceil(t/2),gems:t>=8?1:0},x:p.x,y:p.y};}
+function charterRoute(c){const p=PORTS[c.loc];
+  return {id:'ch_'+c.id,region:p.region,n:c.n,type:'charter',charterDef:c,danger:Math.min(3,Math.floor((c.t-1)/3)),
+    len:Math.max(1,Math.ceil(c.t/2)),power:18*c.t,rew:{reales:140*c.t,parts:2*c.t},x:p.x,y:p.y};}
+function bossAsRoute(b){return {id:b.id,region:b.region,n:b.n,type:'boss',danger:3,len:0,power:b.power,rew:b.rew,bossDef:b,final:b.final,x:b.x,y:b.y};}
+function allRoutes(){
+  const out=routes.filter(r=>S.unlocked.includes(r.region)&&(!r.requiresBoss||S.bossBeaten[r.requiresBoss]));
+  S.ports.forEach(pid=>{const p=PORTS[pid];
+    if(!p||!S.unlocked.includes(p.region))return;
+    const chs=chartersAt(pid);
+    out.push(chs.length?charterRoute(chs[0]):portRoute(pid));});
+  return out;}
+function routeById(id){
+  let r=routes.find(x=>x.id===id);if(r)return r;
+  const bk=Object.keys(BOSSES).find(k=>BOSSES[k].id===id);
+  if(bk)return bossAsRoute(BOSSES[bk]);
+  if(id.startsWith('pt_')){const pid=id.slice(3),chs=chartersAt(pid);
+    return chs.length?charterRoute(chs[0]):portRoute(pid);}
+  if(id.startsWith('ch_')){const c=CHARTERS.find(x=>'ch_'+x.id===id);if(c)return charterRoute(c);}
+  return null;}
+function busyIds(){const s=new Set();S.voyages.forEach(v=>v.ships.forEach(i=>s.add(i)));return s;}
+function isBusy(id){return S.voyages.some(v=>v.ships.includes(id));}
+function voyageOf(id){return S.voyages.find(v=>v.ships.includes(id));}
+function voyDuration(r,fleet){const avg=fleet.reduce((a,s)=>a+s.speed,0)/Math.max(1,fleet.length);
+  return Math.max(45,Math.round(r.len*VOY_SEC_PER_DAY*Math.max(0.45,1-(avg-4)*0.07)));}
+function voyReady(v){return now()>=v.endsAt;}
+function readyCount(){return S.voyages.filter(voyReady).length;}
+function fmtDur(sec){sec=Math.max(0,Math.round(sec));
+  const m=Math.floor(sec/60),s=sec%60;
+  if(m>=60)return Math.floor(m/60)+'h '+(m%60)+'m';
+  return m+':'+String(s).padStart(2,'0');}
+function rushCost(v){return Math.max(1,Math.ceil((v.endsAt-now())/60000*RUSH_GEM_PER_MIN));}
+
+/* ============ RESOURCE STRIP ============ */
+const RES_DEFS=[['reales','rReales','wReales','Reales'],['cargo','rCargo','wCargo','Cargo'],
+  ['parts','rParts','wParts','Parts'],['barrels','rBarrels','wBarrels','Powder'],
+  ['gems','rGems','wGems','Gems'],['sea','rSea','wSea','At Sea']];
+function buildResStrip(){
+  $('resStrip').innerHTML=RES_DEFS.map(([ic,vid,wid,lbl])=>
+    `<div class="resitem" id="${wid}">${iconHTML(ic,0,'resic')}<b id="${vid}">0</b><span>${lbl}</span></div>`).join('');}
+const RES={};
+function updateRes(){
+  const vals={reales:S.reales,cargo:S.cargo,parts:S.parts,barrels:S.barrels,gems:S.gems,sea:busyIds().size};
+  RES_DEFS.forEach(([ic,id,w])=>{
+    const k=ic,el=$(id);if(!el)return;
+    const to=vals[k],from=RES[k]??to;RES[k]=to;
+    if(from===to){el.textContent=to;return;}
+    if(w)bump(w);
+    const t0=performance.now();
+    (function tick(t){const p=Math.min(1,(t-t0)/450);
+      el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));
+      if(p<1)requestAnimationFrame(tick);})(t0);});
+  const b=$('voyBadge'),n=S.voyages.length,rdy=readyCount();
+  if(n){b.style.display='';b.textContent=rdy?rdy:n;b.className='badge'+(rdy?' rdy':'');}
+  else b.style.display='none';}
+
+/* ============ FLAVOUR BANKS ============ */
+const HIT_P=['%s finds the range and puts a broadside into %s — %d.',
+ '%s heels over and rakes %s stem to stern for %d.',
+ "%s's gunners work like men possessed — %s takes %d.",
+ 'Smoke rolls off %s as her shot bites into %s for %d.',
+ '%s comes about hard and hammers %s for %d.',
+ '%s holds her fire a beat too long, then opens up on %s — %d.'];
+const HIT_E=['%s answers from out of the smoke — %s takes %d and shudders with it.',
+ '%s finds your line. %s catches the worst of it: %d.',
+ 'A ragged volley from %s. %s loses %d and a good deal of rigging.',
+ '%s will not be ignored — %s takes %d.',
+ '%s crosses your wake and rakes %s for %d.'];
+const SINK=['%s takes water fast and settles by the head — she is finished.',
+ '%s loses her mainmast and goes silent. Nothing left aboard her but smoke.',
+ 'A shot finds something vital in %s. She burns where she sits.',
+ '%s rolls over and shows her keel to the sky.',
+ 'The fight goes out of %s all at once. She is done.'];
+const CRIP=['%s is holed below the waterline and out of the fight.',
+ '%s can no longer answer her helm — she drifts, crippled.',
+ 'They have gutted %s. Her guns fall silent.'];
+
+/* ============ TUTORIAL ============ */
+const TUTSTEPS=[
+ {modal:1,title:'Welcome Aboard, Captain',
+  text:'You have inherited a flagship, three worn-out ships, 500 reales and a chart of the Caribbean. Turn that into the most feared fleet on the ocean.',btn:'Begin'},
+ {sel:()=>document.querySelector('#main .card'),lockTab:'fleet',title:'Your Ships',
+  text:'This is Port, where your ships live. Each ship has four numbers: Speed, Guns, Hull and Cargo. Hull is health — drop it to zero and the ship is crippled until you pay to repair it here.',btn:'Next'},
+ {sel:()=>$('tabRoutes'),lockTab:'routes',title:'The Naval Map',
+  text:'Every reale you earn comes from the lanes on the map. Open the Map.',wait:'tab:routes'},
+ {sel:()=>$('node_c1'),lockTab:'routes',title:'A Shipping Lane',
+  text:'Green markers are safe lanes. The one near home port is the Havana to Nassau crossing. Tap it.',wait:'route:c1'},
+ {modal:1,title:'Two Ways to Sail',
+  text:'Each lane can be played two ways. ATTACK starts a battle immediately, and winning makes the lane safer. TRADE sends ships away for several real minutes to earn money, but they cannot fight while gone — and traders refuse to sail a lane that is still dangerous. So: attack first, trade afterwards.',btn:'Understood'},
+ {sel:()=>$('shipPicks'),lockTab:'routes',title:'Form Your Line',
+  text:'Tap two ships. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less damage.',wait:'ships:2'},
+ {sel:()=>$('sailBtn'),lockTab:'routes',title:'Clear the Lane',
+  text:'Attack. Winning raises this lane\'s security, which lowers its danger rating.',wait:'launch'},
+ {modal:1,when:()=>$('battleScr').classList.contains('on'),title:'Broadsides',
+  text:'Tap an enemy to target it, then give one order per round. FOCUS FIRE — every ship shoots your target. SPREAD FIRE — each ship picks its own. FIRE BARRELS — 60% more damage, limited supply. BRACE — halves damage taken and dealt. BOARD — capture a ship once it is below 40% hull.',btn:'To Arms'},
+ {sel:()=>$('bcmds'),when:()=>$('battleScr').classList.contains('on'),title:'Send Them Under',
+  text:'Sink them. Keep using Focus Fire on your target until it goes down.',wait:'battle:end'},
+ {sel:()=>$('cap0'),when:()=>$('overlay').classList.contains('on')&&$('cap0'),title:'Prizes of War',
+  text:'A beaten ship is a choice. KEEP adds it to your fleet, but only if you have a free berth — right now you do not. SCRAP breaks it up for parts and a gem. RANSOM sells the crew for reales.',wait:['prize','sheet:close']},
+ {sel:()=>$('tabRoutes'),lockTab:'routes',title:'Now Trade It',
+  text:'The lane is clear, so traders will sail it now. Open the Map and tap that crossing again.',wait:'route:c1'},
+ {sel:()=>$('modeVoy'),lockTab:'routes',title:'Send a Trade Run',
+  text:'Switch to the TRADE tab, pick a ship with cargo space, and send it. It will be gone for a few real minutes and cannot fight until it returns.',wait:['voyage:launch','sheet:close']},
+ {sel:()=>$('tabVoy'),lockTab:'voy',title:'Ships at Sea',
+  text:'Everything you have sent out shows here with a countdown. Collect the reward once a fleet docks.',wait:'tab:voy'},
+ {sel:()=>$('tabFlag'),lockTab:'flag',title:'Your Flagship',
+  text:'One ship is permanently yours. Open the Flagship.',wait:'tab:flag'},
+ {sel:()=>document.querySelector('#main .hero'),lockTab:'flag',title:'She Is Yours Alone',
+  text:'Your flagship uses no berth, cannot be scuttled, and is the only ship you can upgrade. Spend reales and parts on its hull, guns, rigging and hold, and add fittings that change how battles work. Admirals will only fight your flagship.',btn:'Next'},
+ {modal:1,title:'Charters, Notoriety and Admirals',
+  text:'Gold stars are CHARTERS — one-off jobs that permanently open a new port and often award a relic. Everything you finish raises NOTORIETY in that region; fill the bar and the region\'s admiral sails out to fight you. Beat the admiral and the next region of the map unlocks. One warning: lane security decays over time, so a lane you cleared an hour ago may be dangerous again.',btn:'Start Playing'}];
+function tutActive(){return S&&typeof S.tut==='number';}
+function tutEvent(ev){if(!tutActive())return;
+  for(let i=S.tut;i<Math.min(S.tut+3,TUTSTEPS.length);i++){
+    const w=TUTSTEPS[i].wait;
+    if(w&&(Array.isArray(w)?w.includes(ev):w===ev)){S.tut=i+1;save();refreshTut();return;}}}
+function tutNext(){if(!tutActive())return;S.tut++;save();
+  if(S.tut>=TUTSTEPS.length)finishTut();else refreshTut();}
+function tutSkip(){finishTut();}
+function finishTut(){S.tut='done';localStorage.setItem('sp_tutdone','1');save();
+  $('tutHi').style.display='none';$('tutTip').style.display='none';}
+let tutTarget=null,tutRaf=0,tutShownStep=-1;
+function ringTrack(){
+  const hi=$('tutHi');
+  if(!tutActive()||!tutTarget||!tutTarget.isConnected){return;}
+  const b=tutTarget.getBoundingClientRect();
+  if(!b.width||b.bottom<=2||b.top>=innerHeight-2){hi.style.display='none';return;}
+  const L=Math.max(4,b.left-6),T=Math.max(4,b.top-6),
+        R=Math.min(innerWidth-4,b.right+6),B=Math.min(innerHeight-4,b.bottom+6);
+  hi.style.display='block';hi.style.left=L+'px';hi.style.top=T+'px';
+  hi.style.width=Math.max(0,R-L)+'px';hi.style.height=Math.max(0,B-T)+'px';}
+addEventListener('scroll',()=>{if(!tutActive()||!tutTarget)return;
+  cancelAnimationFrame(tutRaf);tutRaf=requestAnimationFrame(ringTrack);},true);
+function refreshTut(){
+  const hi=$('tutHi'),tip=$('tutTip');
+  const hide=()=>{hi.style.display='none';tip.style.display='none';};
+  if(!tutActive()){tutTarget=null;hide();return;}
+  if(S.tut>=TUTSTEPS.length){finishTut();return;}
+  const bn=$('banner');
+  if(bn&&bn.classList.contains('on')){hide();return;}
+  const st=TUTSTEPS[S.tut];
+  if(st.when&&!st.when()){hide();return;}
+  if(st.modal){tutTarget=null;hi.className='full';hi.style.display='block';
+    showTip(null,st);tutShownStep=S.tut;return;}
+  hi.className='';
+  const el=st.sel&&st.sel();
+  if(!el){tutTarget=null;hide();return;}
+  tutTarget=el;
+  const fresh=tutShownStep!==S.tut;tutShownStep=S.tut;
+  if(fresh){try{el.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}}
+  requestAnimationFrame(()=>{
+    ringTrack();
+    const b=el.getBoundingClientRect();
+    showTip({top:b.top,bottom:b.bottom},st);});}
+function safeInsets(){const p=$('safeProbe');if(!p)return{t:0,b:0};
+  const cs=getComputedStyle(p);
+  return {t:parseFloat(cs.borderTopWidth)||0,b:parseFloat(cs.borderBottomWidth)||0};}
+function showTip(r,st){
+  const tip=$('tutTip');
+  tip.innerHTML=`<div class="ttbody"><div class="tt">${st.title}</div><div class="tx">${st.text}</div></div>
+    <div class="ttfoot">
+      ${st.btn?`<button class="btn sm gold" onclick="tutNext()">${st.btn}</button>`
+        :'<span class="sub" style="font-style:italic;flex:1">Do it to continue…</span>'}
+      <button class="skiplink" onclick="tutSkip()">Skip</button></div>`;
+  tip.style.display='flex';
+  const ins=safeInsets(),pad=12;
+  const topLim=ins.t+pad,botLim=innerHeight-ins.b-pad;
+  const band=Math.max(170,botLim-topLim);
+  tip.style.maxHeight=Math.round(band*(r?0.52:0.82))+'px';
+  let th=tip.offsetHeight,top;
+  if(!r){top=topLim+Math.max(0,(band-th)/2);}
+  else{
+    const above=Math.max(0,r.top-pad-topLim),below=Math.max(0,botLim-(r.bottom+pad));
+    const dockBottom=below>=above,room=dockBottom?below:above;
+    if(room>190){tip.style.maxHeight=Math.round(Math.min(room,band*0.52))+'px';th=tip.offsetHeight;}
+    top=dockBottom?botLim-th:topLim;}
+  tip.style.top=Math.round(Math.min(Math.max(topLim,top),Math.max(topLim,botLim-th)))+'px';}
+addEventListener('resize',refreshTut);
+
+/* ============ TABS ============ */
+let tab='fleet';
+const TABIDS={fleet:'tabFleet',flag:'tabFlag',routes:'tabRoutes',voy:'tabVoy',port:'tabPort'};
+Object.entries(TABIDS).forEach(([t,id])=>{$(id).onclick=()=>{
+  if(t===tab)return;
+  if(tutActive()){const st=TUTSTEPS[S.tut];
+    if(st&&st.lockTab&&st.lockTab!==t){toast('Finish this tutorial step first, or skip it below.','bad');return;}}
+  wipe(()=>{tab=t;render();tutEvent('tab:'+t);});};});
+function gotoTab(t){wipe(()=>{tab=t;render();});}
+function render(){updateRes();
+  document.querySelectorAll('nav button').forEach(b=>{b.classList.remove('on');b.classList.remove('alert');});
+  $(TABIDS[tab]).classList.add('on');
+  if(anyBossReady()&&tab!=='routes')$('tabRoutes').classList.add('alert');
+  $('main').className=tab==='routes'?'nopad':'';
+  if(tab==='fleet')renderFleet();else if(tab==='flag')renderFlag();
+  else if(tab==='routes')renderMap();else if(tab==='voy')renderVoyages();else renderMarket();
+  save();refreshTut();}
+
+/* ============ PORT (your ships) ============ */
+function renderFleet(){
+  const f=S.flag,fc=cond(f),fBusy=isBusy('FLAG');let i=0;
+  let h=`<div class="card flagcard ${fBusy?'atsea':''}" style="--i:${i++}"><div class="row">
+      <div><h3 style="color:var(--goldhi)">${iconHTML('flag',24)} ${f.name}</h3>
+      <div class="sub">Flagship · hull ${Math.max(0,f.hull)}/${f.max} · <span style="color:${condColor(fc)}">${fc}</span>${fBusy?' · <b style="color:var(--blu)">AT SEA</b>':''}</div></div>
+      <button class="btn sm gold" onclick="gotoTab('flag')">Upgrade</button></div></div>`;
+  h+=`<div class="sect" style="--i:${i++}">Your Ships — ${S.ships.length}/${S.docks} berths</div>`;
+  if(!S.ships.length)h+=`<div class="card sub" style="--i:${i++}">No ships in port. Buy one in the Market.</div>`;
+  S.ships.forEach(s=>{const c=cond(s),bz=isBusy(s.id),v=bz?voyageOf(s.id):null;i++;
+    h+=`<div class="card ${bz?'atsea':''}" style="--i:${i}"><div style="display:flex;gap:14px;align-items:center">
+      <div class="fleetship">${shipHTML(s.type,'player',1.0,bz?'sea':'')}</div>
+      <div style="flex:1;min-width:0">
+        <div class="row"><h3>${s.name}</h3>
+          <span style="font-family:'Oswald';font-size:14px;letter-spacing:1.5px;color:${bz?'var(--blu)':condColor(c)}">${bz?'AT SEA':c}</span></div>
+        <div class="sub">${tname(s)} · Power ${power(s)}${bz?` · ${v.routeName}`:''}</div>
+        ${hullBar(s)}
+        <div class="stats"><span>SPD <b>${s.speed}</b></span><span>GUNS <b>${s.guns}</b></span><span>HULL <b>${Math.max(0,s.hull)}/${s.max}</b></span><span>CARGO <b>${s.cargo}</b></span></div>
+        ${bz?`<div class="row" style="margin-top:11px"><span class="sub">Home in</span>
+              <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt-now())/1000)}</span></div>`
+            :`<div class="row" style="margin-top:11px">
+          <button class="btn sm" ${s.hull>=s.max?'disabled':''} onclick="doRepair('${s.id}')">Repair · ${iconHTML('reales',19)}${repairCost(s)}</button>
+          <button class="btn sm red" onclick="doScrap('${s.id}')">Scuttle · ${iconHTML('parts',19)}${TYPES[s.type].salv}</button></div>`}
+      </div></div></div>`;});
+  $('main').innerHTML=h;}
+function doRepair(id){const s=findShip(id);if(!s)return;
+  if(isBusy(id))return toast('That ship is away trading. Wait for it to return.','bad');
+  const c=repairCost(s);
+  if(S.reales<c)return toast('Not enough reales to repair that ship.','bad');
+  S.reales-=c;s.hull=s.max;Snd.play('repair');
+  toast('The '+s.name+' is fully repaired.');render();}
+function doScrap(id){if(id==='FLAG')return;
+  if(isBusy(id))return toast('That ship is away trading. Wait for it to return.','bad');
+  const s=findShip(id);
+  if(!confirm('Scuttle the '+s.name+' for '+TYPES[s.type].salv+' parts? This cannot be undone.'))return;
+  S.parts+=TYPES[s.type].salv;S.ships=S.ships.filter(x=>x.id!==id);
+  toast('The '+s.name+' scuttled for '+TYPES[s.type].salv+' parts.');render();}
+
+/* ============ FLAGSHIP ============ */
+function renderFlag(){
+  const f=S.flag,c=cond(f),bz=isBusy('FLAG');let i=2;
+  let h=`<div class="hero">
+      <div class="heroStage">${shipHTML('flagship','flag',2.6,bz?'sea':'')}</div>
+      <div class="hname">${f.name}</div>
+      <div class="hsub">${bz?'Presently at sea under your colours':'Riding at anchor, awaiting your word'}</div>
+      <div class="hstats">
+        <div class="hstat"><b>${f.speed}</b><span>Speed</span></div>
+        <div class="hstat"><b>${f.guns}</b><span>Guns</span></div>
+        <div class="hstat"><b>${Math.max(0,f.hull)}<span style="font-size:15px;color:var(--dim)">/${f.max}</span></b><span>Hull</span></div>
+        <div class="hstat"><b>${f.cargo}</b><span>Cargo</span></div>
+        <div class="hstat"><b>${power(f)}</b><span>Power</span></div>
+      </div></div>
+    <div class="card flagcard" style="--i:1">
+      <div class="row"><h3 style="color:var(--goldhi)">Condition</h3>
+        <span style="font-family:'Oswald';font-size:14px;letter-spacing:1.5px;color:${bz?'var(--blu)':condColor(c)}">${bz?'AT SEA':c}</span></div>
+      ${hullBar(f)}
+      <div class="sub" style="margin-top:7px">Your flagship never takes up a berth and can never be scuttled. It is the only ship you can upgrade.</div>
+      <div class="row" style="margin-top:11px">
+        <button class="btn sm" ${f.hull>=f.max||bz?'disabled':''} onclick="doRepair('FLAG')">Repair · ${iconHTML('reales',19)}${repairCost(f)}</button>
+        <button class="btn sm" onclick="renameFlag()">Rename</button>
+      </div></div>`;
+  if(S.flagBoons.length){
+    h+=`<div class="card flagcard" style="--i:${i++}"><h3 style="color:var(--goldhi)">Legendary Refits</h3>
+      <div class="sub">${S.flagBoons.map(b=>`<b>${BOONS[b].n}</b> — ${BOONS[b].desc}`).join('<br>')}</div></div>`;}
+  h+=`<div class="sect" style="--i:${i++}">Upgrades</div>`;
+  Object.entries(FLAGTIERS).forEach(([k,d])=>{
+    const t=f.tiers[k],maxed=t>=MAXTIER,cost=tierCost(t),can=!maxed&&canPay(cost);
+    h+=`<div class="card" style="--i:${i++}"><div class="row">
+      <div style="flex:1"><h3>${iconHTML(d.icon,30)} ${d.n}</h3>
+        <div class="sub">${d.desc}<br><span class="pips">${'●'.repeat(t)}${'○'.repeat(MAXTIER-t)}</span></div></div>
+      <button class="btn sm gold" ${can?'':'disabled'} onclick="upFlag('${k}')">${maxed?'MAX':costStr(cost)}</button></div></div>`;});
+  h+=`<div class="sect" style="--i:${i++}">Fittings</div>`;
+  Object.entries(FITTINGS).forEach(([k,d])=>{
+    const owned=hasFit(k),can=!owned&&canPay(d.cost);
+    h+=`<div class="card" style="--i:${i++};${owned?'border-color:#8a793e':''}"><div class="row">
+      <div style="flex:1"><h3 style="${owned?'color:var(--goldhi)':''}">${d.n}</h3>
+        <div class="sub">${d.desc}</div></div>
+      <button class="btn sm gold" ${can?'':'disabled'} onclick="buyFit('${k}')">${owned?'FITTED':costStr(d.cost)}</button></div></div>`;});
+  h+=`<div class="sect" style="--i:${i++}">Captain's Quarters — ${S.relics.length} Relic${S.relics.length!==1?'s':''}</div>`;
+  h+=S.relics.length
+    ?`<div class="relicgrid" style="animation:cardIn .4s ease both">${S.relics.map(r=>`<div class="relic">${iconHTML('relic',26)}${r}</div>`).join('')}</div>`
+    :`<div class="card sub" style="--i:${i++}">No relics yet. Relics are rewards from charters — the gold stars on the map.</div>`;
+  $('main').innerHTML=h;}
+function upFlag(k){const t=S.flag.tiers[k];if(t>=MAXTIER)return;
+  const c=tierCost(t);if(!canPay(c))return toast('Not enough to pay for that upgrade.','bad');
+  pay(c);S.flag.tiers[k]++;syncFlag();Snd.play('upgrade');
+  toast(FLAGTIERS[k].n+' brought up to tier '+S.flag.tiers[k]+'.','gold');render();}
+function buyFit(k){if(hasFit(k))return;const d=FITTINGS[k];
+  if(!canPay(d.cost))return toast('Not enough to pay for that upgrade.','bad');
+  pay(d.cost);S.flag.fittings.push(k);Snd.play('upgrade');
+  toast(d.n+' fitted aboard the '+S.flag.name+'.','gold');render();}
+function renameFlag(){const n=prompt('What will you call her?',S.flag.name);
+  if(n&&n.trim()){S.flag.name=n.trim().slice(0,20);toast('Flagship renamed to '+S.flag.name+'.');render();}}
+
+/* ============ MAP ============ */
+function starPath(x,y,r){return `M${x},${y-r} L${x+r*0.35},${y-r*0.35} L${x+r},${y} L${x+r*0.35},${y+r*0.35} L${x},${y+r} L${x-r*0.35},${y+r*0.35} L${x-r},${y} L${x-r*0.35},${y-r*0.35} Z`;}
+function nodeShapeS(r,col,k){const {x,y}=r,s=5.5*k;
+  if(r.type==='patrol')return `<rect x="${x-s}" y="${y-s}" width="${s*2}" height="${s*2}" transform="rotate(45 ${x} ${y})" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  if(r.type==='raid'||r.type==='blockade')return `<path d="M${x},${y-s*1.35} L${x+s*1.2},${y+s*0.85} L${x-s*1.2},${y+s*0.85} Z" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  if(r.type==='salvage')return `<circle cx="${x}" cy="${y}" r="${s}" fill="none" stroke="${col}" stroke-width="${2.8*k}"/>`;
+  if(r.type==='escort')return `<rect x="${x-s}" y="${y-s}" width="${s*2}" height="${s*2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  return `<circle cx="${x}" cy="${y}" r="${s}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/><circle cx="${x}" cy="${y}" r="${2*k}" fill="#eaf4f4"/>`;}
+function isWideMap(){return innerWidth>=900&&innerWidth>innerHeight;}
+function renderMap(){
+  const host=$('main');
+  const CW=Math.max(320,host.clientWidth||innerWidth);
+  const CH=Math.max(300,host.clientHeight||(innerHeight-190));
+  const wide=CW>=760;
+  const legW=wide?Math.min(320,CW*0.17)+46:0;
+  const padX=Math.max(64,CW*0.06), padTop=Math.max(52,CH*0.09), padBot=Math.max(84,CH*0.14);
+  const x0=padX+legW, x1=CW-padX, y0=padTop, y1=CH-padBot;
+  const MX=x=>+(x0+(x/360)*(x1-x0)).toFixed(1);
+  const MY=y=>+(y0+(y/560)*(y1-y0)).toFixed(1);
+  const NR=Math.max(1.0,Math.min(CW/900,CH/620)*1.5);
+  const LBL=Math.max(16,Math.round(13*NR)), HLBL=Math.max(18,Math.round(14.5*NR));
+  const LSX=CW/360, LSY=CH/560;
+  let lines='',nodes='',bossNodes='',voyLines='';
+  const active={};S.voyages.forEach(v=>{active[v.routeId]=v;});
+  const hx=MX(HOME.x),hy=MY(HOME.y);
+  allRoutes().forEach(r=>{
+    const d=effDanger(r),col=DHEX[d],isCh=r.type==='charter',open=voyageOpen(r);
+    const x=MX(r.x),y=MY(r.y);
+    lines+=`<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="${col}" stroke-width="${1.6*NR}" opacity="0.7"/>`;
+    if(active[r.id])voyLines+=`<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#7ab0e0" stroke-width="${2.4*NR}" opacity="0.95"/>`;
+    const isPort=r.id.startsWith('pt_')||isCh;
+    nodes+=`<g id="node_${r.id}" onclick="openMission('${r.id}')" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="${22*NR}" fill="transparent"/>
+      ${isCh?`<path class="charterstar" d="${starPath(x,y,10*NR)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
+        :`<circle class="nodeglow" cx="${x}" cy="${y}" r="${13*NR}" fill="${col}"/>${nodeShapeS({...r,x,y},col,NR)}`}
+      ${open&&!isCh?`<circle cx="${x+10*NR}" cy="${y-10*NR}" r="${4.2*NR}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>`:''}
+      ${active[r.id]?`<circle cx="${x-10*NR}" cy="${y-10*NR}" r="${4.2*NR}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>`:''}
+      ${isPort?`<text x="${x}" y="${y+20*NR+LBL}" text-anchor="middle" fill="${isCh?'#efe3ae':'#a8c4c6'}" font-size="${LBL}" font-family="Oswald" letter-spacing="1" style="paint-order:stroke" stroke="#04161c" stroke-width="3">${(isCh?PORTS[r.charterDef.loc].n:PORTS[r.id.slice(3)].n).toUpperCase()}</text>`:''}
+    </g>`;});
+  Object.keys(REGIONS).forEach(rk=>{
+    if(!S.unlocked.includes(rk))return;
+    const b=BOSSES[rk];if(!b)return;
+    const x=MX(b.x),y=MY(b.y);
+    if(S.bossBeaten[rk]){
+      bossNodes+=`<g><circle cx="${x}" cy="${y}" r="${9*NR}" fill="none" stroke="#d9c98a" stroke-width="1.8" opacity=".6"/>
+        <path d="M${x-3.5*NR},${y-5*NR} v${10*NR} M${x-3.5*NR},${y-5*NR} h${7.5*NR} l${-2.4*NR},${2.6*NR} l${2.4*NR},${2.6*NR} h${-7.5*NR}"
+          fill="#d9c98a" stroke="#d9c98a" stroke-width="${1.2*NR}" stroke-linejoin="round"/></g>`;return;}
+    if(!bossReady(rk))return;
+    lines+=`<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#d94a3a" stroke-width="${2*NR}" opacity="0.9"/>`;
+    bossNodes+=`<g id="node_${b.id}" onclick="openMission('${b.id}')" style="cursor:pointer">
+      <circle cx="${x}" cy="${y}" r="${26*NR}" fill="transparent"/>
+      <circle class="bossglow" cx="${x}" cy="${y}" r="${18*NR}" fill="#d94a3a"/>
+      <path d="${starPath(x,y,10*NR)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/>
+      <text x="${x}" y="${y+24*NR+LBL}" text-anchor="middle" fill="#f0b0a6" font-size="${LBL}" font-family="Oswald" letter-spacing="1.2" style="paint-order:stroke" stroke="#0a0507" stroke-width="3">${b.n.toUpperCase()}</text></g>`;});
+  let li=0;
+  const legend=Object.keys(REGIONS).map(rk=>{li++;
+    if(!S.unlocked.includes(rk))return `<div class="leg lock" style="--i:${li}"><div class="legrow"><i style="background:#173238"></i><span>LOCKED — ${REGIONS[rk].n}</span></div></div>`;
+    const rs=allRoutes().filter(r=>r.region===rk);
+    const maxd=rs.length?Math.max(...rs.map(r=>effDanger(r))):0;
+    const b=BOSSES[rk],need=b?b.noto:1,cur=Math.min(S.noto[rk]||0,need),done=S.bossBeaten[rk];
+    const chn=CHARTERS.filter(c=>PORTS[c.loc].region===rk&&charterAvailable(c)).length;
+    const openN=rs.filter(voyageOpen).length;
+    const meta=[(S.patrol[rk]||0)>0?`<span>${iconHTML('flag',18)}PATROL</span>`:'',
+      chn?`<span style="color:#efe3ae">${iconHTML('star',18)}${chn}</span>`:'',
+      openN?`<span style="color:#63c06a">${iconHTML('anchor',18)}${openN}</span>`:''].filter(Boolean).join('');
+    return `<div class="leg" style="--i:${li}">
+      <div class="legrow"><i style="background:${DHEX[maxd]}"></i><span>${REGIONS[rk].n}</span></div>
+      ${meta?`<div class="legmeta">${meta}</div>`:''}
+      ${done?`<div class="legdone">${b.n} DEFEATED</div>`
+        :`<div class="notobar ${cur>=need?'full':''}"><i style="width:${cur/need*100}%"></i></div>
+          <div class="legdone" style="color:${cur>=need?'#f0b0a6':'var(--dim)'}">${cur>=need?'ADMIRAL READY — ATTACK':'NOTORIETY '+cur+'/'+need}</div>`}
+    </div>`;}).join('');
+  $('main').innerHTML=`<div id="mapwrap">
+    <svg id="mapsvg" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
+      <defs><radialGradient id="seabg" cx="45%" cy="40%" r="80%">
+        <stop offset="0%" stop-color="#0e3a40"/><stop offset="55%" stop-color="#082830"/><stop offset="100%" stop-color="#04161c"/>
+      </radialGradient></defs>
+      <rect width="${CW}" height="${CH}" fill="url(#seabg)"/>
+      <g transform="scale(${LSX},${LSY})" opacity=".85">
+        <path d="M-10,470 Q60,430 120,462 Q180,494 250,470 Q320,448 370,478 L370,570 L-10,570 Z" fill="#0a2f2c"/>
+        <path d="M-10,60 Q40,90 20,150 Q0,210 30,240 L-10,260 Z" fill="#0a2f2c"/>
+        <path d="M300,-10 Q280,40 320,70 Q356,96 340,140 L370,150 L370,-10 Z" fill="#0a2f2c"/>
+        <path d="M150,300 q14,-8 30,0 q10,8 -4,14 q-20,6 -26,-14 Z" fill="#0a2f2c"/>
+        <path d="M210,380 q18,-6 30,4 q8,10 -8,13 q-22,3 -22,-17 Z" fill="#0a2f2c"/>
+      </g>
+      ${lines}${voyLines}
+      <g><circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19*NR}" fill="#d9c98a"/>
+      <circle cx="${hx}" cy="${hy}" r="${7*NR}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
+      <text x="${hx}" y="${hy+24*NR+HLBL}" text-anchor="middle" fill="#d9c98a" font-size="${HLBL}" font-family="Oswald" letter-spacing="2" style="paint-order:stroke" stroke="#04161c" stroke-width="3">HOME PORT</text></g>
+      ${nodes}${bossNodes}
+    </svg>
+    <div class="legend">${legend}</div>
+    <div class="maphint">Green = open to trade · Blue = your ships at sea · Gold star = charter · Red star = admiral</div>
+  </div>`;}
+let mapRaf=0;
+addEventListener('resize',()=>{if(tab==='routes'){cancelAnimationFrame(mapRaf);mapRaf=requestAnimationFrame(renderMap);}});
+
+/* ============ AT SEA ============ */
+function renderVoyages(){
+  let i=0,h=`<div class="sect" style="--i:${i++}">Ships at Sea — ${S.voyages.length}/${VOY_MAX_ACTIVE}</div>`;
+  if(!S.voyages.length){
+    h+=`<div class="card" style="--i:${i++}"><div class="sub">No ships trading right now. Attack a trade or salvage lane until its danger drops to <b>Hazardous</b> or lower, then open it again and use the TRADE tab to send ships.</div></div>`;
+    $('main').innerHTML=h;return;}
+  S.voyages.slice().sort((a,b)=>a.endsAt-b.endsAt).forEach(v=>{
+    const rdy=voyReady(v),tot=(v.endsAt-v.startedAt)/1000,left=(v.endsAt-now())/1000;
+    const pct=Math.max(0,Math.min(100,(1-left/tot)*100));
+    const crew=v.ships.map(id=>{const s=findShip(id);return s?s.name:'—';}).join(', ');
+    h+=`<div class="card ${rdy?'ready':'atsea'}" style="--i:${i++}" data-voy="${v.id}">
+      <div class="row"><h3>${v.routeName}</h3><span class="tag ${rdy?'t0':'blu'}">${rdy?'MADE PORT':'AT SEA'}</span></div>
+      <div class="sub">${crew}</div>
+      <div class="vbar ${rdy?'done':''}"><i style="width:${rdy?100:pct}%"></i></div>
+      <div class="row" style="margin-top:8px">
+        <span class="sub">Safe arrival <b>${v.odds}%</b> · Reward <b style="color:var(--goldhi)">${fmt(v.rew)}</b></span>
+        <span class="clock ${rdy?'done':''}" data-endsat="${v.endsAt}">${rdy?'READY':fmtDur(left)}</span></div>
+      <div class="row" style="margin-top:11px">
+        ${rdy?`<button class="btn sm grn" onclick="collectVoyage('${v.id}')">Collect</button>`
+             :`<button class="btn sm blu" onclick="rushVoyage('${v.id}')">Speed Up · ${iconHTML('gems',19)}${rushCost(v)}</button>`}
+        ${rdy?'':`<button class="btn sm red" onclick="recallVoyage('${v.id}')">Call Back</button>`}
+      </div></div>`;});
+  $('main').innerHTML=h;}
+function rushVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;
+  const c=rushCost(v);
+  if(S.gems<c)return toast('Not enough gems to speed that up.','bad');
+  S.gems-=c;v.endsAt=now();Snd.play('arrive');
+  toast('Voyage rushed — the fleet is docking now.','blu');render();}
+function recallVoyage(id){const v=S.voyages.find(x=>x.id===id);if(!v)return;
+  if(!confirm('Call the fleet back? You lose the cargo and get no payment.'))return;
+  S.voyages=S.voyages.filter(x=>x.id!==id);
+  toast('Fleet recalled. Cargo and payment lost.','bad');render();}
+
+/* ============ MARKET ============ */
+function renderMarket(){
+  const dockCost=350+(S.docks-2)*250,dockGems=S.docks>=6?2:0;
+  let i=0,h=`<div class="sect" style="--i:${i++}">Buy a Ship</div>`;
+  ['schooner','brig'].forEach(t=>{h+=marketShipCard(t,`Buy · ${iconHTML('reales',19)}${TYPES[t].cost}`,`buyShip('${t}')`,S.reales>=TYPES[t].cost,i++);});
+  if(S.unlocked.includes('gulf')){
+    h+=`<div class="sect" style="--i:${i++}">Shipyard</div>`;
+    h+=marketShipCard('frigate',`Build · ${iconHTML('reales',19)}550 ${iconHTML('parts',19)}28`,`buildShip('frigate',550,28)`,S.reales>=550&&S.parts>=28,i++);
+    if(S.unlocked.includes('atlantic'))h+=marketShipCard('manowar',`Build · ${iconHTML('reales',19)}1300 ${iconHTML('parts',19)}65`,`buildShip('manowar',1300,65)`,S.reales>=1300&&S.parts>=65,i++);}
+  h+=`<div class="sect" style="--i:${i++}">Trade Goods</div>
+    <div class="card" style="--i:${i++}"><div class="row">
+      <span class="sub" style="flex:1 1 170px">Trade runs load these as cargo. You have <b>${S.cargo}</b> units. Each unit costs ${CARGO_PRICE} reales.</span>
+      <span class="btnset">
+        <button class="btn sm" ${S.reales>=CARGO_PRICE*5?'':'disabled'} onclick="buyCargo(5)">Buy 5 · ${iconHTML('reales',19)}${CARGO_PRICE*5}</button>
+        <button class="btn sm" ${S.reales>=CARGO_PRICE*20?'':'disabled'} onclick="buyCargo(20)">Buy 20 · ${iconHTML('reales',19)}${CARGO_PRICE*20}</button></span></div></div>
+    <div class="sect" style="--i:${i++}">Harbour</div>
+    <div class="card" style="--i:${i++}"><div class="row"><div><h3>Extra Berth</h3>
+      <div class="sub">Each berth holds one ship. You are using ${S.ships.length} of ${S.docks}.</div></div>
+      <button class="btn sm gold" onclick="buyDock()">Buy · ${iconHTML('reales',19)}${dockCost}${dockGems?' '+iconHTML('gems',19)+dockGems:''}</button></div></div>
+    <div class="card" style="--i:${i++}"><h3>Charted Ports — ${S.ports.length}/${Object.keys(PORTS).length}</h3>
+      <div class="sub">${S.ports.map(p=>PORTS[p].n).join(' · ')}</div></div>
+    <div class="card center" style="--i:${i++}"><button class="btn red sm" onclick="if(confirm('Delete your save and start a new game?'))newGame()">New Game</button></div>`;
+  $('main').innerHTML=h;}
+function marketShipCard(t,price,fn,ok,i){const d=TYPES[t];
+  return `<div class="card" style="--i:${i}"><div style="display:flex;gap:14px;align-items:center">
+    <div class="fleetship">${shipHTML(t,'player',1.0)}</div>
+    <div style="flex:1"><h3>${d.n}</h3>
+      <div class="stats"><span>SPD <b>${d.speed}</b></span><span>GUNS <b>${d.guns}</b></span><span>HULL <b>${d.hull}</b></span><span>CARGO <b>${d.cargo}</b></span></div>
+      <div style="margin-top:10px"><button class="btn sm gold" ${ok?'':'disabled'} onclick="${fn}">${price}</button></div>
+    </div></div></div>`;}
+function buyShip(t){if(S.ships.length>=S.docks)return toast('All berths are full. Buy an extra berth below first.','bad');
+  S.reales-=TYPES[t].cost;S.ships.push(newShip(t));
+  toast('A '+TYPES[t].n+' joins your fleet.','gold');render();}
+function buildShip(t,r,p){if(S.ships.length>=S.docks)return toast('All berths are full. Buy an extra berth below first.','bad');
+  S.reales-=r;S.parts-=p;S.ships.push(newShip(t));
+  toast('Your '+TYPES[t].n+' is built and berthed.','gold');render();}
+function buyCargo(n){const c=n*CARGO_PRICE;
+  if(S.reales<c)return toast('Not enough reales — '+n+' units cost '+c+'.','bad');
+  S.reales-=c;S.cargo+=n;
+  toast('Bought '+n+' cargo units for '+c+' reales.','gold');render();}
+function buyDock(){const c=350+(S.docks-2)*250,g=S.docks>=6?2:0;
+  if(S.reales<c||S.gems<g)return toast('Not enough to pay for another berth.','bad');
+  S.reales-=c;S.gems-=g;S.docks++;
+  toast('New berth bought.','gold');render();}
+
+/* ============ MISSION SHEET ============ */
+let sel=[],curRoute=null,sheetMode='battle';
+function openSheet(){const o=$('overlay');o.classList.add('on');requestAnimationFrame(()=>o.classList.add('vis'));}
+function closeSheet(){const o=$('overlay');o.classList.remove('vis');
+  setTimeout(()=>{o.classList.remove('on');},420);tutEvent('sheet:close');render();}
+function openMission(id){
+  if(tutActive()&&S.tut<=3&&id!=='c1'){toast('Tap the green marker near home port to continue.','bad');return;}
+  const r=routeById(id);if(!r)return;
+  curRoute=r;sel=[];sheetMode='battle';
+  tutEvent('route:'+id);
+  if(r.type==='boss')Snd.play('boss_horn');
+  if(r.type==='charter')Snd.play('relic');
+  drawMission();openSheet();}
+function setMode(m){sheetMode=m;sel=[];drawMission();}
+function prizeDesc(p){if(!p)return '';
+  if(p.relic)return 'Relic: '+p.relic;
+  if(p.boon)return 'Legendary refit: '+BOONS[p.boon].n;
+  if(p.gems)return 'Treasure map worth '+p.gems+' gems';return '';}
+function drawMission(){
+  const r=curRoute,d=effDanger(r),sec=secNow(r.id);
+  const isBoss=r.type==='boss',isCh=r.type==='charter',voyable=canVoyage(r);
+  const already=S.voyages.find(v=>v.routeId===r.id);
+  const fleet=sel.map(findShip).filter(Boolean);
+  const fp=fleetPower(fleet),fh=fleetHull(fleet),cap=fleet.reduce((a,s)=>a+s.cargo,0);
+  const slots=sheetMode==='battle'?['FRONT · FIRES FIRST','CENTER · +25% DAMAGE','REAR · TAKES 25% LESS']:['LEAD','ESCORT','ESCORT'];
+  const bz=busyIds();
+  let picks='';
+  allShips().forEach(s=>{
+    const i=sel.indexOf(s.id),crip=s.hull<=0,atSea=bz.has(s.id),dis=crip||atSea,isF=s.id==='FLAG';
+    picks+=`<div class="pick ${i>-1?'sel':''} ${dis?'dis':''} ${isF?'flag':''}" onclick="${dis?'':`togSel('${s.id}')`}">
+      <div class="row"><b>${isF?iconHTML('flag',21)+' ':''}${s.name}</b>${i>-1?`<span class="slot ${sheetMode==='voyage'?'blu':''}">${slots[i]}</span>`:''}</div>
+      <div class="sub">${tname(s)} · pwr ${power(s)} · hull ${Math.max(0,s.hull)}/${s.max} · cargo ${s.cargo}${crip?' · CRIPPLED':''}${atSea?' · AT SEA':''}</div></div>`;});
+  const c=r.charterDef;
+  let extraLine='';
+  if(isCh){const others=chartersAt(c.loc).filter(x=>x.id!==c.id);
+    extraLine=(c.dest?`Carry it through and the port of <b>${PORTS[c.dest].n}</b> opens to you for good. `:'')+
+      (c.prize?`<b style="color:var(--goldhi)">${prizeDesc(c.prize)}</b>. `:'')+
+      (others.length?`<span class="sub">Also on offer here: ${others.map(o=>`<a href="#" style="color:var(--gold)" onclick="event.preventDefault();openMission('ch_${o.id}')">${o.n}</a>`).join(', ')}</span>`:'');}
+  $('sheetHead').innerHTML=`<div class="row"><h3>${r.n}</h3>
+      <span class="tag ${isCh?'gold':'t'+d}">${isBoss?r.bossDef.title.toUpperCase():(isCh?'TIER '+c.t:DNAMES[d])}</span></div>
+    <div class="dbar"><i style="width:${(d+1)*25}%;background:${DCOLORS[d]}"></i></div>
+    ${!isBoss&&!isCh?`<div class="secbar ${d<=1?'clear':''}"><i style="width:${sec}%"></i></div>
+      <div class="sub" style="margin-top:4px">Lane security ${Math.round(sec)}% — falls ${SEC_DECAY_PER_MIN}% every minute. Higher security means lower danger.</div>`:''}
+    <div class="row" style="margin-top:8px"><span class="mtype ${isBoss?'boss':(isCh?'gold':'')}">${MTYPE[r.type].n}</span></div>
+    <div class="sub" style="margin-top:6px;font-style:italic">${isBoss?r.bossDef.desc:MTYPE[r.type].tip}</div>`;
+  let body='';
+  if(voyable&&!isBoss&&!isCh){
+    body+=`<div class="modetabs">
+      <button id="modeBat" class="${sheetMode==='battle'?'on':''}" onclick="setMode('battle')">Attack</button>
+      <button id="modeVoy" class="${sheetMode==='voyage'?'on':''}" onclick="setMode('voyage')">Trade</button></div>`;}
+  if(extraLine)body+=`<div class="card chartercard" style="--i:0"><div class="sub">${extraLine}</div></div>`;
+  if(sheetMode==='voyage'){
+    const dur=fleet.length?voyDuration(r,fleet):r.len*VOY_SEC_PER_DAY;
+    const odds=r.type==='salvage'?salvageChance(r,fh):tradeChance(r,fp);
+    const cargoOK=!r.cargo||(cap>=r.cargo&&S.cargo>=r.cargo);
+    const slotOK=S.voyages.length<VOY_MAX_ACTIVE, open=voyageOpen(r);
+    body+=`<div class="sub" style="margin-bottom:10px">Pick up to three ships to send trading. They leave your fleet for the time shown below and cannot fight until they return.</div>
+      <div id="shipPicks">${picks}</div>
+      <div class="card" style="--i:1"><div class="sub">
+        ${!open?`<b style="color:var(--org)">Traders will not sail here while the lane rates ${DNAMES[d].toLowerCase()}. Attack it first to bring the danger down.</b><br>`:''}
+        ${already?`<b style="color:var(--blu)">You already have a fleet trading this lane.</b><br>`:''}
+        Time away: <b>${fleet.length?fmtDur(dur):'—'}</b>${fleet.length?' of real time — faster ships get back sooner':''}<br>
+        ${r.cargo?`Cargo: needs ${r.cargo} units · your ships can hold ${cap} · you own ${S.cargo}<br>`:''}
+        ${r.type==='salvage'?`Chance of raising the wreck: <b>${odds}%</b> (your fleet hull ${fh} against ${r.hullreq} needed)<br>`:`Chance of arriving safely: <b>${fleet.length?odds+'%':'—'}</b> — fail and you lose the cargo<br>`}
+        Notoriety on return: <b style="color:var(--gold)">+${notoGain(r)}</b> — fills the regional bar that summons the admiral<br>
+        Reward: <b style="color:var(--goldhi)">${fmt(r.rew)}</b>${r.ship?` · you may also raise a wrecked ${TYPES[r.ship.type].n}`:''}${r.final?' · THE FINAL VOYAGE':''}</div></div>
+      <div class="grid2">
+        <button class="btn" onclick="closeSheet()">Cancel</button>
+        <button class="btn blu" id="sailBtn" ${sel.length&&cargoOK&&open&&!already&&slotOK?'':'disabled'} onclick="launchVoyage()">Send Ships</button></div>
+      ${!slotOK?'<div class="sub center" style="margin-top:10px;color:var(--yel)">You can only have ${VOY_MAX_ACTIVE} fleets trading at once. Collect one first.</div>':''}
+      ${r.cargo&&!cargoOK?'<div class="sub center" style="margin-top:10px;color:var(--yel)">Not enough cargo goods, or not enough hold space to carry them. Buy goods in the Market.</div>':''}`;
+  } else {
+    const flagOK=!isBoss||sel.includes('FLAG');
+    body+=`<div class="sub" style="margin-bottom:10px">Pick up to three ships. The order you pick sets their position in the line — tap order matters.${isBoss?' <b style="color:var(--goldhi)">Your flagship sails or nobody does.</b>':''}</div>
+      <div id="shipPicks">${picks}</div>
+      <div class="card ${isBoss?'bosscard':''}" style="--i:1"><div class="sub">
+        Your fleet power <b style="color:${fp>=r.power?'var(--grn)':'var(--yel)'}">${fp}</b>${r.power?' — '+r.power+' recommended':''}<br>
+        ${!isBoss&&!isCh?`Winning adds <b style="color:var(--gold)">+${SEC_PER_WIN}%</b> lane security, which lowers the danger rating<br>`:''}
+        Notoriety on victory: <b style="color:var(--gold)">+${notoGain(r)}</b> — fills the regional bar that summons the admiral<br>
+        Reward: <b style="color:var(--goldhi)">${fmt(r.rew)}</b>${isBoss&&r.bossDef.unlocks?' · opens '+REGIONS[r.bossDef.unlocks].n:''}</div></div>
+      <div class="grid2">
+        <button class="btn" onclick="closeSheet()">Cancel</button>
+        <button class="btn ${isBoss?'red':'gold'}" id="sailBtn" ${sel.length&&flagOK?'':'disabled'} onclick="launchBattle()">${isCh?'Accept':'Attack'}</button></div>
+      ${!flagOK?'<div class="sub center" style="margin-top:10px;color:var(--yel)">Admirals only fight your flagship. Add it to the line.</div>':''}`;}
+  $('sheetBody').innerHTML=body;
+  refreshTut();}
+function togSel(id){const i=sel.indexOf(id);
+  if(i>-1)sel.splice(i,1);else{if(sel.length>=3)return;sel.push(id);}
+  if(sel.length>=2)tutEvent('ships:2');
+  drawMission();}
+
+/* ============ VOYAGE LAUNCH / COLLECT ============ */
+function launchVoyage(){
+  const r=curRoute,fleet=sel.map(findShip).filter(Boolean);
+  if(!fleet.length||!voyageOpen(r))return;
+  if(r.cargo)S.cargo-=r.cargo;
+  const dur=voyDuration(r,fleet);
+  const odds=r.type==='salvage'?salvageChance(r,fleetHull(fleet)):tradeChance(r,fleetPower(fleet));
+  S.voyages.push({id:'v'+(voySeq++),routeId:r.id,routeName:r.n,region:r.region,type:r.type,
+    ships:fleet.map(s=>s.id),startedAt:now(),endsAt:now()+dur*1000,
+    odds,rew:r.rew,noto:notoGain(r),shipFind:r.ship||null});
+  Snd.play('depart');
+  toast('Fleet away. Back in '+fmtDur(dur)+'.','blu');
+  tutEvent('voyage:launch');
+  save();closeSheet();}
+function collectVoyage(id){
+  const v=S.voyages.find(x=>x.id===id);if(!v||!voyReady(v))return;
+  S.voyages=S.voyages.filter(x=>x.id!==id);
+  const fleet=v.ships.map(findShip).filter(Boolean);
+  const success=Math.random()*100<v.odds;
+  let msg='',captives=[],evt='';
+  if(success){
+    S.reales+=v.rew.reales||0;S.parts+=v.rew.parts||0;S.gems+=v.rew.gems||0;
+    S.done[v.routeId]=(S.done[v.routeId]||0)+1;
+    msg='The fleet docked with full holds. The run paid out.';
+    if(v.shipFind&&Math.random()<v.shipFind.chance){
+      captives.push({type:v.shipFind.type,derelict:true});
+      msg='The fleet docked with full holds, towing a wreck they raised on the way.';}
+    Snd.play('arrive');
+  }else{
+    const alive=fleet.filter(s=>s.hull>0&&!(hasFit('copper')&&s.id==='FLAG'));
+    if(alive.length){const s=alive[Math.floor(Math.random()*alive.length)];
+      const dm=Math.round(s.max*rnd(0.2,0.45));s.hull=Math.max(0,s.hull-dm);
+      msg=`Raiders caught the fleet mid-passage and took the cargo. No payment, and the ${s.name} came home with ${dm} damage.`;}
+    else msg='The cargo was lost at sea. No payment.';
+    Snd.play('defeat');}
+  if(Math.random()<0.3&&!tutActive()){
+    const alive=fleet.filter(s=>s.hull>0&&!(hasFit('copper')&&s.id==='FLAG'));
+    const roll=Math.random();
+    if(roll<0.35&&alive.length){const s=alive[Math.floor(Math.random()*alive.length)];
+      const dm=Math.max(1,Math.round(s.max*rnd(0.06,0.14)));s.hull=Math.max(0,s.hull-dm);
+      evt=`A storm on the way home damaged the ${s.name} for ${dm}.`;}
+    else if(roll<0.7){const cg=Math.floor(rnd(3,8));S.cargo+=cg;
+      evt=`The fleet salvaged ${cg} cargo units from floating wreckage on the way home.`;}
+    else evt='A red moon on the third night. The crew have opinions about it. Nothing came of it.';}
+  let noto=0;
+  if(success)noto=addNoto({region:v.region,id:v.routeId,type:v.type,danger:0},v.noto);
+  showResult({id:v.routeId,n:v.routeName,region:v.region,type:v.type,rew:v.rew},success,msg,captives,evt,noto,'',true);}
+
+/* ============ BATTLE LAUNCH ============ */
+function launchBattle(){
+  const r=curRoute,fleet=sel.map(findShip).filter(Boolean);
+  const forcedTut=tutActive()&&S.tut<=6&&r.id==='c1';
+  tutEvent('launch');
+  $('overlay').classList.remove('vis');$('overlay').classList.remove('on');
+  if(r.type==='boss'){const b=r.bossDef;
+    wipe(()=>startBattle(fleet,bossEnemies(b),false,win=>{
+      if(win)bossVictory(b,fleet);
+      else showResult(r,false,`${b.n} still holds this water and knows your face now. Your line broke and ran, and she let you go — which is its own kind of message.`,[],'',0,'');},b));
+    return;}
+  if(r.type==='charter'){
+    wipe(()=>startBattle(fleet,charterEnemies(r.charterDef),false,win=>{
+      if(win)charterVictory(r,fleet);
+      else showResult(r,false,'The commission goes unfulfilled and the man who offered it is not pleased. It stands, though. Refit and come back for it.',[],'',0,'');}));
+    return;}
+  wipe(()=>startBattle(fleet,forcedTut?tutEnemies():genEnemies(r),r.type==='escort'&&!forcedTut,win=>{
+    if(win)battleVictory(r,fleet);
+    else showResult(r,false,r.type==='escort'
+      ?'They took the merchant out from under your guns and were over the horizon before you could come about. The charter is void and word will get around.'
+      :'What is left of your line limps home under torn canvas. The lane is exactly as dangerous as it was this morning.',[],'',0,'');}));}
+function bossEnemies(b){return b.ships.map(s=>({...s,max:s.hull,disabled:false,pal:'boss'}));}
+function tutEnemies(){return [
+  {type:'schooner',name:'Smuggler Skiff',hull:14,max:14,guns:2,speed:6,disabled:false},
+  {type:'schooner',name:'Cutthroat Jib',hull:14,max:14,guns:2,speed:6,disabled:false}];}
+function charterEnemies(c){const t=c.t;
+  let comp=t<=2?['schooner','schooner']:t<=4?['schooner','brig']:t<=6?['brig','brig','schooner']:
+    t<=8?['brig','frigate','brig']:['frigate','frigate','brig'];
+  const mod=1+t*0.05,pool=[...ENAMES].sort(()=>Math.random()-.5);
+  return comp.map((ty,i)=>{const b=TYPES[ty];
+    return {type:ty,name:pool[i]||b.n,hull:Math.round(b.hull*mod),max:Math.round(b.hull*mod),
+      guns:Math.round(b.guns*mod),speed:b.speed,disabled:false};});}
+function genEnemies(r){
+  const t=REGIONS[r.region].tier,d=Math.max(1,effDanger(r));
+  let comp;
+  if(d===1)comp=t>=3?['brig','brig']:['schooner',Math.random()<.5?'schooner':'brig'];
+  else if(d===2)comp=t>=3?['brig','frigate','brig']:['brig','brig',Math.random()<.4?'frigate':'schooner'];
+  else comp=t>=4?['frigate','manowar','frigate']:(t>=3?['frigate','frigate','brig']:['brig','frigate','brig']);
+  if(r.type==='blockade')comp=comp.map(x=>x==='schooner'?'brig':x);
+  const mod=1+(t-1)*0.12,pool=[...ENAMES].sort(()=>Math.random()-.5);
+  return comp.map((ty,i)=>{const b=TYPES[ty];
+    return {type:ty,name:pool[i]||b.n,hull:Math.round(b.hull*mod),max:Math.round(b.hull*mod),
+      guns:Math.round(b.guns*mod),speed:b.speed,disabled:false};});}
+function addNoto(r,forced){
+  const rk=r.region,b=BOSSES[rk];if(!b||S.bossBeaten[rk])return 0;
+  const before=S.noto[rk]||0;
+  if(before>=b.noto)return 0;
+  const g=forced||notoGain(r);
+  S.noto[rk]=Math.min(b.noto,before+g);
+  if(before<b.noto&&S.noto[rk]>=b.noto)
+    setTimeout(()=>{Snd.play('boss_horn');toast(b.n+' has been provoked. The admiral is on the map — go and fight.','bad');},900);
+  return g;}
+function battleVictory(r,fleet){
+  const before=effDanger(r);
+  addSec(r.id,SEC_PER_WIN);
+  const after=effDanger(r);
+  S.reales+=r.rew.reales||0;S.parts+=r.rew.parts||0;S.gems+=r.rew.gems||0;
+  S.done['bat_'+r.id]=(S.done['bat_'+r.id]||0)+1;
+  const noto=addNoto(r);
+  if(r.type==='patrol')S.patrol[r.region]=3;
+  let msg=`The lane is clear. Its security is now ${Math.round(secNow(r.id))}%.`;
+  if(after<before)msg+=` The danger rating has dropped to ${DNAMES[after].toLowerCase()}.`;
+  if(canVoyage(r)&&after<=1&&before>1){msg+=' It is now safe enough to send trade runs along it.';
+    setTimeout(()=>toast(r.n+' is safe enough to trade now.','gold'),800);}
+  showResult(r,true,msg,BT.b.enemies.filter(e=>e.disabled),'',noto,'');}
+function charterVictory(r,fleet){
+  const c=r.charterDef;
+  S.charters[c.id]=1;
+  S.reales+=r.rew.reales;S.parts+=r.rew.parts;
+  const noto=addNoto(r);
+  let msg=`The commission is discharged and the paper signed off in front of witnesses. "${c.n}" is done.`,prizeMsg='';
+  if(c.dest&&!S.ports.includes(c.dest)){
+    S.ports.push(c.dest);
+    msg+=` ${PORTS[c.dest].n} is charted, and a standing lane runs there now.`;
+    setTimeout(()=>toast('New port charted: '+PORTS[c.dest].n,'gold'),800);}
+  if(c.prize){
+    if(c.prize.relic){S.relics.push(c.prize.relic);
+      prizeMsg='Relic: '+c.prize.relic+" — it will look well enough in the captain's quarters.";
+      setTimeout(()=>{Snd.play('relic');toast('Relic claimed: '+c.prize.relic,'gold');},1200);}
+    if(c.prize.boon){S.flagBoons.push(c.prize.boon);syncFlag();
+      prizeMsg='Refit: '+BOONS[c.prize.boon].n+' — '+BOONS[c.prize.boon].desc+', fitted aboard the '+S.flag.name+'.';
+      setTimeout(()=>{Snd.play('upgrade');toast(BOONS[c.prize.boon].n+' fitted.','gold');},1200);}
+    if(c.prize.gems){S.gems+=c.prize.gems;prizeMsg='A map came with the payment. Whatever it pointed at was worth '+c.prize.gems+' gems.';}}
+  showResult(r,true,msg,BT.b.enemies.filter(e=>e.disabled),'',noto,prizeMsg);}
+function bossVictory(b,fleet){
+  S.bossBeaten[b.region]=true;
+  S.reales+=b.rew.reales;S.parts+=b.rew.parts;S.gems+=b.rew.gems;
+  let msg=`${b.n} strikes her colours with what is left of her upperworks on fire. The ${b.title} is broken, and every captain in these waters will know it by morning.`;
+  if(b.unlocks&&!S.unlocked.includes(b.unlocks)){
+    S.unlocked.push(b.unlocks);
+    msg+=` The chart opens: ${REGIONS[b.unlocks].n} lies before you.`;
+    setTimeout(()=>toast('New waters charted: '+REGIONS[b.unlocks].n,'gold'),800);}
+  else if(!b.unlocks){msg+=' Nothing stands between you and the Grand Fleet Route now.';
+    if(!S.won){S.won=true;setTimeout(()=>{Snd.play('victory');toast('The Grand Fleet Route lies open.','gold');},800);}}
+  showResult(bossAsRoute(b),true,msg,BT.b.enemies.filter(e=>e.disabled&&!e.isBoss),'',0,'');}
+
+/* ============ RESULT ============ */
+function showResult(r,success,msg,captives,evt,noto,prizeMsg,fromVoyage){
+  const isBoss=r.type==='boss',isCh=r.type==='charter';
+  const title=success
+    ?(isBoss?'Admiral Defeated':(isCh?'Charter Fulfilled':(fromVoyage?'Ships Returned':'Lane Swept')))
+    :(isBoss?'Repulsed':(fromVoyage?'Run Lost':'Battle Lost'));
+  let h=`<div class="sub center" style="font-size:15px;color:${success?'var(--grn)':'#e88a7a'};font-family:'Oswald';letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">${title}</div>
+    <div class="sub center">${success?'<b style="color:var(--goldhi)">'+fmt(r.rew)+'</b> paid into the strongbox. ':''}${msg||''}</div>
+    ${prizeMsg?`<div class="evt prize">${prizeMsg}</div>`:''}
+    ${noto?`<div class="evt noto">Your name carries further in ${REGIONS[r.region].n} — notoriety +${noto}, now ${S.noto[r.region]||0} of ${BOSSES[r.region].noto}.</div>`:''}
+    ${evt?`<div class="evt">${evt}</div>`:''}`;
+  if(captives.length){
+    h+=`<div class="sect" style="margin-top:14px;--i:1">Prizes of War</div>`;
+    captives.forEach((e,i)=>{
+      const t=TYPES[e.type],full=S.ships.length>=S.docks;
+      h+=`<div class="card" style="--i:${i+2}" id="cap${i}"><div style="display:flex;gap:12px;align-items:center">
+        <div>${shipHTML(e.type,e.pal==='boss'?'boss':'enemy',0.85)}</div>
+        <div style="flex:1"><h3>${e.derelict?'Derelict':'Captured'} ${t.n}</h3>
+        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Scrap: ${t.salv} parts and 1 gem.${e.derelict?' No crew aboard to ransom.':' Ransom: '+t.ransom+' reales.'}</div></div></div>
+        <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:7px">
+          <button class="btn sm gold" ${full?'disabled':''} onclick="capAct(${i},'capture','${e.type}')">Keep</button>
+          <button class="btn sm" onclick="capAct(${i},'salvage','${e.type}')">Scrap</button>
+          ${e.derelict?'':`<button class="btn sm" onclick="capAct(${i},'ransom','${e.type}')">Ransom</button>`}
+          <button class="btn sm" onclick="capAct(${i},'ignore','${e.type}')">Let Go</button>
+        </div>${full?'<div class="sub" style="color:var(--yel);margin-top:8px">No free berth. Scuttle a ship in Port, or buy a berth in the Market, to keep her.</div>':''}</div>`;});}
+  h+=`<button class="btn gold wide" style="margin-top:12px" onclick="closeSheet()">Continue</button>`;
+  $('sheetHead').innerHTML=`<h3>${r.n}</h3>`;
+  $('sheetBody').innerHTML=h;openSheet();
+  if(success&&r.rew.reales)setTimeout(()=>coinFly(Math.min(12,Math.ceil(r.rew.reales/200))),500);
+  save();updateRes();refreshTut();}
+function capAct(i,act,type){
+  const t=TYPES[type],el=$('cap'+i);
+  if(act==='capture'){
+    if(S.ships.length>=S.docks)return toast('Every berth is full, Captain.','bad');
+    S.ships.push(newShip(type,rnd(0.25,0.45)));
+    el.querySelector('.sub').textContent='Added to your fleet, damaged. Repair her in Port.';
+    toast('The '+t.n+' flies your colours now.','gold');}
+  else if(act==='salvage'){S.parts+=t.salv;S.gems+=1;
+    el.querySelector('.sub').textContent=`Scrapped for ${t.salv} parts and 1 gem.`;}
+  else if(act==='ransom'){S.reales+=t.ransom;coinFly(6);
+    el.querySelector('.sub').textContent=`Crew ransomed back for ${t.ransom} reales.`;}
+  else el.querySelector('.sub').textContent='Left to drift. Nothing gained.';
+  el.querySelector('.row').remove();updateRes();save();tutEvent('prize');}
+
+/* ============ PHASER BATTLE ============ */
+let PG=null;
+const BT={b:null,scene:null,busy:false};
+function gim(k){return BT.b.boss&&BT.b.boss.gimmicks.includes(k);}
+class BattleScene extends Phaser.Scene{
+  constructor(){super('battle');}
+  create(){
+    const W=this.scale.width,H=this.scale.height;
+    if(!this.textures.exists('px')){const g=this.make.graphics({add:false});
+      g.fillStyle(0xffffff).fillRect(0,0,4,4);g.generateTexture('px',4,4);g.destroy();}
+    if(!this.textures.exists('soft')){const cv=document.createElement('canvas');cv.width=cv.height=128;
+      const c2=cv.getContext('2d'),gr=c2.createRadialGradient(64,64,0,64,64,64);
+      gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(1,'rgba(255,255,255,0)');
+      c2.fillStyle=gr;c2.fillRect(0,0,128,128);this.textures.addCanvas('soft',cv);}
+    Object.keys(SHIP_CANVAS).forEach(k=>{
+      if(!this.textures.exists('ship_'+k))this.textures.addCanvas('ship_'+k,SHIP_CANVAS[k]);});
+    const fogTint=BT.b.boss?0xe08070:0x78e0e8;
+    for(let i=0;i<7;i++){
+      const f=this.add.image(Math.random()*W,Math.random()*H,'soft')
+        .setScale(rnd(3,6)).setAlpha(rnd(.04,.09)).setTint(fogTint).setDepth(0);
+      this.tweens.add({targets:f,x:f.x+rnd(-120,120),y:f.y+rnd(-60,60),
+        duration:rnd(9000,16000),yoyo:true,repeat:-1,ease:'Sine.inOut'});}
+    this.ships=[];this.marker=null;
+    this.buildFleets();BT.scene=this;
+    this.events.on('shutdown',()=>{if(BT.scene===this)BT.scene=null;});}
+  shipScale(){const m=Math.min(this.scale.width,this.scale.height);
+    return m<430?0.62:(m>760?1.05:0.82);}
+  buildFleets(){
+    const b=BT.b,W=this.scale.width,H=this.scale.height,s=this.shipScale();
+    const py=[.2,.48,.74],ey=[.22,.5,.78];
+    b.fleet.forEach((sh,i)=>this.addShip(sh,sh.id==='FLAG'?'flag':'player',W*0.17,H*(py[i]||.74),true,s));
+    if(b.merchant)this.addShip(b.merchant,'merchant',W*0.34,H*0.36,true,s*0.9);
+    b.enemies.forEach((e,i)=>this.addShip(e,e.pal||'enemy',W*0.83,H*(ey[i]||.78),false,s*(e.isBoss?1.15:1)));
+    this.setMarker(0);
+    this.ships.forEach((o,i)=>{const tx=o.c.x;o.c.x+=o.facingRight?-W*0.5:W*0.5;o.c.alpha=0;
+      this.tweens.add({targets:o.c,x:tx,alpha:1,delay:i*110,duration:600,ease:'Cubic.out'});});}
+  addShip(data,pal,x,y,facingRight,scale){
+    const type=SHIPCFG[data.type]?data.type:'brig';
+    let key=type+'_'+pal;if(!SHIP_CANVAS[key])key=type+'_enemy';
+    const dim=SHIP_DIM[key];
+    const c=this.add.container(x,y).setDepth(data.isBoss?3:2);
+    const img=this.add.image(0,0,'ship_'+key).setDisplaySize(dim.w*scale*1.5,dim.h*scale*1.5);
+    img.setFlipX(!!facingRight);
+    const pw=Math.max(110,dim.w*scale*1.4);
+    const plate=this.add.rectangle(0,dim.h*scale*0.75+16,pw,28,0x07161b,0.92)
+      .setStrokeStyle(1,data.isBoss?0x8a463e:0x164a52);
+    const nm=this.add.text(0,dim.h*scale*0.75+9,data.name.toUpperCase(),
+      {fontFamily:'Oswald',fontSize:'14px',color:data.isBoss?'#f0b0a6':'#cfe3e4'}).setOrigin(.5,.5);
+    const hp=this.add.graphics();
+    c.add([img,plate,nm,hp]);
+    const o={c,img,hp,data,pal,facingRight,scale,dim,pw,
+      bobT:this.tweens.add({targets:c,y:y+rnd(3,6),duration:rnd(1600,2400),yoyo:true,repeat:-1,ease:'Sine.inOut'})};
+    this.drawHp(o);
+    if(pal==='enemy'||pal==='boss'){
+      img.setInteractive({useHandCursor:true});
+      img.on('pointerdown',()=>{if(!data.disabled&&!BT.busy){
+        BT.b.target=BT.b.enemies.indexOf(data);this.setMarker(BT.b.target);Snd.play('ui_tap');}});}
+    this.ships.push(o);return o;}
+  find(data){return this.ships.find(o=>o.data===data);}
+  drawHp(o){const g=o.hp;g.clear();
+    const y=o.dim.h*o.scale*0.75+23,w=o.pw-16,p=Math.max(0,o.data.hull/o.data.max);
+    g.fillStyle(0x03181c).fillRect(-w/2,y,w,4);
+    g.fillStyle(p<0.26?0xd94a3a:(p<0.6?0xd9c34a:0x63c06a)).fillRect(-w/2,y,w*p,4);}
+  setMarker(i){const e=BT.b.enemies[i];if(!e)return;
+    const o=this.find(e);if(!o)return;
+    if(this.marker)this.marker.destroy();
+    this.marker=this.add.image(o.c.x,o.c.y-o.dim.h*o.scale*0.75-16,'soft')
+      .setScale(.4).setTint(0xd94a3a).setDepth(4);
+    this.tweens.add({targets:this.marker,scale:.56,alpha:.4,duration:600,yoyo:true,repeat:-1});
+    this.markerHome=o;}
+  update(){if(this.marker&&this.markerHome){
+    this.marker.x=this.markerHome.c.x;
+    this.marker.y=this.markerHome.c.y-this.markerHome.dim.h*this.markerHome.scale*0.75-16;}}
+  muzzle(x,y,dir){
+    const m=this.add.image(x,y,'soft').setScale(.28).setTint(0xffd080).setBlendMode(Phaser.BlendModes.ADD).setDepth(5);
+    this.tweens.add({targets:m,scale:.7,alpha:0,duration:180,onComplete:()=>m.destroy()});
+    const e=this.add.particles(x,y,'px',{speed:{min:30,max:90},angle:dir>0?{min:-25,max:25}:{min:155,max:205},
+      lifespan:350,quantity:6,scale:{start:1.2,end:0},tint:[0xaaaaaa,0x777777],emitting:false}).setDepth(5);
+    e.explode(6);this.time.delayedCall(500,()=>e.destroy());}
+  impact(x,y,dmg,big){
+    const e=this.add.particles(x,y,'px',{speed:{min:70,max:big?280:170},lifespan:big?550:380,
+      quantity:big?28:14,scale:{start:1.6,end:0},tint:[0xffd080,0xff8040,0x8a5a30],emitting:false}).setDepth(6);
+    e.explode(big?28:14);this.time.delayedCall(700,()=>e.destroy());
+    const fl=this.add.image(x,y,'soft').setScale(big?.95:.5).setTint(0xffb060)
+      .setBlendMode(Phaser.BlendModes.ADD).setDepth(6);
+    this.tweens.add({targets:fl,scale:fl.scale*2,alpha:0,duration:260,onComplete:()=>fl.destroy()});
+    this.floatText(x,y-26,'-'+dmg,big?'#ffb060':'#f0d0a0',big?28:22);
+    this.cameras.main.shake(big?200:120,big?0.012:0.006);
+    Snd.play(big?'explosion':'impact');}
+  floatText(x,y,txt,color,size){
+    const t=this.add.text(x,y,txt,{fontFamily:'Oswald',fontSize:(size||20)+'px',color,
+      stroke:'#000',strokeThickness:4}).setOrigin(.5).setDepth(7);
+    this.tweens.add({targets:t,y:y-46,alpha:0,duration:900,ease:'Cubic.out',onComplete:()=>t.destroy()});}
+  flash(color){
+    const r=this.add.rectangle(this.scale.width/2,this.scale.height/2,this.scale.width,this.scale.height,color,0.55).setDepth(9);
+    this.tweens.add({targets:r,alpha:0,duration:420,onComplete:()=>r.destroy()});}
+  fireShot(from,to,barrel,huge){
+    return new Promise(res=>{
+      const fo=this.find(from),to_=this.find(to);
+      if(!fo||!to_){res();return;}
+      const dir=fo.c.x<to_.c.x?1:-1;
+      const sx=fo.c.x+dir*fo.dim.w*fo.scale*0.68,sy=fo.c.y;
+      this.muzzle(sx,sy,dir);if(huge){this.muzzle(sx,sy-18,dir);this.muzzle(sx,sy+18,dir);}
+      Snd.play('cannon');
+      this.tweens.add({targets:fo.c,x:fo.c.x-dir*(huge?16:7),duration:huge?140:80,yoyo:true});
+      const ball=this.add.image(sx,sy,(barrel||huge)?'soft':'px')
+        .setScale(huge?.4:(barrel?.22:1.8)).setTint(huge?0xff5030:(barrel?0xff7030:0x222222)).setDepth(6);
+      if(barrel||huge){ball.setBlendMode(Phaser.BlendModes.ADD);
+        ball._trail=this.add.particles(0,0,'px',{follow:ball,speed:15,lifespan:300,quantity:2,frequency:20,
+          scale:{start:huge?1.6:1,end:0},tint:[0xff8040,0xffc060],emitting:true}).setDepth(5);}
+      const ex=to_.c.x-dir*to_.dim.w*to_.scale*0.3,ey=to_.c.y+rnd(-8,8);
+      const mx=(sx+ex)/2,peak=Math.min(sy,ey)-rnd(40,80);
+      const tw={t:0};
+      this.tweens.add({targets:tw,t:1,duration:huge?620:(barrel?520:400),ease:'Sine.in',
+        onUpdate:()=>{const t=tw.t;
+          ball.x=(1-t)*(1-t)*sx+2*(1-t)*t*mx+t*t*ex;
+          ball.y=(1-t)*(1-t)*sy+2*(1-t)*t*peak+t*t*ey;},
+        onComplete:()=>{if(ball._trail)ball._trail.destroy();ball.destroy();res({x:ex,y:ey,o:to_});}});});}
+  hitFlash(o){
+    this.tweens.addCounter({from:0,to:1,duration:120,yoyo:true,
+      onUpdate:tw=>o.img.setTintFill(0xffffff).setAlpha(1-tw.getValue()*0.3),
+      onComplete:()=>{o.img.clearTint();o.img.setAlpha(1);}});
+    this.tweens.add({targets:o.c,x:o.c.x+rnd(-5,5),duration:60,yoyo:true,repeat:2});}
+  sink(o){
+    if(!o)return;o.bobT.stop();Snd.play('splash');
+    this.tweens.add({targets:o.c,angle:o.facingRight?-11:11,y:o.c.y+26,alpha:.55,duration:900,ease:'Cubic.in'});
+    o._flames=this.add.particles(o.c.x,o.c.y-o.dim.h*o.scale*0.4,'px',
+      {speedY:{min:-40,max:-15},speedX:{min:-10,max:10},lifespan:700,quantity:2,frequency:110,
+       scale:{start:1.3,end:0},tint:[0xff8040,0xffc060,0x555555],emitting:true}).setDepth(5);
+    const bub=this.add.particles(o.c.x,o.c.y+o.dim.h*o.scale*0.4,'px',
+      {speedY:{min:-30,max:-10},lifespan:600,quantity:8,scale:{start:1,end:0},tint:0x9fd8e0,emitting:false}).setDepth(1);
+    bub.explode(10);this.time.delayedCall(800,()=>bub.destroy());}
+  shieldPulse(){BT.b.fleet.forEach(s=>{const o=this.find(s);if(!o||s.hull<=0)return;
+    const sh=this.add.image(o.c.x,o.c.y,'soft').setScale(1.2).setTint(0x78d0e0)
+      .setBlendMode(Phaser.BlendModes.ADD).setAlpha(.35).setDepth(4);
+    this.tweens.add({targets:sh,scale:1.7,alpha:0,duration:700,onComplete:()=>sh.destroy()});});}
+  telegraphFx(){
+    const bs=BT.b.enemies.find(e=>e.isBoss&&!e.disabled);if(!bs)return;
+    const o=this.find(bs);if(!o)return;
+    Snd.play('telegraph');this.flash(0x8a2018);
+    const g=this.add.image(o.c.x,o.c.y,'soft').setScale(1.6).setTint(0xd94a3a)
+      .setBlendMode(Phaser.BlendModes.ADD).setAlpha(.5).setDepth(4);
+    this.tweens.add({targets:g,scale:2.2,alpha:0,duration:900,repeat:2,onComplete:()=>g.destroy()});
+    this.floatText(o.c.x,o.c.y-64,'BRACE!','#ff9080',30);}
+  boardDash(from,to){return new Promise(res=>{
+    const fo=this.find(from),to_=this.find(to);if(!fo||!to_){res();return;}
+    Snd.play('board');const ox=fo.c.x;
+    this.tweens.add({targets:fo.c,x:to_.c.x-(to_.c.x>ox?90:-90),duration:380,ease:'Cubic.out',
+      yoyo:true,hold:250,onYoyo:()=>res(),onComplete:()=>{fo.c.x=ox;}});});}
+  spawnReinforcement(nd,deadData){return new Promise(res=>{
+    const W=this.scale.width,H=this.scale.height,s=this.shipScale();
+    let x=W*0.83,y=H*0.5;
+    const dO=deadData?this.find(deadData):null;
+    if(dO){x=dO.c.x;y=dO.c.y-20;
+      this.tweens.add({targets:dO.c,alpha:0,duration:400,onComplete:()=>{
+        if(dO._flames)dO._flames.destroy();dO.c.destroy();
+        this.ships=this.ships.filter(o=>o!==dO);}});}
+    this.time.delayedCall(420,()=>{
+      const o=this.addShip(nd,'boss',x,y,false,s);
+      const tx=o.c.x;o.c.x=W+140;o.c.alpha=0;this.flash(0x2a4a52);
+      this.tweens.add({targets:o.c,x:tx,alpha:1,duration:620,ease:'Cubic.out',onComplete:()=>res()});});});}
+  retreatAnim(){BT.b.fleet.forEach((s,i)=>{const o=this.find(s);if(!o)return;
+    this.tweens.add({targets:o.c,x:-180,delay:i*90,duration:700,ease:'Cubic.in'});});}
+}
+function ensurePhaser(cb){
+  if(PG){cb();return;}
+  PG=new Phaser.Game({type:Phaser.AUTO,parent:'phaserHost',transparent:true,
+    scale:{mode:Phaser.Scale.RESIZE},scene:[]});
+  PG.events.once('ready',()=>cb());}
+function startBattle(fleet,enemies,escort,onEnd,boss){
+  BT.b={fleet,enemies,onEnd,round:1,target:0,log:[],
+    merchant:escort?{type:'merchant',name:'Merchant Rose',hull:40,max:40}:null,
+    boss:boss||null,reinforce:(boss&&boss.reinforce)||0,
+    reinfPool:(boss&&boss.reinforcements)?boss.reinforcements.slice():[],telegraph:false};
+  BT.busy=false;
+  if(hasFit('magazine'))S.barrels=Math.min(9,S.barrels+1);
+  $('banner').classList.remove('on');
+  $('battleScr').classList.add('on');
+  $('battleScr').classList.toggle('boss',!!boss);
+  Snd.ambience(true);
+  if(boss)Snd.play('boss_horn');
+  blog(boss?`${boss.n} puts her helm over and comes about to meet you. The ${boss.title}, in the flesh at last.`:
+    (escort?'They came out of the haze on the convoy\'s blind quarter. Get between them and the merchant.':'Sails on the horizon, and not friendly ones. Beat to quarters.'),boss?'bad':'');
+  drawHud();
+  ensurePhaser(()=>{
+    if(PG.scene.getScene('battle'))PG.scene.remove('battle');
+    PG.scene.add('battle',BattleScene,true);refreshTut();});}
+function blog(m,c){BT.b.log.push({m,c});if(BT.b.log.length>3)BT.b.log.shift();
+  $('blog').innerHTML=BT.b.log.map(l=>`<div class="${l.c}">${l.m}</div>`).join('');}
+function drawHud(){
+  $('bTitle').textContent=(BT.b.boss?BT.b.boss.n+' — ':'Broadsides — ')+'Round '+BT.b.round;
+  $('bHint').innerHTML=BT.b.telegraph
+    ? `<span class="warn">${BT.b.boss.n} is running out her lower deck — BRACE</span>`
+    : 'Tap an enemy to target it, then choose one order below';
+  $('bcmds').innerHTML=`
+    <button class="btn sm" onclick="cmd('focus')">Focus Fire</button>
+    <button class="btn sm" onclick="cmd('volley')">Spread Fire</button>
+    <button class="btn sm" ${S.barrels?'':'disabled'} onclick="cmd('barrels')">Fire Barrels (${S.barrels})</button>
+    <button class="btn sm" onclick="cmd('brace')">Brace</button>
+    <button class="btn sm" onclick="cmd('board')">Board</button>
+    <button class="btn sm red" onclick="cmd('retreat')">Retreat</button>`;
+  refreshTut();}
+const aliveE=()=>BT.b.enemies.filter(e=>!e.disabled);
+const aliveP=()=>BT.b.fleet.filter(s=>s.hull>0);
+function retarget(){const b=BT.b;
+  if(!b.enemies[b.target]||b.enemies[b.target].disabled){
+    const ni=b.enemies.findIndex(e=>!e.disabled);
+    if(ni>-1){b.target=ni;BT.scene&&BT.scene.setMarker(ni);}}}
+async function maybeReinforce(dead){
+  if(!gim('wolfpack')||BT.b.reinforce<=0)return;
+  const tpl=BT.b.reinfPool.shift();if(!tpl)return;
+  BT.b.reinforce--;
+  const nd={...tpl,max:tpl.hull,disabled:false,pal:'boss'};
+  BT.b.enemies.push(nd);
+  blog(`Another sail cuts out of the fog where there was nothing — the ${nd.name} takes her place in the line.`,'bad');
+  if(BT.scene)await BT.scene.spawnReinforcement(nd,dead);else await sleep(300);
+  retarget();}
+async function cmd(c){
+  if(BT.busy)return;
+  const b=BT.b,sc=BT.scene;
+  BT.busy=true;$('bcmds').classList.add('busy');
+  try{
+    if(c==='retreat'){
+      const sp=aliveP().reduce((a,s)=>a+s.speed,0)/Math.max(1,aliveP().length);
+      if(Math.random()<Math.min(0.9,0.45+sp*0.04)){
+        blog('You put the helm hard over and slip away under every stitch she carries.','good');
+        sc&&sc.retreatAnim();Snd.play('sail');await sleep(750);return showBanner('escaped');}
+      blog('The wind betrays you at exactly the wrong moment and they close the gap.','bad');
+      await enemyPhase(false);return endRound();}
+    if(c==='barrels'){if(S.barrels<1){BT.busy=false;$('bcmds').classList.remove('busy');return;}
+      S.barrels--;updateRes();}
+    const brace=c==='brace',barrel=c==='barrels';
+    if(brace)sc&&sc.shieldPulse();
+    if(c==='board'){
+      const t=b.enemies[b.target],thr=hasFit('grapple')?0.55:0.40;
+      if(gim('ironclad')){blog('The grapples clatter off iron plating and fall away into the water. There is no boarding that ship.','bad');}
+      else if(!t||t.disabled||t.hull>t.max*thr){blog(`Too much hull left to board — get her below ${Math.round(thr*100)}% first.`,'bad');}
+      else{
+        const boarder=aliveP()[0];
+        await (sc?sc.boardDash(boarder,t):sleep(300));
+        if(Math.random()<(t.hull<t.max*0.15?0.75:0.55)){
+          t.disabled=true;t.hull=Math.max(1,t.hull);
+          blog(`${boarder.name}'s people go over the rail screaming and the ${t.name} strikes inside two minutes.`,'good');
+          if(sc){const o=sc.find(t);sc.floatText(o.c.x,o.c.y-44,'TAKEN','#63c06a',24);sc.sink(o);}
+          retarget();await maybeReinforce(t);
+        }else{
+          const dm=Math.round(t.guns*rnd(0.8,1.2));boarder.hull=Math.max(0,boarder.hull-dm);
+          blog(`They were waiting at the rail with pikes. ${boarder.name} comes away with ${dm} and fewer hands.`,'bad');
+          if(sc){const o=sc.find(boarder);sc.impact(o.c.x,o.c.y,dm,false);sc.hitFlash(o);sc.drawHp(o);
+            if(boarder.hull<=0)sc.sink(o);}}}
+    } else {
+      for(const s of aliveP()){
+        const shots=(s.id==='FLAG'&&hasFit('chase'))?2:1;
+        for(let k=0;k<shots;k++){
+          if(!aliveE().length)break;
+          const slotI=b.fleet.indexOf(s);
+          let t=c==='focus'?b.enemies[b.target]:aliveE()[Math.floor(Math.random()*aliveE().length)];
+          if(!t||t.disabled)t=aliveE()[0];if(!t)break;
+          const dmg=Math.round(s.guns*rnd(0.8,1.2)*(slotI===1?1.25:1)*(barrel?1.6:1)*(brace?0.5:1)*(k?0.6:1));
+          const hit=await (sc?sc.fireShot(s,t,barrel):sleep(200));
+          t.hull-=dmg;
+          blog(fx(pick(HIT_P),s.name,t.name,dmg)+(k?' The chase guns speak after her.':''),'');
+          if(sc&&hit){sc.impact(hit.x,hit.y,dmg,barrel);sc.hitFlash(hit.o);sc.drawHp(hit.o);}
+          if(t.hull<=0&&!t.disabled){t.disabled=true;t.hull=0;
+            blog(fx(pick(SINK),t.name),'good');
+            if(sc)sc.sink(sc.find(t));
+            retarget();await maybeReinforce(t);}
+          await sleep(170);}}}
+    if(!aliveE().length){await sleep(500);return showBanner('win');}
+    await sleep(280);
+    await enemyPhase(brace);
+    endRound();
+  }catch(e){console.error(e);endRound();}}
+async function enemyPhase(brace){
+  const b=BT.b,sc=BT.scene;
+  if(b.telegraph){
+    const bs=b.enemies.find(e=>e.isBoss&&!e.disabled);
+    b.telegraph=false;
+    if(bs){const ps=aliveP();
+      if(ps.length){
+        const t=ps.reduce((a,s)=>power(s)>power(a)?s:a);
+        const dm=Math.round(bs.guns*2.6*(brace?0.42:1));
+        const hit=await (sc?sc.fireShot(bs,t,false,true):sleep(300));
+        t.hull=Math.max(0,t.hull-dm);
+        if(sc)sc.flash(0xffb060);
+        blog(`${bs.name} empties her lower deck in one long rolling crash — ${t.name} takes ${dm}.${brace?' Braced, thank God.':' Nothing was ready for it.'}`,'bad');
+        if(sc&&hit){sc.impact(hit.x,hit.y,dm,true);sc.hitFlash(hit.o);sc.drawHp(hit.o);
+          if(t.hull<=0){sc.sink(hit.o);blog(fx(pick(CRIP),t.name),'bad');}}
+        await sleep(260);}}}
+  for(const e of aliveE()){
+    if(b.merchant&&b.merchant.hull>0&&Math.random()<0.3){
+      const dm=Math.round(e.guns*rnd(0.6,1.0));
+      const hit=await (sc?sc.fireShot(e,b.merchant,false):sleep(200));
+      b.merchant.hull=Math.max(0,b.merchant.hull-dm);
+      blog(`${e.name} ignores you entirely and puts her guns on the ${b.merchant.name} — ${dm}.`,'bad');
+      if(sc&&hit){sc.impact(hit.x,hit.y,dm,false);sc.hitFlash(hit.o);sc.drawHp(hit.o);
+        if(b.merchant.hull<=0){sc.sink(hit.o);blog(`The ${b.merchant.name} is going down by the bow and there is nothing to be done about it.`,'bad');}}
+      await sleep(170);continue;}
+    const ps=aliveP();if(!ps.length)break;
+    let t=Math.random()<0.65?ps.reduce((a,s)=>power(s)>power(a)?s:a):ps[Math.floor(Math.random()*ps.length)];
+    const dm=Math.round(e.guns*rnd(0.8,1.2)*(b.fleet.indexOf(t)===2?0.75:1)*(brace?0.5:1));
+    const hit=await (sc?sc.fireShot(e,t,false):sleep(200));
+    t.hull=Math.max(0,t.hull-dm);
+    blog(fx(pick(HIT_E),e.name,t.name,dm),'bad');
+    if(sc&&hit){sc.impact(hit.x,hit.y,dm,false);sc.hitFlash(hit.o);sc.drawHp(hit.o);
+      if(t.hull<=0){sc.sink(hit.o);blog(fx(pick(CRIP),t.name),'bad');}}
+    await sleep(170);}}
+function endRound(){
+  const b=BT.b;b.round++;
+  if(b.merchant&&b.merchant.hull<=0){blog('The merchant is gone beneath the waves and your contract with her.','bad');return showBanner('loss');}
+  if(!aliveP().length){blog('Your line is shattered and what is left is not answering signals.','bad');return showBanner('loss');}
+  if(gim('broadside')&&b.round%3===0&&b.enemies.some(e=>e.isBoss&&!e.disabled)){
+    b.telegraph=true;
+    blog(`The gunports come up along ${b.boss.n}'s lower deck, one after another. Whatever comes next will not be survivable twice. BRACE.`,'bad');
+    BT.scene&&BT.scene.telegraphFx();}
+  BT.busy=false;$('bcmds').classList.remove('busy');
+  drawHud();}
+function showBanner(kind){
+  const b=BT.b,el=$('banner'),win=kind==='win',isBoss=!!b.boss;
+  refreshTut();
+  if(win){S.barrels=Math.min(9,S.barrels+1);Snd.play('victory');}
+  else if(kind==='loss')Snd.play('defeat');
+  const cols={win:'var(--grn)',loss:'var(--red)',escaped:'var(--yel)'};
+  const txt={win:isBoss?'Admiral Broken':'Victorious',loss:'Defeated',escaped:'Escaped'};
+  let inner=`<div class="big" style="color:${cols[kind]}">${txt[kind]}</div>`;
+  if(win){
+    const prizes=b.enemies.filter(e=>e.disabled&&!e.isBoss).length;
+    inner+=`<div class="rewrow"><span>${iconHTML('barrels',26)} +1 barrel</span><span>${iconHTML('anchor',26)} ${prizes} prize${prizes!==1?'s':''}</span>
+      ${isBoss?`<span>${iconHTML('star',26)} ${b.boss.title}</span>`:''}</div>
+      <div class="stat"><div class="lbl"><span>lane status</span><span style="color:var(--grn)">securing</span></div>
+      <div class="dbar"><i id="secbarFx" style="width:100%;background:var(--red)"></i></div></div>`;}
+  else if(kind==='loss')inner+=`<div class="sub" style="margin-top:10px">What is still afloat turns for home and the surgeons.</div>`;
+  inner+=`<button class="btn gold" style="margin-top:22px;min-width:180px" onclick="endBattle('${kind}')">Continue</button>`;
+  el.innerHTML=inner;el.classList.add('on');refreshTut();
+  if(win)setTimeout(()=>{const s=$('secbarFx');if(s){s.style.width='28%';s.style.background='var(--grn)';}},120);
+  save();updateRes();}
+function endBattle(kind){
+  $('banner').classList.remove('on');
+  Snd.ambience(false);
+  wipe(()=>{
+    $('battleScr').classList.remove('on');$('battleScr').classList.remove('boss');
+    if(PG&&PG.scene.getScene('battle'))PG.scene.remove('battle');
+    if(kind==='win')tutEvent('battle:end');
+    else if(tutActive()&&S.tut>=7&&S.tut<=9){S.tut=3;save();toast('Repair your ships in Port and try again.','bad');}
+    BT.b.onEnd(kind==='win');
+    save();updateRes();});}
+
+/* ============ TICKER ============ */
+let lastReady=0;
+setInterval(()=>{
+  if(!S)return;
+  const rdy=readyCount();
+  // update countdowns in place — never re-render from inside this loop
+  document.querySelectorAll('.clock[data-endsat]').forEach(el=>{
+    const left=(+el.dataset.endsat-now())/1000;
+    if(left<=0){el.textContent='READY';el.classList.add('done');}
+    else{el.textContent=fmtDur(left);el.classList.remove('done');}});
+  document.querySelectorAll('.card[data-voy] .vbar i').forEach(i=>{
+    const card=i.closest('.card[data-voy]'),v=S.voyages.find(x=>x.id===card.dataset.voy);
+    if(!v)return;
+    const tot=(v.endsAt-v.startedAt)/1000,left=(v.endsAt-now())/1000;
+    i.style.width=Math.max(0,Math.min(100,(1-left/tot)*100))+'%';});
+  // render exactly once, on the transition
+  if(rdy>lastReady){
+    Snd.play('arrive');
+    toast('A fleet has docked. Collect the reward in At Sea.','blu');
+    if(tab==='voy'||tab==='fleet')render();}
+  lastReady=rdy;
+  updateRes();
+},1000);
+setInterval(()=>{if(S)save();},15000);
+addEventListener('visibilitychange',()=>{if(!document.hidden&&S){updateRes();
+  if(tab==='voy'||tab==='fleet'||tab==='routes')render();}});
+
+/* ============ BOOT ============ */
+Promise.all([loadShipArt(),loadIconArt()]).then(()=>{
+  buildResStrip();
+  if(!load())newGame();else render();
+  lastReady=readyCount();});
+</script>
+</body>
+</html>
