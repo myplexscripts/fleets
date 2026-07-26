@@ -114,6 +114,20 @@ export function renderMap() {
     return +Math.min(Math.max(x, legW + 6 + half), CW - 6 - half).toFixed(1);
   };
 
+  /* Transparent tap targets. The marker gets a circle; a labelled node also gets
+     a patch covering the gap down to its label, so the words are part of the
+     button and there is no dead strip between the two. */
+  const hitShapes = (x, y, label, size, drop) => {
+    let out = `<circle cx="${x}" cy="${y}" r="${HIT}" fill="${'transparent'}"/>`;
+    if (label) {
+      const half = Math.min(HIT * 2.2, Math.max(HIT, label.length * size * 0.32));
+      const lx = labelX(x, label, size);
+      out += `<rect x="${(lx - half).toFixed(1)}" y="${y.toFixed(1)}" width="${(half * 2).toFixed(1)}"`
+        + ` height="${(drop + size).toFixed(1)}" fill="transparent"/>`;
+    }
+    return out;
+  };
+
   const hx = MX(HOME.x), hy = MY(HOME.y);
   let lines = '', nodes = '', bossNodes = '', voyLines = '';
 
@@ -137,7 +151,7 @@ export function renderMap() {
     const labelColor = isCh ? '#efe3ae' : (isDive ? '#8fb8d8' : '#a8c4c6');
 
     nodes += `<g id="node_${r.id}" data-act="mission" data-id="${r.id}" class="mapnode">
-      <circle cx="${x}" cy="${y}" r="${HIT}" fill="transparent"/>
+      ${hitShapes(x, y, label, LBL, 18 * MS)}
       ${isCh
         ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
         : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${nodeShape({ ...r, x, y }, col, MS)}`}
@@ -161,7 +175,7 @@ export function renderMap() {
 
     lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#d94a3a" stroke-width="${2 * MS}" opacity="0.9"/>`;
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
-      <circle cx="${x}" cy="${y}" r="${HIT * 1.15}" fill="transparent"/>
+      ${hitShapes(x, y, b.n.toUpperCase(), LBL, 22 * MS)}
       <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#d94a3a"/>
       <path d="${starPath(x, y, 10 * MS)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/>
       <text x="${labelX(x, b.n.toUpperCase(), LBL)}" y="${y + 22 * MS + LBL}" text-anchor="middle" fill="#f0b0a6" font-size="${LBL}" font-family="Oswald" letter-spacing="1.2" style="paint-order:stroke" stroke="#0a0507" stroke-width="3">${esc(b.n.toUpperCase())}</text></g>`;

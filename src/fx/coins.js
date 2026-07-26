@@ -1,11 +1,11 @@
-/* Coins arcing from mid-screen into the reales counter on a payout. */
+/* Coins arcing from mid-screen into the gold counter on a payout. */
 
 import { $ } from '../core/dom.js';
 import { play } from './sound.js';
 import { bump } from '../ui/hud.js';
 
 export function coinFly(n) {
-  const target = $('rReales');
+  const target = $('rGold');
   if (!target) return;
   const tgt = target.getBoundingClientRect();
   for (let i = 0; i < Math.min(n, 12); i++) {
@@ -25,7 +25,7 @@ export function coinFly(n) {
     setTimeout(() => {
       c.remove();
       if (i === 0) play('coin');
-      bump('wReales');
+      bump('wGold');
     }, 650 + i * 60);
   }
 }

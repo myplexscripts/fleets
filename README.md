@@ -7,14 +7,25 @@ kept separate on purpose:
 - **Wreck dives** — send divers down; chests come up and sell on the quay. No
   enemies either, only depth, and depth is what your diving bell is for.
 - **Battles** — patrols, escorts, raids, blockades, charters and admirals. These
-  pay in coin, materials and reputation.
+  pay in gold, materials, and trade goods taken off the enemy.
 
-A patrol is the bridge between the halves: winning one suppresses danger across
-its whole region for a while, which makes every cargo run through it safer. But
-you never have to fight to open a trade route — trade routes are always open.
+**Danger is alive.** Every cargo lane's danger climbs on its own in real time, at
+its own rate and up to its own ceiling — home water drifts slowly and never gets
+worse than Hazardous; the Grand Fleet Route is Treacherous again within the hour.
+Danger never blocks trade. It only decides how roughly a run is handled.
+
+Pushing it back down is the fight you choose to have. A lane above Safe offers a
+**sweep** on its own sheet — the same three ships, one battle, one step of danger
+off that lane. A **patrol** is the broad version: it steps every lane in its
+region down at once and keeps the water quiet for a while. A Safe lane offers
+nothing to fight, which is the point.
+
+Before any battle you see who is out there and your **estimated odds**, and you
+can stand off and look again for a different line-up as often as you like.
 
 Fill a region's notoriety bar and its admiral comes looking for you. Beat the
-admiral and the next region of the chart unlocks.
+admiral and the next region of the chart unlocks. Trade never unlocks anything —
+progression runs through notoriety and admirals.
 
 Vanilla JavaScript ES modules, no build step, no runtime dependencies beyond a
 vendored copy of [Phaser 3](https://phaser.io/) for the battle renderer.
@@ -63,6 +74,9 @@ src/
     config.js         every tuning number
     state.js          the save object, migrations, persistence
     contracts.js      per-port cargo contracts (drawn, stored, redrawn)
+    selectors.js      also owns live lane danger: stored as (step, timestamp)
+                      and projected forward on read, so lanes keep drifting
+                      while the game is closed with no ticker running
     selectors.js      derived facts (power, danger, voyages) — pure reads
     settings.js       player options, stored separately from the save
     actions.js        data-act click delegation
@@ -73,8 +87,8 @@ src/
                       flagship upgrades, flavour text, tutorial script
   art/                procedural ship sprites and icons (SVG → canvas)
   fx/                 sound, toasts, transitions, coins, mist, haptics
-  systems/            voyages (cargo + dives), contracts, notoriety,
-                      collectibles, enemy generation, battle outcomes
+  systems/            voyages (cargo + dives), notoriety, collectibles, loot,
+                      enemy generation, battle outcomes (including lane sweeps)
   ui/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
@@ -123,10 +137,14 @@ resolve through the log rather than taking the whole game down.
 
 ## Economy
 
+**Gold** is the only currency. Everything is priced in it and everything pays in
+it — there is no premium second currency splitting the same decision in two.
+
 **Trade goods** — sugar, rum, tobacco, wine, spice. Bought at the Market,
-consumed by cargo contracts, and sellable back at a loss. A delivery pays
-several times the counter price for the same crates, so the market is where you
-dump stock you cannot place, not a business model.
+**won from any battle**, consumed by cargo contracts, and sellable back at a
+loss. A delivery pays several times the counter price for the same crates, so the
+market is where you dump stock you cannot place, not a business model. A captain
+who fights rarely has to buy stock at all.
 
 **Materials** — wood, metal, cloth. What every refit is built from. They come
 from fighting, from breaking up captured hulls, and from wreck dives; contracts
@@ -147,9 +165,9 @@ fills a shelf in the great cabin.
 `localStorage`:
 
 - `saltpowder` — the game. `core/state.js#migrate` upgrades older shapes on
-  load, so adding fields is safe. It also converts pre-goods saves: the old
-  generic `cargo` becomes sugar and rum, `parts` splits into wood/metal/cloth,
-  flat `relics` fold into their collectible sets, and the retired lane-security
-  table is dropped.
+  load, so adding fields is safe. It converts pre-goods saves (the old generic
+  `cargo` becomes sugar and rum, `parts` splits into wood/metal/cloth, flat
+  `relics` fold into their collectible sets), folds the retired `gems` currency
+  into gold at a flat rate, and drops the old lane-security table.
 - `sp_settings` — audio, motion, haptics. Survives starting a new game.
 - `sp_tutdone` — whether the tutorial has ever been finished.

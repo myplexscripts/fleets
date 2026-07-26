@@ -1,4 +1,5 @@
-/* Ship classes, names, and the geometry/palettes the placeholder art uses. */
+/* Ship classes, names, and the geometry/palettes the placeholder art uses.
+   `cost` is in gold; `ransom` is the gold a captured crew fetches. */
 
 export const TYPES = {
   schooner: { n: 'Schooner',    speed: 8, guns: 3,  hull: 20, cargo: 10, cost: 320,  rep: 3, salv: 6,  ransom: 150 },

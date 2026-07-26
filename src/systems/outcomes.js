@@ -7,12 +7,13 @@
 import { S, syncFlag } from '../core/state.js';
 import { PATROL_MS } from '../core/config.js';
 import { now } from '../core/dom.js';
-import { REGIONS } from '../data/world.js';
+import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
-import { fmtDur, bossAsRoute, grant } from '../core/selectors.js';
+import { fmtDur, bossAsRoute, grant, sweepLane, sweepRegion, effDanger } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
+import { goodsHaul, haulLine } from './loot.js';
 import { showResult } from '../ui/result.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
@@ -30,12 +31,18 @@ export function battleVictory(route, enemies) {
   grant(route.rew);
   S.done[route.id] = (S.done[route.id] || 0) + 1;
   const noto = addNoto(route);
+  const haul = goodsHaul(route.region, route.danger);
 
   let msg = 'The water is yours. What was floating out here is not any more.';
 
   if (route.type === 'patrol') {
+    /* The broad version of a sweep: every lane in the region drops a step, and
+       the water stays quiet for a while on top of that. */
     S.patrol[route.region] = now() + PATROL_MS;
-    msg = `Your patrol has the run of ${REGIONS[route.region].n}. Every cargo run through this region is a step safer for the next ${fmtDur(PATROL_MS / 1000)}.`;
+    const cleared = sweepRegion(route.region);
+    msg = `Your patrol has the run of ${REGIONS[route.region].n}.`
+      + (cleared ? ` ${cleared} lane${cleared === 1 ? '' : 's'} pushed back a step,` : '')
+      + ` and the whole region stays a step quieter for ${fmtDur(PATROL_MS / 1000)}.`;
   } else if (route.type === 'escort') {
     msg = 'The merchant makes port with her cargo and her crew, and says so loudly to anyone who will listen.';
   } else if (route.type === 'blockade') {
@@ -43,8 +50,35 @@ export function battleVictory(route, enemies) {
   }
 
   showResult({
+    route, success: true, msg: msg + ' ' + haulLine(haul),
+    captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
+  });
+}
+
+/* Sweeping a cargo lane: the escort action that pushes one lane's danger down a
+   step. It never opens the lane — the lane was always open — it just makes the
+   next run through it a safer bet. */
+export function sweepVictory(route, enemies) {
+  const { before, after } = sweepLane(route);
+  grant({ gold: 120 + 90 * before });
+  S.done['sweep_' + route.id] = (S.done['sweep_' + route.id] || 0) + 1;
+  const noto = addNoto(route);
+  const haul = goodsHaul(route.region, before);
+
+  let msg = `The lane is swept. ${route.n} drops from ${DNAMES[before].toLowerCase()} to ${DNAMES[after].toLowerCase()}.`;
+  if (after === 0) msg += ' Nothing is working this water now.';
+  msg += ' ' + haulLine(haul);
+
+  showResult({
     route, success: true, msg,
     captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
+  });
+}
+
+export function sweepLoss(route) {
+  showResult({
+    route, success: false,
+    msg: `They hold the lane. ${route.n} is still ${DNAMES[effDanger(route)].toLowerCase()}, and anything you send through it carries that risk.`
   });
 }
 
@@ -77,13 +111,14 @@ export function charterVictory(route, enemies) {
       prizeMsg = 'Refit: ' + b.n + ' — ' + b.desc + ', fitted aboard the ' + S.flag.name + '.';
       setTimeout(() => { play('upgrade'); toast(b.n + ' fitted.', 'gold'); }, 1200);
     }
-    if (c.prize.gems) {
-      S.gems += c.prize.gems;
-      prizeMsg = 'A map came with the payment. Whatever it pointed at was worth ' + c.prize.gems + ' gems.';
+    if (c.prize.gold) {
+      S.gold += c.prize.gold;
+      prizeMsg = 'A map came with the payment. Whatever it pointed at was worth ' + c.prize.gold + ' gold.';
     }
   }
 
-  showResult({ route, success: true, msg, captives: prizesFrom(enemies), noto, prizeMsg });
+  const haul = goodsHaul(route.region, route.danger);
+  showResult({ route, success: true, msg: msg + ' ' + haulLine(haul), captives: prizesFrom(enemies), noto, prizeMsg });
 }
 
 export function bossVictory(boss, enemies) {

@@ -1,8 +1,7 @@
 /* The resource strip and its little count-up animations.
 
-   Six plates is all that fits on a phone, and there are now nine things worth
-   counting — so goods and materials show as totals and open the Ship's Stores
-   sheet when tapped. */
+   Five plates fit comfortably on a phone; goods and materials show as totals and
+   open the Ship's Stores sheet when tapped. */
 
 import { $ } from '../core/dom.js';
 import { S } from '../core/state.js';
@@ -11,11 +10,10 @@ import { iconHTML } from '../art/icons.js';
 
 /* [key, value element id, plate element id, label, opens stores?] */
 const RES_DEFS = [
-  ['reales',  'rReales',  'wReales',  'Reales', false],
+  ['gold',    'rGold',    'wGold',    'Gold',   false],
   ['cargo',   'rGoods',   'wGoods',   'Goods',  true],
   ['mats',    'rMats',    'wMats',    'Materials', true],
   ['barrels', 'rBarrels', 'wBarrels', 'Powder', false],
-  ['gems',    'rGems',    'wGems',    'Gems',   false],
   ['sea',     'rSea',     'wSea',     'At Sea', false]
 ];
 
@@ -38,8 +36,8 @@ export function bump(id) {
 export function updateRes() {
   if (!S) return;
   const vals = {
-    reales: S.reales, cargo: totalGoods(), mats: totalMats(),
-    barrels: S.barrels, gems: S.gems, sea: busyIds().size
+    gold: S.gold, cargo: totalGoods(), mats: totalMats(),
+    barrels: S.barrels, sea: busyIds().size
   };
   RES_DEFS.forEach(([key, vid, wid]) => {
     const el = $(vid);

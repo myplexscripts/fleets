@@ -19,17 +19,18 @@ const TIER_MATS = {
 };
 
 export function tierCost(key, t) {
-  const cost = { reales: 300 * (t + 1), gems: t >= 3 ? (t - 2) : 0 };
+  /* The last two tiers cost extra on top of the linear ramp. */
+  const cost = { gold: 300 * (t + 1) + (t >= 3 ? 200 * (t - 2) : 0) };
   const mats = TIER_MATS[key] || {};
   for (const m in mats) cost[m] = mats[m] * (t + 1);
   return cost;
 }
 
 export const FITTINGS = {
-  grapple:  { n: 'Grappling Hooks',  desc: 'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.', cost: { reales: 800,  metal: 16, cloth: 8 } },
-  magazine: { n: 'Powder Magazine',  desc: 'Start every battle with one extra fire barrel.',                                               cost: { reales: 1200, metal: 18, wood: 12, gems: 2 } },
-  copper:   { n: 'Copper Sheathing', desc: 'The flagship takes no damage from storms or from a cargo run gone wrong.',                     cost: { reales: 1500, metal: 30, gems: 2 } },
-  chase:    { n: 'Chase Guns',       desc: 'The flagship fires twice each round. The second shot deals 60% damage.',                       cost: { reales: 2200, metal: 34, wood: 16, gems: 4 } }
+  grapple:  { n: 'Grappling Hooks',  desc: 'Board enemy ships at 55% hull instead of 40% — you can capture them much earlier in a fight.', cost: { gold: 800,  metal: 16, cloth: 8 } },
+  magazine: { n: 'Powder Magazine',  desc: 'Start every battle with one extra fire barrel.',                                               cost: { gold: 1600, metal: 18, wood: 12 } },
+  copper:   { n: 'Copper Sheathing', desc: 'The flagship takes no damage from storms or from a cargo run gone wrong.',                     cost: { gold: 1900, metal: 30 } },
+  chase:    { n: 'Chase Guns',       desc: 'The flagship fires twice each round. The second shot deals 60% damage.',                       cost: { gold: 3000, metal: 34, wood: 16 } }
 };
 
 /* Permanent refits awarded by charters. */

@@ -20,11 +20,10 @@ export const BELL_NAMES = [
 /* Cost to go from tier `b` to `b + 1`. */
 export function bellCost(b) {
   return {
-    reales: 500 * (b + 1),
+    gold: 500 * (b + 1) + (b >= 2 ? 200 * (b - 1) : 0),
     metal: 14 * (b + 1),
     wood: 8 * (b + 1),
-    cloth: 4 * (b + 1),
-    gems: b >= 2 ? b - 1 : 0
+    cloth: 4 * (b + 1)
   };
 }
 
@@ -33,7 +32,7 @@ export const bellMaxDepth = b => b + 1;
 
 export const DEPTH_NAMES = ['', 'Shallows', 'Reef Shelf', 'Deep Water', 'The Trench', 'The Abyss'];
 
-/* Reales per chest, by depth. Deep water is where the money is. */
+/* Gold per chest, by depth. Deep water is where the money is. */
 export const CHEST_VALUE = [0, 90, 170, 320, 620, 1150];
 
 /* Chance a dive turns up a collectible piece, by depth. */

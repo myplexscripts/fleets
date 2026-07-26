@@ -46,7 +46,7 @@ export function renderPort() {
           ? `<div class="row" style="margin-top:11px"><span class="sub">Home in</span>
              <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span></div>`
           : `<div class="row" style="margin-top:11px">
-             <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair · ' + iconHTML('reales', 19) + repairCost(s)}</button>
+             <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair · ' + iconHTML('gold', 19) + repairCost(s)}</button>
              <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Break Up</button></div>`}
       </div></div></div>`;
   });
@@ -60,8 +60,8 @@ export function doRepair(id) {
   if (isBusy(id)) return toast('That ship is away trading. Wait for it to return.', 'bad');
   if (s.hull >= s.max) return;
   const c = repairCost(s);
-  if (S.reales < c) return toast('Not enough reales to repair that ship.', 'bad');
-  S.reales -= c;
+  if (S.gold < c) return toast('Not enough gold to repair that ship.', 'bad');
+  S.gold -= c;
   s.hull = s.max;
   play('repair');
   toast('The ' + s.name + ' is fully repaired.');

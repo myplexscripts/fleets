@@ -40,7 +40,7 @@ export function renderSea() {
       <div class="row" style="margin-top:11px">
         ${rdy
           ? `<button class="btn sm grn" data-act="collect-voy" data-id="${v.id}">Collect</button>`
-          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up · ${iconHTML('gems', 19)}${rushCost(v)}</button>
+          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up · ${iconHTML('gold', 19)}${rushCost(v)}</button>
              <button class="btn sm red" data-act="recall-voy" data-id="${v.id}">Call Back</button>`}
       </div></div>`;
   });
@@ -52,7 +52,7 @@ export function renderSea() {
 function manifest(v) {
   if (v.type === 'dive') {
     const takings = (v.chests || 0) * (v.chestValue || 0);
-    return `${iconHTML('chest', 20)} ${v.chests} chest${v.chests === 1 ? '' : 's'} raised · <b style="color:var(--goldhi)">${takings}</b> reales on landing`
+    return `${iconHTML('chest', 20)} ${v.chests} chest${v.chests === 1 ? '' : 's'} raised · <b style="color:var(--goldhi)">${takings}</b> gold on landing`
       + (fmt(v.rew) ? ` · ${fmt(v.rew)}` : '');
   }
   return `${iconHTML(v.good, 20)} ${goodsLine(v.good, v.qty)} → <b>${esc(v.dest || '—')}</b> · <b style="color:var(--goldhi)">${fmt(v.rew)}</b>`;
@@ -62,8 +62,8 @@ function rushVoyage(id) {
   const v = S.voyages.find(x => x.id === id);
   if (!v) return;
   const c = rushCost(v);
-  if (S.gems < c) return toast('Not enough gems to speed that up.', 'bad');
-  S.gems -= c;
+  if (S.gold < c) return toast('Not enough gold to speed that up.', 'bad');
+  S.gold -= c;
   v.endsAt = now();
   play('arrive');
   toast('Voyage rushed — the fleet is docking now.', 'blu');

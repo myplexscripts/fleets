@@ -24,10 +24,10 @@ export const VOYAGE_TYPES = ['cargo', 'dive'];
 export const BATTLE_TYPES = ['patrol', 'escort', 'raid', 'blockade', 'charter', 'boss'];
 
 export const MTYPE = {
-  cargo:    { n: 'Cargo Run',       tip: 'Load the goods named below and deliver them. No fighting — a cargo run is a delivery, and pays far better than dumping the same goods at the market.' },
+  cargo:    { n: 'Cargo Run',       tip: 'Load the goods named below and deliver them. A cargo run is a delivery, never a battle — danger here only decides how roughly the fleet is handled on the way.' },
   dive:     { n: 'Wreck Dive',      tip: 'Nobody guards a wreck, so there is no fight here. What stops you is depth: your diving bell has to reach it. Chests are sold as they come up.' },
-  patrol:   { n: 'Patrol',          tip: 'A fight for modest money. Winning suppresses the danger of this whole region for a while, which makes every cargo run through it safer.' },
-  raid:     { n: 'Raid',            tip: 'A fight for a large one-off payout in reales and materials.' },
+  patrol:   { n: 'Patrol',          tip: 'A fight for modest money that clears every lane in the region at once and keeps the water quiet for a while. The broad version of sweeping a single lane.' },
+  raid:     { n: 'Raid',            tip: 'A fight for a large one-off payout in gold and materials.' },
   escort:   { n: 'Escort',          tip: 'A fight where you must also keep the merchant ship alive. If she sinks you lose, however well you are doing. Pays in cloth and timber.' },
   blockade: { n: 'Blockade Break',  tip: 'The hardest ordinary fight on the chart, and the largest ordinary reward. Bring your best three ships.' },
   boss:     { n: 'Admiral',         tip: 'The region admiral. Your flagship must be in the line. Beating one unlocks the next region of the map.' },

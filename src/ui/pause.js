@@ -114,7 +114,7 @@ async function doRestartTutorial() {
 async function doNewGame() {
   const ok = await confirmDlg({
     title: 'Abandon This Fleet?',
-    text: 'Every ship, port, collectible and admiral you have beaten is struck from the record, and you begin again with 500 reales.',
+    text: 'Every ship, port, collectible and admiral you have beaten is struck from the record, and you begin again with 500 gold.',
     ok: 'Start Over', cancel: 'Belay That', danger: true
   });
   if (!ok) return;

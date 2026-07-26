@@ -11,7 +11,7 @@
 
 export const TUTSTEPS = [
   { modal: 1, title: 'Welcome Aboard, Captain',
-    text: 'You have inherited a flagship, three worn-out ships, 500 reales and a chart of the Caribbean. Turn that into the most feared fleet on the ocean.',
+    text: 'You have inherited a flagship, three worn-out ships, 500 gold and a chart of the Caribbean. Turn that into the most feared fleet on the ocean.',
     btn: 'Begin' },
 
   { sel: '#main .card', lockTab: 'fleet', title: 'Your Ships',
@@ -27,7 +27,7 @@ export const TUTSTEPS = [
     wait: 'route:c1' },
 
   { modal: 1, title: 'How Trade Works',
-    text: 'A contract names goods, a quantity and a destination, and pays on delivery. The goods come out of your warehouse when the ships leave, so buy what a contract asks for in the Market first. There is no fighting on a cargo run — the only risk is losing the cargo in dangerous water.',
+    text: "A contract names goods, a quantity and a destination, and pays on delivery. The goods come out of your warehouse when the ships leave, so buy what a contract asks for in the Market first. There is no fighting on a cargo run — danger only decides how roughly the fleet is handled on the way. Watch it, though: every lane's danger creeps upward on its own in real time.",
     btn: 'Understood' },
 
   { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ships',
@@ -43,15 +43,15 @@ export const TUTSTEPS = [
     wait: 'tab:voy' },
 
   { modal: 1, title: 'Fighting Is Its Own Trade',
-    text: 'You never have to fight to open a trade route — trade routes are always open. Battles are separate missions with their own markers, and they pay in coin, materials and reputation. A PATROL is the useful one for a trader: winning it suppresses danger across the whole region for a while, which makes every cargo run through it safer.',
+    text: "You never have to fight to open a trade route — trade routes are always open. Fighting is how you push danger back down. A lane that has drifted above Safe offers a SWEEP on its own sheet: same ships, one battle, one step of danger off that lane. A PATROL is the broad version — it steps every lane in the region down at once and keeps the water quiet for a while. Both also come home with goods taken off the enemy.",
     btn: 'Show Me' },
 
   { sel: '#node_c3', lockTab: 'routes', only: 'c3', title: 'A Patrol',
-    text: 'Open the Map and tap the diamond — the patrol in the Windward Passage.',
+    text: 'Open the Map and tap the diamond — the patrol in the Windward Passage. Diamonds, squares and spearheads are all fights.',
     wait: 'route:c3' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Form the Line',
-    text: 'Pick two ships and attack. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less.',
+    text: 'Pick two ships and attack. Order matters: the first fires first, the second deals 25% more damage, the third takes 25% less. The card above shows who is out there and your estimated odds — if a match-up looks bad you can stand off and look again for a different one, as often as you like.',
     wait: 'launch' },
 
   { modal: 1, when: 'battle', title: 'Broadsides',

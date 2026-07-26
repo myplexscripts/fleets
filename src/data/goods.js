@@ -5,6 +5,7 @@
    always worse — it is the release valve for stock you cannot place, not a
    business model. */
 
+/* `buy` and `sell` are gold per unit. */
 export const GOODS = {
   sugar:   { n: 'Sugar',   unit: 'crates',  buy: 10, sell: 6 },
   rum:     { n: 'Rum',     unit: 'barrels', buy: 16, sell: 10 },

@@ -17,11 +17,11 @@ import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 
 const SHIP_BUILD = {
-  frigate: { reales: 550, wood: 20, metal: 12, cloth: 8 },
-  manowar: { reales: 1300, wood: 40, metal: 30, cloth: 18 }
+  frigate: { gold: 550, wood: 20, metal: 12, cloth: 8 },
+  manowar: { gold: 1300, wood: 40, metal: 30, cloth: 18 }
 };
 
-const dockCost = () => ({ reales: 350 + (S.docks - 2) * 250, gems: S.docks >= 6 ? 2 : 0 });
+const dockCost = () => ({ gold: 350 + (S.docks - 2) * 250 + (S.docks >= 6 ? 400 : 0) });
 
 export function renderMarket() {
   let i = 0;
@@ -31,10 +31,10 @@ export function renderMarket() {
   h += `<div class="goodsgrid" style="--i:${i++}">`;
   GOOD_KEYS.forEach(k => {
     const g = GOODS[k];
-    const can1 = S.reales >= g.buy, can10 = S.reales >= g.buy * 10;
+    const can1 = S.gold >= g.buy, can10 = S.gold >= g.buy * 10;
     h += `<div class="goodcard">
       <div class="ghead">${iconHTML(k, 34)}<div><b>${g.n}</b><i>${S.goods[k]} ${g.unit}</i></div></div>
-      <div class="gprice">buy ${g.buy}${iconHTML('reales', 16)} · sell ${g.sell}${iconHTML('reales', 16)}</div>
+      <div class="gprice">buy ${g.buy}${iconHTML('gold', 16)} · sell ${g.sell}${iconHTML('gold', 16)}</div>
       <div class="btnset">
         <button class="btn sm" ${can1 ? '' : 'disabled'} data-act="buy-good" data-good="${k}" data-n="1">+1</button>
         <button class="btn sm" ${can10 ? '' : 'disabled'} data-act="buy-good" data-good="${k}" data-n="10">+10</button>
@@ -50,10 +50,10 @@ export function renderMarket() {
     const m = MATERIALS[k];
     h += `<div class="goodcard">
       <div class="ghead">${iconHTML(k, 34)}<div><b>${m.n}</b><i>${S.mats[k]} ${m.unit}</i></div></div>
-      <div class="gprice">buy ${m.buy}${iconHTML('reales', 16)}</div>
+      <div class="gprice">buy ${m.buy}${iconHTML('gold', 16)}</div>
       <div class="btnset">
-        <button class="btn sm" ${S.reales >= m.buy ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="1">+1</button>
-        <button class="btn sm" ${S.reales >= m.buy * 5 ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="5">+5</button>
+        <button class="btn sm" ${S.gold >= m.buy ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="1">+1</button>
+        <button class="btn sm" ${S.gold >= m.buy * 5 ? '' : 'disabled'} data-act="buy-mat" data-mat="${k}" data-n="5">+5</button>
       </div></div>`;
   });
   h += `</div>`;
@@ -73,8 +73,8 @@ export function renderMarket() {
   /* ---- ships ---- */
   h += `<div class="sect" style="--i:${i++}">Buy a Ship</div>`;
   ['schooner', 'brig'].forEach(t => {
-    h += shipCard(t, `Buy · ${iconHTML('reales', 19)}${TYPES[t].cost}`,
-      `data-act="buy-ship" data-type="${t}"`, S.reales >= TYPES[t].cost, i++);
+    h += shipCard(t, `Buy · ${iconHTML('gold', 19)}${TYPES[t].cost}`,
+      `data-act="buy-ship" data-type="${t}"`, S.gold >= TYPES[t].cost, i++);
   });
 
   if (S.unlocked.includes('gulf')) {
@@ -112,18 +112,18 @@ function shipCard(t, price, attrs, ok, i) {
 /* ---- actions ---- */
 function buyGood(key, n) {
   const g = GOODS[key], cost = g.buy * n;
-  if (S.reales < cost) return toast(`Not enough reales — that is ${cost}.`, 'bad');
-  S.reales -= cost;
+  if (S.gold < cost) return toast(`Not enough gold — that is ${cost}.`, 'bad');
+  S.gold -= cost;
   S.goods[key] += n;
   play('coin');
-  toast(`Bought ${n} ${g.unit} of ${g.n.toLowerCase()} for ${cost} reales.`, 'gold');
+  toast(`Bought ${n} ${g.unit} of ${g.n.toLowerCase()} for ${cost} gold.`, 'gold');
   render();
 }
 
 function buyMat(key, n) {
   const m = MATERIALS[key], cost = m.buy * n;
-  if (S.reales < cost) return toast(`Not enough reales — that is ${cost}.`, 'bad');
-  S.reales -= cost;
+  if (S.gold < cost) return toast(`Not enough gold — that is ${cost}.`, 'bad');
+  S.gold -= cost;
   S.mats[key] += n;
   play('coin');
   toast(`Bought ${n} ${m.unit}.`, 'gold');
@@ -152,8 +152,8 @@ function berthFree() {
 function buyShip(t) {
   if (!berthFree()) return;
   const cost = TYPES[t].cost;
-  if (S.reales < cost) return toast('Not enough reales for that ship.', 'bad');
-  S.reales -= cost;
+  if (S.gold < cost) return toast('Not enough gold for that ship.', 'bad');
+  S.gold -= cost;
   S.ships.push(newShip(t));
   toast('A ' + TYPES[t].n + ' joins your fleet.', 'gold');
   render();

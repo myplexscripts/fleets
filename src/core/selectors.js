@@ -2,7 +2,10 @@
    every screen needs. No DOM. */
 
 import { S, routes } from './state.js';
-import { VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GEM_PER_MIN } from './config.js';
+import {
+  VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN,
+  DANGER_RISE_MIN_DEFAULT, SWEEP_STEP
+} from './config.js';
 import { TYPES } from '../data/ships.js';
 import { REGIONS, NOTO_BONUS, VOYAGE_TYPES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
@@ -36,36 +39,93 @@ export function condColor(c) {
 }
 
 /* ---- wallet ----
-   A cost or a reward is one flat bag: { reales, gems, wood, metal, cloth }. */
+   A cost or a reward is one flat bag: { gold, wood, metal, cloth }. There is a
+   single currency on purpose — a second one only ever split the same decision
+   in two. */
 export function canPay(c) {
-  if ((c.reales || 0) > S.reales) return false;
-  if ((c.gems || 0) > S.gems) return false;
+  if ((c.gold || 0) > S.gold) return false;
   return MAT_KEYS.every(m => (c[m] || 0) <= S.mats[m]);
 }
 export function pay(c) {
-  S.reales -= (c.reales || 0);
-  S.gems -= (c.gems || 0);
+  S.gold -= (c.gold || 0);
   MAT_KEYS.forEach(m => { S.mats[m] -= (c[m] || 0); });
 }
 export function grant(o) {
   if (!o) return;
-  S.reales += (o.reales || 0);
-  S.gems += (o.gems || 0);
+  S.gold += (o.gold || 0);
   MAT_KEYS.forEach(m => { S.mats[m] += (o[m] || 0); });
 }
 export const totalGoods = () => GOOD_KEYS.reduce((a, k) => a + S.goods[k], 0);
 export const totalMats = () => MAT_KEYS.reduce((a, k) => a + S.mats[k], 0);
 
 /* ---- danger ----
-   Nothing you do to a lane changes its danger any more. Only a standing patrol
-   over the whole region does, and patrols wear off. */
+
+   A cargo lane's danger is alive: it climbs a step every `riseMin` minutes of
+   real time, up to that lane's own cap, and a won sweep pushes it back down.
+   It never blocks trade — it only decides how roughly a run is handled.
+
+   Stored as (step, timestamp) and projected forward on read, so it keeps
+   drifting while the game is closed without needing a ticker. */
 export const patrolActive = rk => (S.patrol[rk] || 0) > now();
 export const patrolLeft = rk => Math.max(0, (S.patrol[rk] || 0) - now());
 
+const hasLane = r => r.type === 'cargo';
+const laneCap = r => (r.dangerCap == null ? 3 : r.dangerCap);
+const laneRiseMs = r => (r.riseMin || DANGER_RISE_MIN_DEFAULT) * 60000;
+
+function laneRec(r) {
+  const rec = S.lanes[r.id];
+  if (!rec) {
+    S.lanes[r.id] = { d: r.danger || 0, ts: now(), region: r.region };
+    return S.lanes[r.id];
+  }
+  if (!rec.region) rec.region = r.region;   // records written before regions were stored
+  return rec;
+}
+
+/* The lane's own danger, before any patrol is taken into account. */
+export function laneDanger(r) {
+  if (!hasLane(r)) return r.danger || 0;
+  const rec = laneRec(r);
+  const steps = Math.floor((now() - rec.ts) / laneRiseMs(r));
+  return Math.max(0, Math.min(laneCap(r), rec.d + steps));
+}
+
+/* Real time until this lane worsens by a step, or 0 if it is already capped. */
+export function laneRiseIn(r) {
+  if (!hasLane(r) || laneDanger(r) >= laneCap(r)) return 0;
+  const rec = laneRec(r);
+  const elapsed = (now() - rec.ts) % laneRiseMs(r);
+  return laneRiseMs(r) - elapsed;
+}
+
+/* Snapshot the drift and knock the lane down. Called on a won sweep. */
+export function sweepLane(r) {
+  const before = laneDanger(r);
+  const after = Math.max(0, before - SWEEP_STEP);
+  S.lanes[r.id] = { d: after, ts: now(), region: r.region };
+  return { before, after };
+}
+
+/* A patrol clears every lane in its region at once. */
+export function sweepRegion(rk) {
+  let cleared = 0;
+  Object.keys(S.lanes).forEach(id => {
+    const rec = S.lanes[id];
+    if (rec.region !== rk) return;
+    if (rec.d > 0) { rec.d = Math.max(0, rec.d - 1); cleared++; }
+    rec.ts = now();
+  });
+  return cleared;
+}
+
 export function effDanger(r) {
-  const base = r.danger || 0;
+  const base = laneDanger(r);
   return Math.max(0, Math.min(3, base - (patrolActive(r.region) ? 1 : 0)));
 }
+
+/* Lanes worth sweeping right now. A Safe lane needs no escort. */
+export const needsSweep = r => hasLane(r) && effDanger(r) > 0;
 
 /* ---- mission shape ---- */
 export const canVoyage = r => VOYAGE_TYPES.includes(r.type);
@@ -106,6 +166,18 @@ export function tradeChance(r, fp) {
   const d = effDanger(r);
   const ratio = r.qty ? fp / (r.qty * 2.5) : 1;
   return Math.max(35, Math.min(98, Math.round(100 * (0.72 + 0.16 * Math.min(ratio, 1.5) - 0.11 * d))));
+}
+
+/* Estimated odds of taking a fight, from the two line-ups' total power. It is
+   a forecast, not a dice roll — the battle is still fought by hand. Shown before
+   committing so a hopeless match-up can be rerolled instead of walked into. */
+export function battleOdds(fleet, enemies) {
+  if (!fleet.length) return 0;
+  const fp = fleetPower(fleet);
+  const ep = Math.max(1, enemies.reduce((a, e) => a + Math.round(e.guns * 2 + e.speed + e.hull / 5), 0));
+  const ratio = fp / ep;
+  const odds = 100 * (1 - Math.exp(-1.6 * Math.pow(ratio, 2.2)));
+  return Math.max(3, Math.min(100, Math.round(odds)));
 }
 
 /* Total times a mission has been finished. Older saves counted battles under a
@@ -154,7 +226,7 @@ export function charterRoute(c) {
     id: 'ch_' + c.id, region: p.region, n: c.n, type: 'charter', charterDef: c,
     danger: Math.min(3, Math.floor((c.t - 1) / 3)),
     power: 18 * c.t,
-    rew: { reales: 140 * c.t, metal: c.t, cloth: c.t },
+    rew: { gold: 140 * c.t, metal: c.t, cloth: c.t },
     x: p.x, y: p.y
   };
 }
@@ -212,7 +284,8 @@ export function voyDuration(r, fleet) {
   return Math.max(45, Math.round(r.len * VOY_SEC_PER_DAY * Math.max(0.45, 1 - (avg - 4) * 0.07)));
 }
 export function rushCost(v) {
-  return Math.max(1, Math.ceil((v.endsAt - now()) / 60000 * RUSH_GEM_PER_MIN));
+  return Math.max(RUSH_GOLD_PER_MIN,
+    Math.ceil((v.endsAt - now()) / 60000) * RUSH_GOLD_PER_MIN);
 }
 
 export function fmtDur(sec) {

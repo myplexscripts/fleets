@@ -5,9 +5,9 @@ import { GOODS } from '../data/goods.js';
 import { MATERIALS } from '../data/materials.js';
 
 /* Order things always appear in, so a cost and a reward read the same way. */
-const BAG_ORDER = ['reales', 'wood', 'metal', 'cloth', 'gems'];
+const BAG_ORDER = ['gold', 'wood', 'metal', 'cloth'];
 
-/* A cost or reward bag: "◎260  ▤4  ▮2" */
+/* A cost or reward bag: "◉260  ▤4  ▮2" */
 export function bag(o, size) {
   if (!o) return '';
   return BAG_ORDER

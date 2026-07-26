@@ -38,7 +38,10 @@ function draw(pid) {
     good, qty, destId,
     len: legLength(p, dest),
     danger: Math.min(3, Math.floor((p.t - 1) / 3)),
-    rew: { reales: Math.round(qty * GOODS[good].buy * rate) }
+    /* Busier ports sit on busier water. */
+    riseMin: Math.max(10, 30 - p.t),
+    dangerCap: Math.min(3, 1 + Math.floor(p.t / 3)),
+    rew: { gold: Math.round(qty * GOODS[good].buy * rate) }
   };
 }
 
@@ -60,7 +63,8 @@ export function contractRoute(pid) {
     id: 'k_' + pid, region: p.region, type: 'cargo', portId: pid, contract: c,
     n: p.n + ' → ' + PORTS[c.destId].n,
     good: c.good, qty: c.qty, dest: PORTS[c.destId].n,
-    danger: c.danger, len: c.len, rew: c.rew,
+    danger: c.danger, riseMin: c.riseMin, dangerCap: c.dangerCap,
+    len: c.len, rew: c.rew,
     x: p.x, y: p.y
   };
 }

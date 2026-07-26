@@ -26,7 +26,7 @@ function drawStores() {
     return `<div class="storerow ${have ? '' : 'empty'}">
       <span class="sname">${iconHTML(k, 26)}<b>${g.n}</b><i>${have} ${g.unit}</i></span>
       <span class="sright">
-        <span class="sub">${g.sell}${iconHTML('reales', 16)} ea</span>
+        <span class="sub">${g.sell}${iconHTML('gold', 16)} ea</span>
         <button class="btn sm" ${have ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="1">Sell 1</button>
         <button class="btn sm" ${have ? '' : 'disabled'} data-act="sell-good" data-good="${k}" data-n="all">All</button>
       </span></div>`;
@@ -64,9 +64,9 @@ function sellGood(key, n) {
   if (qty <= 0) return;
   S.goods[key] -= qty;
   const paid = qty * g.sell;
-  S.reales += paid;
+  S.gold += paid;
   play('coin');
-  toast(`Sold ${qty} ${g.unit} of ${g.n.toLowerCase()} for ${paid} reales.`, 'gold');
+  toast(`Sold ${qty} ${g.unit} of ${g.n.toLowerCase()} for ${paid} gold.`, 'gold');
   updateRes();
   if (sheetOpen()) drawStores();   // the Market sells too, with no sheet open
   render();

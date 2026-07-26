@@ -30,7 +30,7 @@ export function showTitle() {
       const beaten = Object.keys(d.bossBeaten || {}).length;
       const region = (d.unlocked || []).slice(-1)[0];
       progress = `<div class="tprogress">
-        <span>${iconHTML('reales', 20)}${d.reales | 0}</span>
+        <span>${iconHTML('gold', 20)}${d.gold | 0}</span>
         <span>${iconHTML('anchor', 20)}${(d.ships || []).length} ship${(d.ships || []).length === 1 ? '' : 's'}</span>
         <span>${iconHTML('star', 20)}${beaten}/4 admirals</span>
         ${region && REGIONS[region] ? `<span>${iconHTML('map', 20)}${REGIONS[region].n}</span>` : ''}
@@ -90,7 +90,7 @@ async function titleNew() {
     if (!ok) return;
   }
   newGame();
-  toast('A flagship, three tired ships, and 500 reales. Make it count.', 'gold');
+  toast('A flagship, three tired ships, and 500 gold. Make it count.', 'gold');
   enterGame();
 }
 

@@ -117,12 +117,12 @@ function finishDive(v, fleet) {
   const takings = chests * (v.chestValue || 0);
 
   /* Chests never enter the hold as an item — they are sold on the quayside. */
-  S.reales += takings;
+  S.gold += takings;
   grant(v.rew);
   S.done[v.routeId] = (S.done[v.routeId] || 0) + 1;
   play('coin');
 
-  const msg = `${chests} chest${chests === 1 ? '' : 's'} came up off the wreck and went straight to the buyers on the quay for ${takings} reales.`;
+  const msg = `${chests} chest${chests === 1 ? '' : 's'} came up off the wreck and went straight to the buyers on the quay for ${takings} gold.`;
   const found = Math.random() < diveFindChance(v.depth) ? rollDrop('dive') : null;
   const prizeMsg = found
     ? `${found.name} came up with the last chest — ${found.setName}, ${found.have} of ${found.of}.`
@@ -133,7 +133,7 @@ function finishDive(v, fleet) {
   showResult({
     route: { id: v.routeId, n: v.routeName, region: v.region, type: v.type, rew: v.rew },
     success: true, msg, evt: sideEvent(fleet), noto, prizeMsg,
-    extra: { reales: takings }, fromVoyage: true
+    extra: { gold: takings }, fromVoyage: true
   });
 }
 

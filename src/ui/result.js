@@ -7,6 +7,9 @@ import { rnd } from '../core/rng.js';
 import { grant } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
 import { SCRAP_YIELD, MATERIALS } from '../data/materials.js';
+
+/* What the loose fittings off a broken-up prize fetch. */
+const SCRAP_GOLD = 200;
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
@@ -40,7 +43,7 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
       h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
         <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
         <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
-        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Break up: ${scrapLine(e.type)}.${e.derelict ? ' No crew aboard to ransom.' : ' Ransom: ' + t.ransom + ' reales.'}</div></div></div>
+        <div class="sub">Damaged, about a third of her hull left.<br>Keep: joins your fleet, needs a free berth. Break up: ${scrapLine(e.type)}.${e.derelict ? ' No crew aboard to ransom.' : ' Ransom: ' + t.ransom + ' gold.'}</div></div></div>
         <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:7px">
           <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button>
           <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Break Up</button>
@@ -55,8 +58,8 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   setSheet(`<h3>${esc(route.n)}</h3>`, h);
   openSheet();
 
-  if (success && paid.reales) {
-    setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.reales / 200))), 500);
+  if (success && paid.gold) {
+    setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.gold / 200))), 500);
   }
   save();
   updateRes();
@@ -67,7 +70,7 @@ const scrapWords = type => {
   const y = SCRAP_YIELD[type];
   return `${y.wood} ${MATERIALS.wood.unit}, ${y.metal} ${MATERIALS.metal.unit} and ${y.cloth} ${MATERIALS.cloth.unit}`;
 };
-const scrapLine = type => scrapWords(type) + ', plus a gem';
+const scrapLine = type => scrapWords(type) + `, plus ${SCRAP_GOLD} gold`;
 
 function capAct(i, mode, type) {
   const t = TYPES[type], el = $('cap' + i);
@@ -82,12 +85,12 @@ function capAct(i, mode, type) {
   } else if (mode === 'salvage') {
     const yld = SCRAP_YIELD[type];
     grant(yld);
-    S.gems += 1;
-    sub.textContent = `Broken up for ${scrapWords(type)} and 1 gem.`;
+    S.gold += SCRAP_GOLD;
+    sub.textContent = `Broken up for ${scrapWords(type)}, and ${SCRAP_GOLD} gold for the fittings.`;
   } else if (mode === 'ransom') {
-    S.reales += t.ransom;
+    S.gold += t.ransom;
     coinFly(6);
-    sub.textContent = `Crew ransomed back for ${t.ransom} reales.`;
+    sub.textContent = `Crew ransomed back for ${t.ransom} gold.`;
   } else {
     sub.textContent = 'Left to drift. Nothing gained.';
   }

@@ -357,3 +357,22 @@
 /* the two plates that open the stores sheet */
 .resitem.tappable{cursor:pointer}
 .resitem.tappable:active{transform:scale(.95)}
+
+/* ---- sighted sails: enemy line-up, odds, reroll ---- */
+.oddscard{border-color:#8a463e}
+.oddscard::before,.oddscard::after{border-color:#a05a4e}
+.odds{
+  font-family:var(--ui);font-size:clamp(22px,1.8vw,32px);letter-spacing:1px;
+  color:var(--dim);line-height:1;
+}
+.odds.good{color:var(--grn);text-shadow:0 0 14px rgba(99,192,106,.35)}
+.odds.fair{color:var(--yel)}
+.odds.poor{color:#e88a7a;text-shadow:0 0 14px rgba(217,74,58,.3)}
+
+.foelist{display:flex;flex-direction:column;gap:5px;margin:9px 0 8px}
+.foe{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  border-left:3px solid #8a463e;background:rgba(58,20,16,.28);padding:6px 10px;
+}
+.foe b{font-family:var(--ui);font-size:clamp(15px,1.1vw,19px);letter-spacing:1px;text-transform:uppercase;color:#f0b0a6}
+.foe span{font-family:var(--ui);font-size:clamp(14px,1vw,17px);letter-spacing:.6px;color:var(--dim)}

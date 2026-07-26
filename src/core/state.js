@@ -1,10 +1,10 @@
 /* The save game.
 
    `S` is the single mutable state object. It is exported as a live binding —
-   importers read `S.reales` and see current values, but only this module may
+   importers read `S.gold` and see current values, but only this module may
    swap the object itself (newGame / load). */
 
-import { SAVE_KEY, TUT_KEY, PATROL_MS } from './config.js';
+import { SAVE_KEY, TUT_KEY, PATROL_MS, GEM_TO_GOLD } from './config.js';
 import { TYPES, NAMES } from '../data/ships.js';
 import { FLAGBASE, BOONS } from '../data/flagship.js';
 import { makeRoutes } from '../data/routes.js';
@@ -56,14 +56,14 @@ export function nextVoyId() { return 'v' + (voySeq++); }
 
 export function newGame() {
   S = {
-    reales: 500, gems: 0, barrels: 3, docks: 3,
+    gold: 500, barrels: 3, docks: 3,
     goods: { ...zeroed(GOOD_KEYS), sugar: 10, rum: 6 },
     mats: { ...zeroed(MAT_KEYS), wood: 8, metal: 6, cloth: 4 },
     bell: 0,
     ships: [newShip('schooner'), newShip('schooner'), newShip('brig')],
     flag: newFlag(),
     unlocked: ['caribbean'],
-    done: {}, patrol: {}, noto: {}, bossBeaten: {}, voyages: [],
+    done: {}, patrol: {}, lanes: {}, noto: {}, bossBeaten: {}, voyages: [],
     ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
     won: false,
     tut: localStorage.getItem(TUT_KEY) ? 'done' : 0,
@@ -121,9 +121,19 @@ function migrate() {
   S.contracts = S.contracts || {};
   S.flagBoons = S.flagBoons || [];
   S.patrol = S.patrol || {};
+  S.lanes = S.lanes || {};
   S.done = S.done || {};
   if (!S.startedAt) S.startedAt = Date.now();
   if (!S.ports.includes('staug')) S.ports.push('staug');
+
+  /* Reales and gems were two currencies doing one job. Gems fold in at a flat
+     rate and the whole thing is now just gold. The old field names are read
+     off the raw save here, so this must not be renamed with the rest. */
+  if (typeof S.gold !== 'number') {
+    S.gold = (S.reales | 0) + (S.gems | 0) * GEM_TO_GOLD;
+  }
+  delete S.reales;
+  delete S.gems;
 
   /* Patrols used to be stored as a bare counter that nothing ever decremented,
      so one patrol win suppressed a region's danger forever. They are now an

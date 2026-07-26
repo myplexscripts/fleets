@@ -40,7 +40,7 @@ export function renderFlagship() {
       ${hullBar(f)}
       <div class="sub" style="margin-top:7px">Your flagship never takes up a berth and can never be scuttled. It is the only ship you can upgrade.</div>
       <div class="row" style="margin-top:11px">
-        <button class="btn sm" ${f.hull >= f.max || bz ? 'disabled' : ''} data-act="repair" data-id="FLAG">${f.hull >= f.max ? 'No Repairs' : 'Repair · ' + iconHTML('reales', 19) + repairCost(f)}</button>
+        <button class="btn sm" ${f.hull >= f.max || bz ? 'disabled' : ''} data-act="repair" data-id="FLAG">${f.hull >= f.max ? 'No Repairs' : 'Repair · ' + iconHTML('gold', 19) + repairCost(f)}</button>
         <button class="btn sm" data-act="rename-flag">Rename</button>
       </div></div>`;
 
