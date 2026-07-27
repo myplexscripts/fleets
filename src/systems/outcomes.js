@@ -11,7 +11,7 @@ import { now } from '../core/dom.js';
 import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
-import { fmtDur, bossAsRoute, grant, calmRegion } from '../core/selectors.js';
+import { fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { goodsHaul, matsHaul } from './loot.js';
@@ -53,6 +53,35 @@ export function battleVictory(route, enemies) {
   showResult({
     route, success: true, msg, spoils,
     captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
+  });
+}
+
+/* Clearing a cargo lane: the fight you may take on a lane that has gone bad,
+   instead of — or before — running it. It never opens the lane; the lane was
+   always open. It just makes the next passage through it a better bet. */
+export function laneVictory(route, enemies) {
+  /* Quoted on the sheet before the fight, so read the pay before clearing moves
+     the lane out from under it. */
+  const pay = lanePay(route);
+  const { before, after } = clearLane(route);
+  grant(pay);
+  S.done['lane_' + route.id] = (S.done['lane_' + route.id] || 0) + 1;
+  const noto = addNoto(route);
+  const spoils = { goods: goodsHaul(route.region, before), mats: matsHaul(route.region, before) };
+
+  let msg = `The water is yours. ${route.n} drops from ${DNAMES[before].toLowerCase()} to ${DNAMES[after].toLowerCase()}.`;
+  if (after === 0) msg += ' Nothing is working this lane now.';
+
+  showResult({
+    route, success: true, msg, spoils,
+    captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
+  });
+}
+
+export function laneLoss(route) {
+  showResult({
+    route, success: false,
+    msg: `They hold the lane. ${route.n} is still ${DNAMES[effDanger(route)].toLowerCase()}, and anything you send through it carries that risk.`
   });
 }
 

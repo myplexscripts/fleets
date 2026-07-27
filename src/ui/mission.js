@@ -8,9 +8,16 @@
    consignment, power to see off the water, speed to make the passage. A fight
    takes a line of up to three.
 
-   You face the ships that are out there. There is no looking again for an easier
-   line-up: the answer to a match-up you cannot win is a better fleet, and a
-   button that rerolls the enemy is a button that makes building one pointless.
+   A cargo lane that has drifted above Safe is two jobs, and the sheet offers both
+   as tabs at the top: run it as it stands, or fight it first and knock a step of
+   danger off. Neither is compulsory. Running a bad lane anyway is always allowed
+   — danger only decides how roughly the passage goes.
+
+   You face the ships that are out there. They are generated from the water
+   itself — the region's tier and that lane's danger right now — and there is no
+   looking again for an easier line-up: the answer to a match-up you cannot win
+   is a better fleet, and a button that rerolls the enemy is a button that makes
+   building one pointless.
 
    The sheet has one shape and every mission uses it:
 
@@ -34,7 +41,7 @@ import {
   routeById, allShips, findShip, busyIds, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
-  bellDepth, laneRiseIn, battleOdds
+  bellDepth, laneRiseIn, laneFight, lanePay, battleOdds
 } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
@@ -49,14 +56,17 @@ import { launchVoyage } from '../systems/voyages.js';
 import { startBattle } from '../battle/loop.js';
 import { bossEnemies, charterEnemies, genEnemies, tutEnemies } from '../systems/enemies.js';
 import {
-  battleVictory, charterVictory, bossVictory, battleLoss
+  battleVictory, charterVictory, bossVictory, battleLoss, laneVictory, laneLoss
 } from '../systems/outcomes.js';
 
 let sel = [];               // chosen ship ids, in tap order
 let curRoute = null;
 let foes = null;            // who is out there, drawn once and faced as drawn
+let fighting = false;       // a cargo lane's sheet is showing the fight, not the run
 
-const crewSize = r => (canVoyage(r) ? VOY_SHIPS : BATTLE_SHIPS);
+/* A run sails under one hull; a fight — including a fight for a cargo lane —
+   takes a line of three. */
+const crewSize = r => ((fighting || !canVoyage(r)) ? BATTLE_SHIPS : VOY_SHIPS);
 
 /* Who is out there. Drawn once when the sheet opens, and that is who you fight. */
 function drawFoes(r) {
@@ -76,7 +86,8 @@ export function openMission(id) {
 
   curRoute = r;
   sel = [];
-  foes = canVoyage(r) ? null : drawFoes(r);
+  fighting = false;
+  foes = (canVoyage(r) && !laneFight(r)) ? null : drawFoes(r);
   tutEvent('route:' + id);
   if (r.type === 'boss') play('boss_horn');
   if (r.type === 'charter') play('relic');
@@ -160,12 +171,24 @@ function drawMission() {
   if (showDanger) {
     head += `<div class="dbar"><i style="width:${(d + 1) / DNAMES.length * 100}%;background:${DCOLORS[d]}"></i></div>`;
   }
-  head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
+
+  /* A lane that has gone bad is two jobs, and both are offered up front. Neither
+     is compulsory — you may always just sail it. */
+  if (canVoyage(r) && laneFight(r)) {
+    head += `<div class="mtabs">
+      <button class="mtab ${fighting ? '' : 'on'}" data-act="run-mode">${iconHTML(r.type === 'dive' ? 'chest' : 'cargo', 40)}${MTYPE[r.type].n}</button>
+      <button class="mtab ${fighting ? 'on' : ''}" data-act="fight-mode">${iconHTML('danger', 40)}Battle</button>
+    </div>`;
+  } else {
+    head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
+  }
   head += requirements(r, isBoss);
   $('sheetHead').innerHTML = head;
 
   /* ---- body: the ships, then who is waiting ---- */
-  const panel = canVoyage(r) ? voyageBody(r) : battleBody(r, isBoss, isCh);
+  const panel = fighting ? laneBody(r)
+    : canVoyage(r) ? voyageBody(r)
+    : battleBody(r, isBoss, isCh);
   $('sheetBody').innerHTML = panel.body;
 
   /* ---- foot: the one button that commits ---- */
@@ -181,6 +204,22 @@ function drawMission() {
 function requirements(r, isBoss) {
   const fleet = sel.map(findShip).filter(Boolean);
   const picked = !!fleet.length;
+
+  /* Fighting for a cargo lane. What it does to the lane, and what it pays. */
+  if (fighting) {
+    const d = effDanger(r);
+    const odds = foes && picked ? battleOdds(fleet, foes) : 0;
+    return reqBar([
+      chip('danger', `${DNAMES[d]} <em>&rarr;</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok',
+        'What winning does to this lane'),
+      chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
+      foes && picked
+        ? chip('target', odds + '%', odds >= 85 ? 'ok' : odds >= 60 ? 'warn' : 'bad', 'Estimated odds')
+        : '',
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
+      bagChips(lanePay(r))
+    ], 'Knock a step of danger off this lane. You are never made to — the run is one tab away, and a bad lane can be sailed as it stands.');
+  }
 
   if (r.type === 'cargo') {
     const g = GOODS[r.good];
@@ -291,6 +330,18 @@ function voyageBody(r) {
   };
 }
 
+/* ---- fighting for a cargo lane ---- */
+function laneBody(r) {
+  const fleet = sel.map(findShip).filter(Boolean);
+  return {
+    body: `${pickHint(BATTLE_SHIPS)}
+      ${shipPicks(false)}
+      ${foesCard(fleet)}`,
+    label: 'Clear the Lane', act: 'lane-attack', id: 'sailBtn', cls: 'gold',
+    ready: !!fleet.length
+  };
+}
+
 /* ---- battle missions ---- */
 function battleBody(r, isBoss, isCh) {
   const fleet = sel.map(findShip).filter(Boolean);
@@ -363,10 +414,34 @@ function doAttack() {
     (win, enemies) => (win ? battleVictory(r, enemies) : battleLoss(r))));
 }
 
+/* Fighting for a lane. Same picker, same odds, a different outcome. */
+function doLaneAttack() {
+  const r = curRoute;
+  const fleet = sel.map(findShip).filter(Boolean);
+  if (!fleet.length || !laneFight(r)) return;
+  const line = foes || drawFoes(r);
+  closeForBattle();
+  wipe(() => startBattle(fleet, line, false,
+    (win, enemies) => (win ? laneVictory(r, enemies) : laneLoss(r))));
+}
+
+/* Swapping between the run and the fight. They want different crews, so the
+   selection is cleared rather than carried across. */
+function setMode(on) {
+  fighting = on;
+  sel = [];
+  if (on && !foes) foes = drawFoes(curRoute);
+  play('sail');
+  drawMission();
+}
+
 actions({
   mission: d => openMission(d.id),
   'pick-ship': d => togSel(d.id),
   'send-ships': doSendShips,
   attack: doAttack,
+  'lane-attack': doLaneAttack,
+  'fight-mode': () => setMode(true),
+  'run-mode': () => setMode(false),
   'close-sheet': closeSheet
 });

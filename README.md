@@ -29,14 +29,24 @@ ceiling — home water drifts slowly and never gets past Risky; the Grand Fleet
 Route is Hazardous again within the hour. Danger never blocks trade. It only
 decides how roughly a run is handled.
 
-**Patrolling a region is the only thing that lowers danger**, anywhere. There is
-no per-lane escort job to buy your way out of a bad passage: either you patrol,
-or you sail it as it is with a ship strong enough to take it.
+**A bad lane is two jobs, and neither is compulsory.** Its sheet opens on two
+tabs: run it as it stands, or fight it and knock a step of danger off first.
+Sailing a Hazardous lane anyway is always allowed — danger only decides how
+roughly the passage goes. A patrol does the same thing across a whole region at
+once.
 
-**You face the ships that are out there.** No rerolling the enemy for an easier
-line-up — the answer to a match-up you cannot win is a better fleet, and a button
-that reshuffles the opposition is a button that makes building one pointless. You
-see the odds before you commit, and walking away is always allowed. A **patrol** is the broad version: it steps every lane in its
+**You face the ships that are out there.** They are generated from the water
+itself — the region's tier and that lane's danger right now — so a lane that has
+drifted brings out heavier ships than it did an hour ago. There is no rerolling
+for an easier line-up: the answer to a match-up you cannot win is a better fleet,
+and a button that reshuffles the opposition is a button that makes building one
+pointless. You see the odds before you commit, and walking away is always
+allowed.
+
+**A prize is a decision, not a payout.** Beat a ship and nothing is granted
+automatically — keep her and she takes a berth, scuttle her for materials, ransom
+the crew, or let her drift. The after-action sheet will not close until every
+prize has been answered for, by the button, by Escape or by tapping away. A **patrol** is the broad version: it steps every lane in its
 region down at once and keeps the water quiet for a while. A Safe lane offers
 nothing to fight, which is the point.
 
@@ -120,7 +130,8 @@ styles/
   battle.css          battle view
   overlays.css        sheet, dialogs, pause, title, loading, toasts, tutorial
 tools/
-  check-min-size.js   fails on any text or icon that renders under 16px
+  check-min-size.js   fails on text under 16px or icons under 40px
+  check-overflow.js   fails on any screen that scrolls sideways
 src/
   main.js             boot sequence
   core/
@@ -199,9 +210,11 @@ With `playwright-core` on hand and the game being served it also measures what
 the browser actually computes, across three viewports and nine surfaces — screens
 and overlays alike — which is how a `0.5em` sub-label got caught.
 
-**No scrollbars.** Anywhere. A scrollbar is browser chrome, and browser chrome is
+**No scrollbars, and nothing scrolls sideways.** A scrollbar is browser chrome, and browser chrome is
 the loudest thing on screen saying "this is a web page". Scrolling works exactly
-as before; it just does not draw a track.
+as before; it just does not draw a track. `tools/check-overflow.js` measures every
+screen for horizontal overflow and names the element responsible — that is how a
+decorative glow laid out 20% wider than its box got caught.
 
 **The bus exists to break cycles.** `ui/shell.js` owns rendering and imports
 every screen, so screens cannot import it back. They call `render()` from

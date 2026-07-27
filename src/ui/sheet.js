@@ -6,6 +6,7 @@ import { tutEvent } from './tutorial.js';
 
 export function openSheet() {
   const o = $('overlay');
+  held = null;
   /* Replacing innerHTML does not reset scroll, so a newly presented sheet would
      open part-scrolled wherever the previous one was left. Reset on present,
      not on write — redraws (picking a ship, selling a crate) must stay put. */
@@ -23,9 +24,17 @@ export function setSheetFoot(html) {
   f.classList.toggle('empty', !html);
 }
 
+/* A sheet can refuse to close. The after-action report uses this while prizes
+   are still undecided — deciding is part of the fight, not a formality after
+   it — so Escape and the scrim have to respect it too, not just the button. */
+let held = null;
+export const holdSheet = fn => { held = fn; };
+
 export function closeSheet() {
   const o = $('overlay');
   if (!o.classList.contains('on')) return;
+  if (held && held()) return;
+  held = null;
   o.classList.remove('vis');
   setTimeout(() => o.classList.remove('on'), 420);
   tutEvent('sheet:close');

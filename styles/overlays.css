@@ -400,3 +400,11 @@
 
 /* a before/after inside one chip: "HAZARDOUS → SAFE" */
 .chip em{font-style:normal;color:var(--dim);margin:0 .35em;font-size:max(16px,1.1em)}
+
+/* ---- prizes must be answered for ---- */
+.prizehint{
+  font-family:var(--ui);letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--goldhi);margin:-4px 0 10px;
+}
+.card.decided{opacity:.6;border-color:var(--line)}
+.card.decided .sub{color:var(--grn)}

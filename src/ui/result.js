@@ -1,4 +1,9 @@
-/* The after-action report, and what you do with captured ships. */
+/* The after-action report, and what you do with captured ships.
+
+   A prize is a decision, not a payout. Nothing about a beaten ship is granted
+   automatically: keep her and she takes a berth, scuttle her for materials,
+   ransom the crew for coin, or let her drift. The sheet will not close until
+   every prize taken has been answered for — deciding is the reward. */
 
 import { $, esc } from '../core/dom.js';
 import { S, save, newShip } from '../core/state.js';
@@ -16,7 +21,7 @@ import { shipHTML } from '../art/ships.js';
 import { fmt, chip, have, chipRow, outOf, bagChips, shipChips } from './format.js';
 import { GOODS } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
-import { setSheet, openSheet } from './sheet.js';
+import { setSheet, openSheet, setSheetFoot, holdSheet } from './sheet.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
 import { toast } from '../fx/toast.js';
@@ -41,6 +46,8 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
 
   if (captives.length) {
     h += `<div class="sect" style="margin-top:14px;--i:1">Prizes of War</div>`;
+    h += `<div class="sub center prizehint" id="prizeHint">${captives.length === 1
+      ? 'Decide what becomes of her.' : 'Decide what becomes of each of them.'}</div>`;
     captives.forEach((e, i) => {
       const t = TYPES[e.type], full = S.ships.length >= S.docks;
       /* Each option shows what it gives you, so choosing needs no paragraph. */
@@ -61,9 +68,11 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     });
   }
 
-  setSheet(`<h3>${esc(route.n)}</h3>`, h,
-    `<button class="btn gold wide" data-act="close-sheet">Continue</button>`);
+  pending = captives.length;
+  setSheet(`<h3>${esc(route.n)}</h3>`, h, footHTML());
   openSheet();
+  /* Undecided prizes hold the sheet open — against Escape and the scrim too. */
+  holdSheet(() => pending > 0);
 
   if (success && paid.gold) {
     setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.gold / 200))), 500);
@@ -73,6 +82,16 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   refreshTut();
 }
 
+
+/* How many prizes are still waiting on a decision. */
+let pending = 0;
+
+/* Continue is only a button once every prize has been answered for. */
+function footHTML() {
+  return pending
+    ? `<button class="btn wide" disabled>${pending} prize${pending === 1 ? '' : 's'} undecided</button>`
+    : `<button class="btn gold wide" data-act="close-sheet">Continue</button>`;
+}
 
 /* One prize choice. Same shape as an item footer everywhere else: what you get
    on the left, the button that takes it on the right. */
@@ -129,6 +148,13 @@ function capAct(i, mode, type) {
 
   const opts = el.querySelector('.prizeopts');
   if (opts) opts.remove();
+  el.classList.add('decided');
+
+  pending = Math.max(0, pending - 1);
+  setSheetFoot(footHTML());
+  const hint = $('prizeHint');
+  if (hint && !pending) hint.remove();
+
   updateRes();
   save();
   tutEvent('prize');

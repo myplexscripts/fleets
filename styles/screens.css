@@ -18,9 +18,12 @@
   border:1px solid var(--brass);border-radius:4px;
   animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both;
 }
+/* The glow used to be laid out 20% wider than the hero on each side, which made
+   the whole screen scroll sideways to reach nothing. Same look, inside the box:
+   the ellipse is widened instead of the element. */
 .hero::before{
-  content:'';position:absolute;left:-20%;right:-20%;bottom:-40px;height:120px;
-  background:radial-gradient(ellipse at 50% 0,rgba(120,220,230,.16),transparent 70%);
+  content:'';position:absolute;left:0;right:0;bottom:-40px;height:120px;
+  background:radial-gradient(ellipse 140% 100% at 50% 0,rgba(120,220,230,.16),transparent 70%);
 }
 .heroStage{
   position:relative;width:100%;height:clamp(190px,26vh,430px);

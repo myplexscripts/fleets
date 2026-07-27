@@ -20,6 +20,8 @@
 }
 .item.owned{border-color:var(--brass);background:linear-gradient(180deg,rgba(58,47,20,.4),rgba(20,16,8,.6))}
 .item.dis{opacity:.45}
+/* A card replaced in place — a stepper tick — must not replay its entrance. */
+.item.noanim{animation:none}
 
 .itemhead{display:flex;align-items:center;gap:11px}
 .itemhead .itemic{width:clamp(40px,3.2vw,54px);height:clamp(40px,3.2vw,54px);flex-shrink:0}
@@ -151,3 +153,22 @@
 /* ---- section heading ----------------------------------------- */
 .secttrail{margin-left:auto;display:flex;align-items:center;gap:8px}
 .secttrail .chips{margin-top:0}
+
+/* ---- mission tabs ----
+   A lane that has gone bad is two jobs. They sit side by side at the top of the
+   sheet so the choice is visible before anything is scrolled, and neither is
+   compulsory — the run tab is always there to sail it as it stands.
+   ---------------------------------------------------------------- */
+.mtabs{display:flex;gap:0;margin-top:10px;border:1px solid var(--line2);border-radius:3px;overflow:hidden}
+.mtab{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--panel2);border:none;border-right:1px solid var(--line2);
+  color:var(--dim);font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);
+  letter-spacing:1.6px;text-transform:uppercase;padding:8px;cursor:pointer;
+  transition:background .2s,color .2s;min-height:56px;
+}
+.mtab:last-child{border-right:none}
+.mtab .ic{opacity:.6;transition:opacity .2s;flex-shrink:0}
+.mtab.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi)}
+.mtab.on .ic{opacity:1}
+.mtab:active{background:#123a41}

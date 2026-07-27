@@ -31,6 +31,45 @@ const dockCost = () => ({ gold: 350 + (S.docks - 2) * 250 + (S.docks >= 6 ? 400 
 const qty = {};
 const amount = (key, max) => Math.max(1, Math.min(max == null ? Infinity : Math.max(1, max), qty[key] || 1));
 
+/* One card's worth of markup, so a stepper tick can redraw its own card and
+   nothing else. Rebuilding the screen for every tap made the whole page jump
+   and replay its entrance animations, which reads as the game glitching. */
+function goodCard(k) {
+  const g = GOODS[k];
+  const n = amount('g' + k, S.goods[k]);
+  return itemCard({
+    id: 'itm_g_' + k, icon: k, name: g.n, sub: g.unit,
+    held: chipRow([chip(k, S.goods[k], '', g.n + ' in store')], 'tight'),
+    body: stepper('good-qty', k, n, S.goods[k]),
+    price: chipRow([chip('gold', g.sell * n, 'gold', `${g.sell} each`)], 'tight'),
+    action: itemAction('Sell', 'sell-good', { good: k, n })
+  });
+}
+
+function matCard(k) {
+  const m = MATERIALS[k];
+  const n = amount('m' + k);
+  const cost = { gold: m.buy * n };
+  return itemCard({
+    id: 'itm_m_' + k, icon: k, name: m.n, sub: m.unit,
+    held: chipRow([chip(k, S.mats[k], '', m.n + ' in store')], 'tight'),
+    body: stepper('mat-qty', k, n),
+    price: priceChips(cost),
+    action: itemAction('Buy', 'buy-mat', { mat: k, n }, { disabled: !canPay(cost) })
+  });
+}
+
+/* Swap one card for its freshly built self, without the entrance animation and
+   without touching a pixel of anything else on the page. */
+function refreshCard(id, html) {
+  const el = $(id);
+  if (!el) return false;
+  el.outerHTML = html;
+  const next = $(id);
+  if (next) next.classList.add('noanim');
+  return true;
+}
+
 export function renderMarket() {
   let i = 0;
   let h = '';
@@ -42,34 +81,13 @@ export function renderMarket() {
   if (!held.length) {
     h += `<div class="card" style="--i:${i++}"><div class="sub center">Nothing in the hold to sell.</div></div>`;
   } else {
-    h += itemGrid(held.map(k => {
-      const g = GOODS[k];
-      const n = amount('g' + k, S.goods[k]);
-      return itemCard({
-        icon: k, name: g.n, sub: g.unit,
-        held: chipRow([chip(k, S.goods[k], '', g.n + ' in store')], 'tight'),
-        body: stepper('good-qty', k, n, S.goods[k]),
-        price: chipRow([chip('gold', g.sell * n, 'gold', `${g.sell} each`)], 'tight'),
-        action: itemAction('Sell', 'sell-good', { good: k, n })
-      });
-    }).join(''));
+    h += itemGrid(held.map(goodCard).join(''));
     i++;
   }
 
   /* ---- buy: materials ---- */
   h += sect('Materials', i++);
-  h += itemGrid(MAT_KEYS.map(k => {
-    const m = MATERIALS[k];
-    const n = amount('m' + k);
-    const cost = { gold: m.buy * n };
-    return itemCard({
-      icon: k, name: m.n, sub: m.unit,
-      held: chipRow([chip(k, S.mats[k], '', m.n + ' in store')], 'tight'),
-      body: stepper('mat-qty', k, n),
-      price: priceChips(cost),
-      action: itemAction('Buy', 'buy-mat', { mat: k, n }, { disabled: !canPay(cost) })
-    });
-  }).join(''));
+  h += itemGrid(MAT_KEYS.map(matCard).join(''));
   i++;
 
   /* ---- the diving bell ---- */
@@ -111,10 +129,13 @@ export function renderMarket() {
 }
 
 /* ---- stepper ---- */
-function bump(key, d, max) {
+function bump(key, d, max, redraw) {
   const cur = amount(key, max);
-  qty[key] = Math.max(1, Math.min(max == null ? 9999 : max, cur + d));
-  render();
+  const next = Math.max(1, Math.min(max == null ? 9999 : max, cur + d));
+  if (next === cur) return;
+  qty[key] = next;
+  /* Only this card changed, so only this card is rebuilt. */
+  if (!refreshCard('itm_' + key[0] + '_' + key.slice(1), redraw())) render();
 }
 
 /* ---- actions ---- */
@@ -164,8 +185,8 @@ function buyDock() {
 }
 
 actions({
-  'good-qty': d => bump('g' + d.key, +d.d, S.goods[d.key]),
-  'mat-qty': d => bump('m' + d.key, +d.d),
+  'good-qty': d => bump('g' + d.key, +d.d, S.goods[d.key], () => goodCard(d.key)),
+  'mat-qty': d => bump('m' + d.key, +d.d, null, () => matCard(d.key)),
   'sell-good': d => sellGood(d.good, d.n),
   'buy-mat': d => buyMat(d.mat, +d.n),
   'buy-bell': buyBell,

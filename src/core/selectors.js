@@ -4,7 +4,7 @@
 import { S, routes } from './state.js';
 import {
   VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN, CARGO_PER_CHEST,
-  DANGER_RISE_MIN_DEFAULT
+  DANGER_RISE_MIN_DEFAULT, LANE_CLEAR_STEP
 } from './config.js';
 import { TYPES } from '../data/ships.js';
 import { REGIONS, NOTO_BONUS, VOYAGE_TYPES, MAX_DANGER } from '../data/world.js';
@@ -61,9 +61,10 @@ export const totalMats = () => MAT_KEYS.reduce((a, k) => a + S.mats[k], 0);
 /* ---- danger ----
 
    A cargo lane's danger is alive: it climbs a step every `riseMin` minutes of
-   real time, up to that lane's own cap, and only a patrol of its region pushes
-   it back down. It never blocks trade — it only decides how roughly a run is
-   handled.
+   real time, up to that lane's own cap. Fighting the lane pushes it down a step;
+   patrolling its region does the same to every lane there at once. Neither is
+   compulsory — danger never blocks trade, it only decides how roughly a run is
+   handled, so sailing a bad lane anyway is always allowed.
 
    Stored as (step, timestamp) and projected forward on read, so it keeps
    drifting while the game is closed without needing a ticker. */
@@ -100,9 +101,16 @@ export function laneRiseIn(r) {
   return laneRiseMs(r) - elapsed;
 }
 
-/* A patrol is the only thing that pushes danger back down. There is no
-   per-lane escort job and no way to look at a different enemy: a lane you
-   cannot run is a lane you patrol the region of, or grow strong enough for. */
+/* Fighting a lane knocks its own danger down a step. Snapshot the drift first,
+   because the record is about to be rewritten. */
+export function clearLane(r) {
+  const before = laneDanger(r);
+  const after = Math.max(0, before - LANE_CLEAR_STEP);
+  S.lanes[r.id] = { d: after, ts: now(), region: r.region };
+  return { before, after };
+}
+
+/* A patrol does the same to every lane in its region at once. */
 export function calmRegion(rk) {
   let cleared = 0;
   Object.keys(S.lanes).forEach(id => {
@@ -118,6 +126,14 @@ export function effDanger(r) {
   const base = laneDanger(r);
   return Math.max(0, Math.min(MAX_DANGER, base - (patrolActive(r.region) ? 1 : 0)));
 }
+
+/* A lane worth fighting. Safe water has nothing working it, so there is nothing
+   to clear — anything above that, the player may fight or simply sail. */
+export const laneFight = r => hasLane(r) && effDanger(r) > 0;
+
+/* What clearing a lane pays. Worse water pays better, so the lane you least want
+   to run is the one worth taking on. Quoted before you commit. */
+export const lanePay = r => ({ gold: 120 + 90 * laneDanger(r) });
 
 /* ---- mission shape ---- */
 export const canVoyage = r => VOYAGE_TYPES.includes(r.type);

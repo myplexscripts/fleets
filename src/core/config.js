@@ -16,12 +16,15 @@ export const BATTLE_SHIPS = 3;
 
 /* Lane danger.
 
-   A lane's danger climbs on its own in real time. Patrolling its region is the
-   only thing that pushes it back down. Trade is never blocked by it — danger
-   only decides how roughly a cargo run is handled on the way. Each lane sets its
-   own `riseMin` and `dangerCap`, so home waters stay gentle and deep routes do
+   A lane's danger climbs on its own in real time. Two things push it back down:
+   fighting that lane clears one step off it, and patrolling its region clears a
+   step off every lane at once. Neither is compulsory — danger never blocks
+   trade, it only decides how roughly a cargo run is handled on the way, so
+   running a bad lane anyway is always the player's call. Each lane sets its own
+   `riseMin` and `dangerCap`, so home waters stay gentle and deep routes do
    not. */
 export const DANGER_RISE_MIN_DEFAULT = 25;
+export const LANE_CLEAR_STEP = 1;     // danger steps a won lane battle removes
 
 /* A patrol clears a whole region at once, and wears off. */
 export const PATROL_MS = 10 * 60 * 1000;

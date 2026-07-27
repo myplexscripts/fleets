@@ -39,18 +39,32 @@ export function charterEnemies(c) {
   return build(comp, 1 + t * 0.05);
 }
 
+/* Whoever is working this water, drawn from the water itself: the region's tier
+   and the lane's danger right now. Nothing is hand-placed, so a lane that has
+   drifted brings out heavier ships than the same lane did an hour ago, and the
+   same lane in the Atlantic brings out heavier ships than in the Caribbean.
+
+   There is no rerolling this — what it draws is what you face. */
+const LADDER = ['schooner', 'brig', 'frigate', 'manowar'];
+
 export function genEnemies(r) {
-  const t = REGIONS[r.region].tier;
-  const d = Math.max(1, effDanger(r));
-  let comp;
-  if (d === 1) {
-    comp = t >= 3 ? ['brig', 'brig'] : ['schooner', Math.random() < 0.5 ? 'schooner' : 'brig'];
-  } else if (d === 2) {
-    comp = t >= 3 ? ['brig', 'frigate', 'brig'] : ['brig', 'brig', Math.random() < 0.4 ? 'frigate' : 'schooner'];
-  } else {
-    comp = t >= 4 ? ['frigate', 'manowar', 'frigate']
-         : (t >= 3 ? ['frigate', 'frigate', 'brig'] : ['brig', 'frigate', 'brig']);
+  const t = REGIONS[r.region] ? REGIONS[r.region].tier : 1;   // 1..4
+  const d = Math.max(1, effDanger(r));                        // 1..2
+  const weight = t + d;                                       // 2..6
+
+  /* Heavier water fields more of them, and heavier ones. */
+  const count = weight >= 5 ? 3 : weight >= 3 ? (Math.random() < 0.55 ? 3 : 2) : 2;
+  const base = Math.min(LADDER.length - 1, Math.floor((weight - 1) / 1.6));
+
+  const comp = [];
+  for (let i = 0; i < count; i++) {
+    /* The line is not uniform: one may be a class up, one a class down. */
+    const jitter = Math.random() < 0.25 ? 1 : (Math.random() < 0.3 ? -1 : 0);
+    comp.push(LADDER[Math.max(0, Math.min(LADDER.length - 1, base + jitter))]);
   }
-  if (r.type === 'blockade') comp = comp.map(x => (x === 'schooner' ? 'brig' : x));
-  return build(comp, 1 + (t - 1) * 0.12);
+  /* Nobody blockades a harbour in a schooner. */
+  if (r.type === 'blockade') {
+    for (let i = 0; i < comp.length; i++) if (comp[i] === 'schooner') comp[i] = 'brig';
+  }
+  return build(comp, 1 + (t - 1) * 0.12 + (d - 1) * 0.06);
 }
