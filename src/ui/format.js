@@ -57,6 +57,28 @@ export function outOf(icon, cur, max, cls, title) {
   return chip(icon, `${cur}<i>/</i>${max}`, cls, title);
 }
 
+/* A tile: the glyph over the number instead of beside it.
+
+   A chip is the right shape for a line of prose and the wrong shape for a row
+   of winnings — six chips will not fit across a phone with 40px glyphs, six
+   tiles will. Anywhere a set of amounts has to line up as a group, it is tiles;
+   anywhere an amount sits in a sentence, it is a chip. */
+export function tile(icon, value, cls, title) {
+  return `<span class="tile ${cls || ''}"${title ? ` title="${esc(title)}"` : ''}>` +
+    iconHTML(icon, 0, 'tileic') + `<b>${value}</b></span>`;
+}
+
+export function tileRow(list, cls) {
+  const inner = list.filter(Boolean).join('');
+  return inner ? `<div class="tiles ${cls || ''}">${inner}</div>` : '';
+}
+
+/* A cost or reward bag as tiles, in the fixed order. */
+export function bagTiles(o, cls) {
+  if (!o) return '';
+  return BAG_ORDER.filter(k => o[k]).map(k => tile(k, o[k], cls || '')).join('');
+}
+
 export function chipRow(list, cls) {
   const inner = list.filter(Boolean).join('');
   return inner ? `<div class="chips ${cls || ''}">${inner}</div>` : '';

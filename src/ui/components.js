@@ -15,11 +15,20 @@
         and never above the price.
      2. A quantity is always a stepper: − amount +. Never a row of preset
         buttons, and never a free-text field.
+     2b. A set of amounts that has to be read as a group — a haul, the yield of
+        a choice, a ship's four numbers — is tiles, glyph over number, on a
+        fixed grid so tiles in one card line up with tiles in the next. An
+        amount inside a sentence stays a chip. Six chips do not fit across a
+        phone at 40px a glyph; six tiles do.
      3. A set of things you choose between horizontally is a rail. It scrolls
         sideways; it never becomes a tall column that pushes the thing you are
         checking off the screen.
-     4. What a choice requires goes in a requirement bar, in the sheet head
+     4. What a choice requires goes in a requirement bar, in the panel head
         where it cannot scroll away.
+     5. A panel is a full screen with three bands — head, scrolling body, foot
+        holding the button. Never a drawer: a sheet leaves a strip of the screen
+        behind it that is neither useful nor tappable, and makes the thing you
+        came to look at smaller for nothing.
 
    If something does not fit these, change the rule here rather than inventing a
    one-off style in a screen. */

@@ -76,10 +76,18 @@ always a **stepper** (`− 3 +`) and never a row of preset buttons. A set of thi
 you choose between is a **rail** that scrolls sideways, so it can't push what you
 are checking off the screen. What a job requires goes in a **requirement bar** in
 the sheet head, where it cannot scroll away — and the button that commits it sits
-in the sheet foot, where it also cannot. Every mission sheet is the same three
-bands — **head** says what the job asks for, **body** is the ships and who is
-waiting, **foot** is Cancel and the one button that commits — so nothing numeric
-ever appears below the fold on one screen and above it on another. The rules are written at the top of that
+in the panel foot, where it also cannot.
+
+**Panels are full screens, never drawers.** Mission, stores and the after-action
+report all use the same three bands — **head** states what you are looking at
+and what it asks for, **body** scrolls, **foot** holds the button — so nothing
+numeric ever appears below the fold on one screen and above it on another. A
+sheet leaves a strip of the screen behind it that is neither useful nor
+tappable; it just makes the thing you came to look at smaller.
+
+**A group of amounts is tiles, not chips.** Glyph over number, on a fixed grid,
+so a haul fits one row and the yield of one choice lines up with the yield of
+the next. Chips are for a number inside a sentence. The rules are written at the top of that
 module; the fix for something that doesn't fit is to change a rule, not to invent
 a style in a screen.
 

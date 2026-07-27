@@ -2,29 +2,40 @@
    overlays — sheet, dialogs, pause, title, loading, toasts, tutorial
    ============================================================ */
 
-/* ---- mission / result sheet ---------------------------------- */
+/* ---- the mission panel --------------------------------------
+   A full screen, not a drawer. A sheet keeps a strip of the screen behind it
+   which is neither useful nor tappable while the sheet is up — it just makes
+   the thing you are actually looking at smaller. Every panel in the game now
+   takes the whole screen and has the same three bands: a head that states what
+   you are looking at, a body that scrolls, and a foot that holds the button.
+   -------------------------------------------------------------- */
 .overlay{
-  position:fixed;inset:0;z-index:10;display:none;align-items:flex-end;justify-content:center;
-  background:rgba(2,8,10,0);backdrop-filter:blur(0);
-  transition:background .3s,backdrop-filter .3s;
+  position:fixed;inset:0;z-index:10;display:none;
+  background:radial-gradient(ellipse at 50% 12%,#12383e 0%,#08222a 45%,#04141a 100%);
+  opacity:0;transition:opacity .28s ease;
 }
 .overlay.on{display:flex}
-.overlay.vis{background:rgba(2,8,10,.7);backdrop-filter:blur(2px)}
+.overlay.vis{opacity:1}
 
 .sheet{
-  width:100%;max-width:580px;max-height:88dvh;display:flex;flex-direction:column;
-  background:linear-gradient(180deg,rgba(9,28,33,.97),rgba(4,14,17,.98));
-  border-top:2px solid var(--line2);border-radius:6px 6px 0 0;
-  box-shadow:0 -8px 40px rgba(0,0,0,.8);
-  transform:translateY(105%);transition:transform .42s cubic-bezier(.2,.9,.25,1.05);
+  width:100%;height:100%;display:flex;flex-direction:column;
+  transform:translateY(14px);opacity:0;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.1),opacity .26s ease;
 }
-.overlay.vis .sheet{transform:none}
-.sheet-head{padding:15px 18px 12px;border-bottom:1px solid var(--line)}
+.overlay.vis .sheet{transform:none;opacity:1}
+.sheet-head{
+  flex-shrink:0;padding:calc(env(safe-area-inset-top) + 16px) 18px 12px;
+  border-bottom:1px solid var(--line);
+}
 .sheet-head h3{
-  font-family:var(--display);font-size:clamp(21px,1.6vw,29px);font-weight:600;
-  letter-spacing:2px;text-transform:uppercase;color:var(--goldhi);
+  font-family:var(--display);font-size:clamp(23px,1.9vw,34px);font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;color:var(--goldhi);line-height:1.15;
 }
-.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 18px calc(env(safe-area-inset-bottom) + 18px)}
+.sheet-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding:14px 18px 18px;
+}
 
 .resulthead{
   font-family:var(--display);font-weight:600;font-size:clamp(17px,1.3vw,23px);
@@ -385,16 +396,6 @@
 }
 .spoils .chips{margin-top:0}
 
-/* ---- prize choices ----
-   One row per option: what it gives you, then the button that takes it. */
-.prizeopts{display:flex;flex-direction:column;gap:7px;margin-top:11px}
-.prizeopt{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  border-left:3px solid var(--line2);background:rgba(10,26,30,.5);padding:7px 11px;
-}
-.prizeopt .chips{margin-top:0;flex:1}
-.prizeopt .btn.sm{flex-shrink:0}
-
 /* a dialog can show what a choice costs or yields, not just describe it */
 .dlg-body .chips{justify-content:center;margin-top:10px}
 
@@ -415,6 +416,8 @@
    What you won is why you are here, so it gets the top of the screen and the
    biggest type on it. The account of the fight is one short paragraph below.
    ============================================================ */
+/* Same three bands as the mission panel, same rules — see .overlay above. The
+   only thing particular to this one is the verdict at the top. */
 #resultScr{
   position:fixed;inset:0;z-index:22;display:none;flex-direction:column;
   background:radial-gradient(ellipse at 50% 12%,#12383e 0%,#08222a 45%,#04141a 100%);
@@ -422,12 +425,8 @@
 }
 #resultScr.on{display:flex}
 #resultScr.vis{opacity:1}
+#resultScr .sheet-head{text-align:center;padding-bottom:14px}
 
-.rhead{
-  flex-shrink:0;text-align:center;
-  padding:calc(env(safe-area-inset-top) + 20px) 18px 14px;
-  border-bottom:1px solid var(--line);
-}
 .rverdict{
   font-family:var(--display);font-weight:700;
   font-size:clamp(28px,3vw,52px);letter-spacing:4px;text-transform:uppercase;
@@ -440,16 +439,6 @@
   text-transform:uppercase;color:var(--dim);margin-top:5px;
 }
 
-.rbody{
-  flex:1;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-  padding:16px 18px 20px;
-}
-.rfoot{
-  flex-shrink:0;padding:12px 18px calc(env(safe-area-inset-bottom) + 14px);
-  border-top:1px solid var(--line2);
-  background:linear-gradient(180deg,rgba(8,26,30,.6),rgba(4,14,17,.95));
-}
 
 /* the haul, and it is the loudest thing on the page */
 .strongbox{
@@ -464,10 +453,10 @@
   font-family:var(--ui);font-size:16px;letter-spacing:3.5px;text-transform:uppercase;
   color:var(--gold);margin-bottom:9px;
 }
-.strongbox .chips{margin-top:0;justify-content:center;gap:8px 20px}
-.strongbox .chips.big .chip{font-size:clamp(22px,2vw,34px)}
-.strongbox .chips.big .chip .chipic{width:max(44px,1.5em);height:max(44px,1.5em)}
-.strongbox .chip b{color:var(--goldhi)}
+.strongbox .tiles{margin-top:0}
+.strongbox .tile{font-size:clamp(19px,1.7vw,28px)}
+.strongbox .tile .tileic{width:clamp(44px,11vw,60px);height:clamp(44px,11vw,60px)}
+.strongbox .tile b{color:var(--goldhi)}
 
 /* the account of it: short, quiet, underneath */
 .rlines{margin-top:14px;text-align:center}
@@ -551,3 +540,26 @@
   100%{opacity:0;transform:translate(-50%,-190%) scale(1)}
 }
 .calm .pop{animation-duration:.6s}
+
+/* ---- prize cards ----
+   Laid out identically so two of them read against each other: her numbers on
+   the same four columns, then one row per choice with the winnings on the left
+   and the button that takes them on the right. */
+.prizecard{padding-top:12px}
+.prizehead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.prizeart{flex:0 0 clamp(74px,20vw,110px);display:flex;justify-content:center}
+.prizeart svg{max-width:100%;height:auto}
+.prizehead h3{flex:1;min-width:0}
+.prizecard > .tiles.grid4{margin-top:6px}
+.prizecard .sub:empty{display:none}
+
+.prizeopts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.prizeopt{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-left:3px solid var(--line2);background:rgba(10,26,30,.5);
+  padding:8px 11px;min-height:64px;
+}
+.prizegets{flex:1;min-width:0}
+.prizegets .tiles{margin-top:0}
+.prizegets:empty{display:none}
+.prizeopt .btn.sm{flex-shrink:0}

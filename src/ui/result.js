@@ -21,7 +21,7 @@ import { SCRAP_YIELD, MAT_KEYS } from '../data/materials.js';
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
-import { chip, have, chipRow, outOf, bagChips, shipChips } from './format.js';
+import { chip, have, chipRow, outOf, tile, tileRow, bagTiles } from './format.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
 import { toast } from '../fx/toast.js';
@@ -58,19 +58,31 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     h += `<div class="sect" style="--i:1">Prizes of War</div>
       <div class="sub center prizehint" id="prizeHint">${captives.length === 1
         ? 'Decide what becomes of her.' : 'Decide what becomes of each of them.'}</div>`;
+    /* Every prize card is laid out identically — her four numbers on a fixed
+       four-column grid, then one row per choice with the winnings on the same
+       grid again. Two cards side by side line up column for column, so the
+       cost of keeping one and the yield of scuttling the other can be read
+       against each other without counting. */
     captives.forEach((e, i) => {
       const t = TYPES[e.type], full = S.ships.length >= S.docks;
-      h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
-        <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
-        <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
-        ${shipChips({ speed: t.speed, guns: t.guns, hull: Math.round(t.hull * 0.33), max: t.hull, cargo: t.cargo })}
-        <div class="sub"></div></div></div>
+      h += `<div class="card prizecard" style="--i:${i + 2}" id="cap${i}">
+        <div class="prizehead">
+          <div class="prizeart">${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
+          <h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
+        </div>
+        ${tileRow([
+          tile('speed', t.speed, 'dim', 'Speed'),
+          tile('guns', t.guns, 'dim', 'Guns'),
+          tile('hull', t.hull, 'dim', 'Hull'),
+          tile('cargo', t.cargo, 'dim', 'Cargo space')
+        ], 'grid4')}
+        <div class="sub"></div>
         <div class="prizeopts">
-          ${prizeOpt(chipRow([outOf('crew', S.ships.length, S.docks, full ? 'bad' : 'ok', 'Berths in use')], 'tight'),
+          ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Berths free')], 'grid4'),
             'Keep', i, 'capture', e.type, full, 'gold')}
-          ${prizeOpt(chipRow([bagChips({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD })], 'tight'),
+          ${prizeOpt(tileRow([bagTiles({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD }, 'gold')], 'grid4'),
             'Scuttle', i, 'salvage', e.type)}
-          ${e.derelict ? '' : prizeOpt(chipRow([chip('gold', t.ransom, 'gold', 'Ransom')], 'tight'),
+          ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom')], 'grid4'),
             'Ransom', i, 'ransom', e.type)}
           ${prizeOpt('', 'Let Go', i, 'ignore', e.type)}
         </div></div>`;
@@ -91,17 +103,20 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   refreshTut();
 }
 
-/* The haul, big, before any prose. One frame, one chip per thing — the contract
-   money and the materials off the enemy are the same metal, so they are added
-   rather than listed twice. */
+/* The haul, big, before any prose, and on one line whatever it holds.
+
+   Tiles rather than chips: the glyph sits over the number, so six kinds of
+   winnings fit across a phone at 40px a glyph where six chips would wrap. The
+   contract money and the materials off the enemy are the same metal, so they
+   are added rather than listed twice. */
 function strongbox(paid, sp) {
   const bag = { ...paid };
   if (sp && sp.mats) MAT_KEYS.forEach(m => { if (sp.mats[m]) bag[m] = (bag[m] || 0) + sp.mats[m]; });
 
-  const won = [bagChips(bag)];
-  if (sp && sp.goods && sp.goods.n) won.push(chip(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
+  const won = [bagTiles(bag, 'gold')];
+  if (sp && sp.goods && sp.goods.n) won.push(tile(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
 
-  const inner = chipRow(won, 'big');
+  const inner = tileRow(won);
   if (!inner) return '';
   return `<div class="strongbox"><div class="sboxlbl">Taken</div>${inner}</div>`;
 }
@@ -117,9 +132,10 @@ function notoRow(route, noto) {
   ], 'tight')}</div>`;
 }
 
-/* One prize choice: what you get on the left, the button that takes it right. */
+/* One prize choice: what you get on the left, the button that takes it right —
+   the same invariant as every item card in the game. */
 function prizeOpt(gets, label, i, mode, type, disabled, cls) {
-  return `<div class="prizeopt"><div class="itemprice">${gets}</div>`
+  return `<div class="prizeopt"><div class="prizegets">${gets}</div>`
     + `<button class="btn sm ${cls || ''} itemact"${disabled ? ' disabled' : ''}`
     + ` data-act="cap" data-i="${i}" data-mode="${mode}" data-type="${type}">${label}</button></div>`;
 }

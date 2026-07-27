@@ -179,3 +179,36 @@
   position:sticky;top:-14px;z-index:4;margin:-4px 0 12px;
   background:var(--bg);box-shadow:0 6px 12px -6px rgba(0,0,0,.7);
 }
+
+/* ---- tiles ----
+   The glyph over the number rather than beside it. Six chips do not fit across
+   a phone at 40px a glyph; six tiles do — so a row of winnings is tiles and a
+   number in a sentence stays a chip. They share a fixed width so tiles in
+   different cards line up with each other, which is the whole point of them.
+   ---------------------------------------------------------------- */
+.tiles{
+  display:flex;flex-wrap:nowrap;align-items:flex-start;justify-content:center;
+  gap:clamp(4px,1.2vw,14px);margin-top:8px;
+}
+.tiles.wrap{flex-wrap:wrap;row-gap:12px}
+.tiles.left{justify-content:flex-start}
+
+.tile{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  flex:0 1 auto;min-width:0;
+  font-family:var(--ui);letter-spacing:.5px;line-height:1.1;color:var(--ink);
+  font-size:clamp(17px,1.3vw,22px);
+}
+.tile .tileic{width:clamp(40px,10vw,52px);height:clamp(40px,10vw,52px);flex-shrink:0}
+.tile b{font-weight:500;white-space:nowrap}
+.tile.ok b{color:var(--grn)}
+.tile.bad b{color:#e88a7a}
+.tile.warn b{color:var(--yel)}
+.tile.dim,.tile.dim b{color:var(--dim)}
+.tile.gold b{color:var(--goldhi)}
+
+/* A fixed grid, for tiles that must line up with tiles in another row or
+   another card. Four columns whether one is filled or all four are, so the
+   first thing on offer always sits in the same place. */
+.tiles.grid4{display:grid;grid-template-columns:repeat(4,1fr);justify-items:center}
+.tiles.grid4 .tile{width:100%}
