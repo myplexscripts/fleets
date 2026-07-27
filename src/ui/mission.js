@@ -4,19 +4,23 @@
    charter or admiral is a fight. Trade is never gated behind a battle.
 
    A voyage sails under one ship — the question a cargo run asks is whether any
-   single hull you own can take the consignment, and pooling three of them would
-   answer it for free. A fight takes a line of up to three.
+   single hull you own is up to it, on all three counts: cargo space to carry the
+   consignment, power to see off the water, speed to make the passage. A fight
+   takes a line of up to three.
 
-   A cargo lane whose danger has drifted above Safe is two jobs, and the sheet
-   offers both as tabs at the top: run it as it stands, or sweep it first — take a
-   battle line out and push that lane's danger back down a step. Sweeping is an
-   escort job you choose to do, not a toll you have to pay: the lane was always
-   open, sweeping just makes the next run through it a better bet. A Safe lane
-   has no second tab, because there is nothing out there to fight.
+   You face the ships that are out there. There is no looking again for an easier
+   line-up: the answer to a match-up you cannot win is a better fleet, and a
+   button that rerolls the enemy is a button that makes building one pointless.
 
-   Everything numeric on this sheet is a chip: one glyph, one number. Where a
-   number is a test rather than a reading it is written have/need, so the
-   left-hand figure is what you have and the right is what the job wants. */
+   The sheet has one shape and every mission uses it:
+
+     head   what the job asks for, as have/need chips. Never scrolls.
+     body   the ships you can send, on a rail. Then who is waiting.
+     foot   Cancel, and the one button that commits. Never scrolls.
+
+   Everything numeric is a chip: one glyph, one number. Where a number is a test
+   rather than a reading it is written have/need, so the left-hand figure is what
+   you have and the right is what the job wants. */
 
 import { $, esc } from '../core/dom.js';
 import { S } from '../core/state.js';
@@ -27,10 +31,10 @@ import { PORTS } from '../data/ports.js';
 import { GOODS } from '../data/goods.js';
 import { BELL_NAMES, DEPTH_NAMES } from '../data/salvage.js';
 import {
-  routeById, allShips, findShip, busyIds, tname, fleetPower, holdCap,
+  routeById, allShips, findShip, busyIds, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
-  chestCap, bellDepth, laneRiseIn, needsSweep, sweepPay, battleOdds
+  bellDepth, laneRiseIn, battleOdds
 } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
@@ -45,30 +49,22 @@ import { launchVoyage } from '../systems/voyages.js';
 import { startBattle } from '../battle/loop.js';
 import { bossEnemies, charterEnemies, genEnemies, tutEnemies } from '../systems/enemies.js';
 import {
-  battleVictory, charterVictory, bossVictory, battleLoss, sweepVictory, sweepLoss
+  battleVictory, charterVictory, bossVictory, battleLoss
 } from '../systems/outcomes.js';
 
 let sel = [];               // chosen ship ids, in tap order
 let curRoute = null;
-let foes = null;            // the line-up currently on offer, so odds can be shown
-let sweeping = false;       // a cargo lane's sheet is showing the sweep, not the run
+let foes = null;            // who is out there, drawn once and faced as drawn
 
-/* How many ships the job on screen takes. A run sails under one hull; a fight —
-   including a sweep of the same lane — takes a line of three. */
-const crewSize = r =>
-  (sweeping || !canVoyage(r)) ? BATTLE_SHIPS : VOY_SHIPS;
+const crewSize = r => (canVoyage(r) ? VOY_SHIPS : BATTLE_SHIPS);
 
-/* Who is out there. Drawn once when the sheet opens and redrawn on request —
-   an unwinnable match-up should be something you can walk away from and look
-   again, not something you have to take. */
+/* Who is out there. Drawn once when the sheet opens, and that is who you fight. */
 function drawFoes(r) {
   if (r.type === 'boss') return bossEnemies(r.bossDef);
   if (r.type === 'charter') return charterEnemies(r.charterDef);
   if (tutActive() && r.id === 'c3') return tutEnemies();
   return genEnemies(r);
 }
-/* Fixed line-ups cannot be rerolled — an admiral brings what she brings. */
-const canReroll = r => r && r.type !== 'boss' && r.type !== 'charter';
 
 export function openMission(id) {
   if (!tutAllowsMission(id)) {
@@ -80,8 +76,7 @@ export function openMission(id) {
 
   curRoute = r;
   sel = [];
-  sweeping = false;
-  foes = (canVoyage(r) && !needsSweep(r)) ? null : drawFoes(r);
+  foes = canVoyage(r) ? null : drawFoes(r);
   tutEvent('route:' + id);
   if (r.type === 'boss') play('boss_horn');
   if (r.type === 'charter') play('relic');
@@ -107,8 +102,7 @@ function togSel(id) {
 
 /* Ship picker. A rail, not a column: the ships scroll sideways under the
    requirement bar, so what the job needs stays on screen while you look through
-   the fleet for a hull that meets it. `need` is the cargo a cargo run wants, so
-   every card carries a green or red have/need chip. */
+   the fleet for a hull that meets it. */
 function shipPicks(voyage, need) {
   const bz = busyIds();
   const slots = voyage ? ['SAILS'] : ['FRONT', 'CENTRE', 'REAR'];
@@ -124,14 +118,14 @@ function shipPicks(voyage, need) {
       tag: crip ? 'CRIPPLED' : atSea ? 'AT SEA' : (i > -1 ? slots[i] : ''),
       tagCls: crip ? 'bad' : atSea ? 'blu' : (voyage ? 'blu' : ''),
       sub: tname(s),
-      chips: shipChips(s, '', need)
+      chips: shipChips(s, chip('power', power(s), '', 'Power'), need)
     });
   }).join(''), 'shipPicks');
 }
 
-/* The line-up on offer, with the odds of beating it using the ships picked so
-   far. Backing out and looking again is a real move, not a cheat. */
-function foesCard(r, fleet) {
+/* Who is waiting, and the odds against the line you have picked. This is who you
+   fight — there is no other line-up on offer. */
+function foesCard(fleet) {
   if (!foes || !foes.length) return '';
   const odds = battleOdds(fleet, foes);
   const cls = !fleet.length ? '' : odds >= 90 ? 'good' : odds >= 60 ? 'fair' : 'poor';
@@ -140,11 +134,10 @@ function foesCard(r, fleet) {
       chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim')
     ], 'tight')}</div>`).join('');
 
-  return `<div class="card oddscard" style="--i:0">
-      <div class="row"><h3>${iconHTML('target', 22)} Sails Sighted</h3>
+  return `<div class="card oddscard" style="--i:1">
+      <div class="row"><h3>${iconHTML('target', 40)} Sails Sighted</h3>
         <span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span></div>
       <div class="foelist">${list}</div>
-      ${canReroll(r) ? `<button class="btn sm wide" style="margin-top:10px" data-act="reroll">Look Again</button>` : ''}
     </div>`;
 }
 
@@ -153,7 +146,7 @@ function drawMission() {
   const d = effDanger(r);
   const isBoss = r.type === 'boss', isCh = r.type === 'charter';
 
-  /* ---- head ---- */
+  /* ---- head: what this asks of you ---- */
   const tagText = isBoss ? r.bossDef.title.toUpperCase()
     : isCh ? 'TIER ' + r.charterDef.t
     : r.type === 'dive' ? (DEPTH_NAMES[r.depth] || 'DEEP').toUpperCase()
@@ -165,42 +158,17 @@ function drawMission() {
 
   let head = `<div class="row"><h3>${esc(r.n)}</h3><span class="tag ${tagCls}">${tagText}</span></div>`;
   if (showDanger) {
-    head += `<div class="dbar"><i style="width:${(d + 1) * 25}%;background:${DCOLORS[d]}"></i></div>`;
-    /* Which way the water is heading, and how long the patrol holds it down. */
-    const rise = r.type === 'cargo' ? laneRiseIn(r) : 0;
-    head += chipRow([
-      r.type === 'cargo'
-        ? chip('danger', rise ? '↑ ' + fmtDur(rise / 1000) : 'CAPPED', rise ? 'warn' : 'bad',
-            rise ? 'This lane worsens a step in ' + fmtDur(rise / 1000) + ' unless it is swept'
-                 : 'This lane is as bad as it gets until it is swept')
-        : '',
-      patrolActive(r.region)
-        ? chip('flag', fmtDur(patrolLeft(r.region) / 1000), 'ok',
-            REGIONS[r.region].n + ' is under patrol — everything here is a step quieter')
-        : ''
-    ], 'tight');
+    head += `<div class="dbar"><i style="width:${(d + 1) / DNAMES.length * 100}%;background:${DCOLORS[d]}"></i></div>`;
   }
-  /* A bad lane is two jobs, not one job with a footnote: run it as it stands, or
-     fight it quieter first. Both are offered up front as tabs, because a choice
-     the player has to scroll to find is a choice they never knew they had. */
-  if (canVoyage(r) && needsSweep(r)) {
-    head += `<div class="mtabs">
-      <button class="mtab ${sweeping ? '' : 'on'}" data-act="run-mode">${iconHTML(r.type === 'dive' ? 'chest' : 'cargo', 20)}${MTYPE[r.type].n}</button>
-      <button class="mtab ${sweeping ? 'on' : ''}" data-act="sweep-mode">${iconHTML('danger', 20)}Sweep</button>
-    </div>`;
-  } else {
-    head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
-  }
-  /* What the job asks for goes in the head, above the rail and outside the
-     scroller. Checking a requirement should never cost a scroll. */
-  head += requirements(r, isBoss, isCh);
+  head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
+  head += requirements(r, isBoss);
   $('sheetHead').innerHTML = head;
 
-  /* ---- body and the action that commits it ---- */
-  const panel = sweeping ? sweepBody(r)
-    : canVoyage(r) ? voyageBody(r)
-    : battleBody(r, isBoss, isCh);
+  /* ---- body: the ships, then who is waiting ---- */
+  const panel = canVoyage(r) ? voyageBody(r) : battleBody(r, isBoss, isCh);
   $('sheetBody').innerHTML = panel.body;
+
+  /* ---- foot: the one button that commits ---- */
   setSheetFoot(`<div class="grid2">
       <button class="btn" data-act="close-sheet">Cancel</button>
       <button class="btn ${panel.cls}" id="${panel.id}" ${panel.ready ? '' : 'disabled'} data-act="${panel.act}">${esc(panel.label)}</button>
@@ -208,135 +176,118 @@ function drawMission() {
   refreshTut();
 }
 
-/* What this job asks of you, in the head where it stays put. Everything here is
-   a test or a headline number — the small print stays in the body. */
-function requirements(r, isBoss, isCh) {
+/* Everything the job asks for and everything it pays, in the head where it stays
+   put. Nothing numeric lives anywhere else on the sheet. */
+function requirements(r, isBoss) {
   const fleet = sel.map(findShip).filter(Boolean);
-
-  if (sweeping) {
-    const d = effDanger(r);
-    return reqBar([
-      chip('danger', `${DNAMES[d]} <em>&rarr;</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok', 'What a won sweep does to this lane'),
-      chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
-      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
-      bagChips(sweepPay(r))
-    ], 'Beat them and this lane drops a step. What they carry comes home with you.');
-  }
+  const picked = !!fleet.length;
 
   if (r.type === 'cargo') {
     const g = GOODS[r.good];
-    const held = goodsHeld(r.good);
-    const cap = holdCap(fleet);
+    const dur = picked ? voyDuration(r, fleet) : r.len * 90;
+    const fp = fleetPower(fleet);
+    const spd = picked ? Math.round(fleet.reduce((a, s) => a + s.speed, 0) / fleet.length) : 0;
+    const odds = tradeChance(r, fp);
     return reqBar([
-      have(r.good, held, r.qty, `${g.n} in store, of ${r.qty} the contract wants`),
-      have('cargo', cap, r.qty, 'Cargo space on the ship you have picked'),
+      /* The three the ship herself has to answer, first and together. */
+      have('cargo', holdCap(fleet), r.qty, 'Cargo space against the consignment'),
+      have('power', fp, r.power, 'Power against the water she crosses'),
+      have('speed', spd, r.speed, 'Speed against the passage'),
+      /* Then what it costs you and what it pays. */
+      have(r.good, goodsHeld(r.good), r.qty, `${g.n} in store`),
       chip('dest', esc(r.dest), '', 'Destination'),
-      chip('crew', VOY_SHIPS, '', 'Ships this takes')
-    ], esc(MTYPE.cargo.tip));
+      chip('time', picked ? fmtDur(dur) : '—', '', 'Time away'),
+      chip('target', picked ? odds + '%' : '—',
+        picked ? (odds >= 85 ? 'ok' : odds >= 65 ? 'warn' : 'bad') : '', 'Chance she arrives intact'),
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on delivery'),
+      bagChips(r.rew)
+    ], laneNote(r));
   }
 
   if (r.type === 'dive') {
+    const dur = picked ? voyDuration(r, fleet) : r.len * 90;
+    const chests = picked ? diveChests(r, fleet) : 0;
+    const value = chestValue(r);
     return reqBar([
-      have('depth', bellDepth(), r.depth, `${BELL_NAMES[S.bell]} reaches depth ${bellDepth()}; this wreck lies at ${r.depth}`),
-      chip('crew', VOY_SHIPS, '', 'Ships this takes'),
-      chip('target', '100%', 'ok', 'No enemies here — a wreck dive is never a fight')
+      have('depth', bellDepth(), r.depth, `${BELL_NAMES[S.bell]} reaches depth ${bellDepth()}`),
+      have('cargo', holdCap(fleet), r.chestMin * CARGO_PER_CHEST,
+        `Cargo space — ${CARGO_PER_CHEST} per chest raised`),
+      chip('chest', picked ? chests : '—', 'gold', 'Chests expected'),
+      chip('gold', picked ? chests * value : value, 'gold', picked ? 'Sold on the quay' : 'Per chest'),
+      chip('time', picked ? fmtDur(dur) : '—', '', 'Time away'),
+      chip('target', '100%', 'ok', 'A wreck dive is never a fight'),
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety'),
+      bagChips(r.rew)
     ], esc(MTYPE.dive.tip));
   }
 
   const fp = fleetPower(fleet);
+  const odds = foes && picked ? battleOdds(fleet, foes) : 0;
   return reqBar([
     r.power ? have('power', fp, r.power, 'Fleet power against what this fight is rated for')
             : chip('power', fp, '', 'Fleet power'),
     chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
-    foes && fleet.length
-      ? chip('target', battleOdds(fleet, foes) + '%',
-          battleOdds(fleet, foes) >= 85 ? 'ok' : battleOdds(fleet, foes) >= 60 ? 'warn' : 'bad', 'Estimated odds')
+    foes && picked
+      ? chip('target', odds + '%', odds >= 85 ? 'ok' : odds >= 60 ? 'warn' : 'bad', 'Estimated odds')
       : '',
-    chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory')
+    chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
+    bagChips(r.rew),
+    isBoss && r.bossDef.unlocks
+      ? chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory') : ''
   ], isBoss
     ? esc(r.bossDef.desc) + ' <span class="bad">Your flagship sails or nobody does.</span>'
     : esc(MTYPE[r.type].tip));
 }
 
+/* Which way this lane is heading, and the one thing that holds it down. */
+function laneNote(r) {
+  const rise = laneRiseIn(r);
+  const bits = [esc(MTYPE.cargo.tip)];
+  if (patrolActive(r.region)) {
+    bits.push(`Patrolled for ${fmtDur(patrolLeft(r.region) / 1000)} — a step quieter.`);
+  } else if (rise) {
+    bits.push(`Worsens in ${fmtDur(rise / 1000)}. Patrol ${esc(REGIONS[r.region].n)} to push it back.`);
+  } else {
+    bits.push(`Patrol ${esc(REGIONS[r.region].n)} to push it back.`);
+  }
+  return bits.join(' ');
+}
+
 /* One line above the rail: how many ships, and what the order means. */
 function pickHint(n) {
-  return `<div class="pickhint"><span class="crewn">${iconHTML('crew', 20)}<b>${n}</b></span>`
+  return `<div class="pickhint"><span class="crewn">${iconHTML('crew', 40)}<b>${n}</b></span>`
     + `<span>${n === 1 ? 'Pick one ship.' : 'Pick up to three — tap order sets the line.'}</span></div>`;
 }
 
 /* ---- cargo runs and dives ---- */
 function voyageBody(r) {
   const fleet = sel.map(findShip).filter(Boolean);
-  const cap = holdCap(fleet);
   const already = S.voyages.find(v => v.routeId === r.id);
   const slotOK = S.voyages.length < VOY_MAX_ACTIVE;
-  const dur = fleet.length ? voyDuration(r, fleet) : r.len * 90;
-  const need = r.type === 'cargo' ? r.qty : null;
+  const isCargo = r.type === 'cargo';
+  const need = isCargo ? r.qty : null;
 
-  let detail = '', warn = '', ready = false, label = 'Send Ship';
-
-  if (r.type === 'cargo') {
-    const g = GOODS[r.good];
+  let warn = '', ready = false;
+  if (isCargo) {
     const held = goodsHeld(r.good);
-    const haveGoods = held >= r.qty;
-    const holdOK = cap >= r.qty;
-    const odds = tradeChance(r, fleetPower(fleet));
-    ready = haveGoods && holdOK && !!fleet.length;
-    label = 'Load & Sail';
-
-    detail = chipRow([
-      chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
-      chip('target', fleet.length ? odds + '%' : '—',
-        fleet.length ? (odds >= 85 ? 'ok' : odds >= 65 ? 'warn' : 'bad') : '', 'Chance it arrives intact'),
-      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on delivery'),
-      bagChips(r.rew)
-    ], 'big');
-
-    if (!haveGoods) warn = `${r.qty - held} short — run more contracts or take some off the enemy.`;
+    const holdOK = holdCap(fleet) >= r.qty;
+    ready = held >= r.qty && holdOK && !!fleet.length;
+    if (held < r.qty) warn = `${r.qty - held} short — run more contracts or take some off the enemy.`;
     else if (!holdOK && fleet.length) warn = 'That hull is too small.';
     else if (already) warn = 'Already running this contract.';
   } else {
-    const reach = diveReachable(r);
-    const chests = fleet.length ? diveChests(r, fleet) : 0;
-    const value = chestValue(r);
-    ready = reach && !!fleet.length;
-    label = 'Send Divers';
-
-    detail = chipRow([
-      chip('chest', fleet.length ? chests : '—', 'gold', 'Chests expected'),
-      chip('gold', fleet.length ? chests * value : value, 'gold',
-        fleet.length ? 'Sold on the quay as they come up' : 'Per chest'),
-      chip('cargo', fleet.length ? chestCap(fleet) : '—', '',
-        `Chests this hull can carry — ${CARGO_PER_CHEST} cargo space each`),
-      chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
-      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety'),
-      bagChips(r.rew)
-    ], 'big');
-
-    if (!reach) warn = `Upgrade the bell in the Market — yours reaches ${bellDepth()}.`;
+    ready = diveReachable(r) && !!fleet.length;
+    if (!diveReachable(r)) warn = `Upgrade the bell in the Market — yours reaches ${bellDepth()}.`;
   }
-
   if (!slotOK) warn = `All ${VOY_MAX_ACTIVE} fleets are at sea.`;
 
   return {
     body: `${pickHint(VOY_SHIPS)}
       ${shipPicks(true, need)}
-      <div class="card" style="--i:1">${detail}</div>
       ${warn ? `<div class="sub center warnline">${esc(warn)}</div>` : ''}`,
-    label, act: 'send-ships', id: 'sailBtn', cls: 'blu',
+    label: isCargo ? 'Load & Sail' : 'Send Divers',
+    act: 'send-ships', id: 'sailBtn', cls: 'blu',
     ready: ready && slotOK && !already
-  };
-}
-
-/* The sweep: a battle line against whatever is working this water. */
-function sweepBody(r) {
-  const fleet = sel.map(findShip).filter(Boolean);
-  return {
-    body: `${pickHint(BATTLE_SHIPS)}
-      ${shipPicks(false)}
-      ${foesCard(r, fleet)}`,
-    label: 'Sweep the Lane', act: 'sweep', id: 'sweepBtn', cls: 'gold',
-    ready: !!fleet.length
   };
 }
 
@@ -345,13 +296,14 @@ function battleBody(r, isBoss, isCh) {
   const fleet = sel.map(findShip).filter(Boolean);
   const flagOK = !isBoss || sel.includes('FLAG');
 
-  /* Charter extras: what it opens, what it pays, what else is on offer here. */
+  /* A charter is also worth taking for what it opens; those numbers sit in the
+     head with everything else, so all that is left here is where else to look. */
   let extra = '';
   if (isCh) {
     const c = r.charterDef;
     const others = chartersAt(c.loc).filter(x => x.id !== c.id);
     const prizes = chipRow([
-      c.dest ? chip('port', esc(PORTS[c.dest].n), 'gold', 'This port opens for good, with contracts of its own') : '',
+      c.dest ? chip('port', esc(PORTS[c.dest].n), 'gold', 'This port opens for good') : '',
       c.prize && c.prize.piece ? chip('relic', esc(c.prize.piece), 'gold', 'Collectible') : '',
       c.prize && c.prize.boon ? chip('flag', 'REFIT', 'gold', 'A permanent flagship refit') : '',
       c.prize && c.prize.gold ? chip('gold', c.prize.gold, 'gold', 'Treasure map') : ''
@@ -367,13 +319,7 @@ function battleBody(r, isBoss, isCh) {
     body: `${extra}
       ${pickHint(BATTLE_SHIPS)}
       ${shipPicks(false)}
-      ${foesCard(r, fleet)}
-      <div class="card ${isBoss ? 'bosscard' : ''}" style="--i:1">
-        ${chipRow([
-          bagChips(r.rew),
-          isBoss && r.bossDef.unlocks ? chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory') : ''
-        ], 'big')}
-      </div>`,
+      ${foesCard(fleet)}`,
     label: isCh ? 'Accept' : 'Attack', act: 'attack', id: 'sailBtn',
     cls: isBoss ? 'red' : 'gold',
     ready: !!sel.length && flagOK
@@ -386,14 +332,6 @@ function doSendShips() {
   if (!launchVoyage(curRoute, fleet)) return;
   tutEvent('voyage:launch');
   closeSheet();
-}
-
-/* Look at a different set of sails. Free, and the point of showing odds. */
-function doReroll() {
-  if (!curRoute || !canReroll(curRoute)) return;
-  foes = drawFoes(curRoute);
-  play('sail');
-  drawMission();
 }
 
 function closeForBattle() {
@@ -425,35 +363,10 @@ function doAttack() {
     (win, enemies) => (win ? battleVictory(r, enemies) : battleLoss(r))));
 }
 
-/* Sweeping a cargo lane. Same picker, same line-up preview, different outcome. */
-function doSweep() {
-  const r = curRoute;
-  const fleet = sel.map(findShip).filter(Boolean);
-  if (!fleet.length || !needsSweep(r)) return;
-  const line = foes || drawFoes(r);
-  closeForBattle();
-  wipe(() => startBattle(fleet, line, false,
-    (win, enemies) => (win ? sweepVictory(r, enemies) : sweepLoss(r))));
-}
-
-/* Swapping the sheet between the run and the sweep. They want different crews,
-   so the selection is cleared rather than carried across. */
-function setMode(on) {
-  sweeping = on;
-  sel = [];
-  if (on && !foes) foes = drawFoes(curRoute);
-  play('sail');
-  drawMission();
-}
-
 actions({
   mission: d => openMission(d.id),
   'pick-ship': d => togSel(d.id),
   'send-ships': doSendShips,
   attack: doAttack,
-  sweep: doSweep,
-  'sweep-mode': () => setMode(true),
-  'run-mode': () => setMode(false),
-  reroll: doReroll,
   'close-sheet': closeSheet
 });

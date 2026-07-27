@@ -10,6 +10,7 @@
 
 import { S } from './state.js';
 import { CONTRACT_PAY_BASE, CONTRACT_PAY_PER_TIER } from './config.js';
+import { MAX_DANGER } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { GOODS, goodsForTier } from '../data/goods.js';
 import { pick } from './rng.js';
@@ -33,14 +34,18 @@ function draw(pid) {
   const dest = PORTS[destId];
 
   const rate = CONTRACT_PAY_BASE + CONTRACT_PAY_PER_TIER * p.t;
+  const len = legLength(p, dest);
   return {
     id: 'k' + pid + '_' + Date.now().toString(36),
-    good, qty, destId,
-    len: legLength(p, dest),
-    danger: Math.min(3, Math.floor((p.t - 1) / 3)),
+    good, qty, destId, len,
+    /* What the run asks of the ship: space for it, power for the water, speed
+       for the distance. Scaled off the port's tier and the length of the leg. */
+    power: Math.round(8 + p.t * 5 + len * 3),
+    speed: Math.min(8, 3 + Math.floor(len / 2)),
+    danger: Math.min(MAX_DANGER, Math.floor((p.t - 1) / 3)),
     /* Busier ports sit on busier water. */
     riseMin: Math.max(10, 30 - p.t),
-    dangerCap: Math.min(3, 1 + Math.floor(p.t / 3)),
+    dangerCap: Math.min(MAX_DANGER, 1 + Math.floor(p.t / 3)),
     rew: { gold: Math.round(qty * GOODS[good].buy * rate) }
   };
 }
@@ -63,6 +68,7 @@ export function contractRoute(pid) {
     id: 'k_' + pid, region: p.region, type: 'cargo', portId: pid, contract: c,
     n: p.n + ' → ' + PORTS[c.destId].n,
     good: c.good, qty: c.qty, dest: PORTS[c.destId].n,
+    power: c.power || 0, speed: c.speed || 0,
     danger: c.danger, riseMin: c.riseMin, dangerCap: c.dangerCap,
     len: c.len, rew: c.rew,
     x: p.x, y: p.y

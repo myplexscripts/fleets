@@ -30,10 +30,10 @@ export function showTitle() {
       const beaten = Object.keys(d.bossBeaten || {}).length;
       const region = (d.unlocked || []).slice(-1)[0];
       progress = `<div class="tprogress">
-        <span>${iconHTML('gold', 20)}${d.gold | 0}</span>
-        <span>${iconHTML('anchor', 20)}${(d.ships || []).length} ship${(d.ships || []).length === 1 ? '' : 's'}</span>
-        <span>${iconHTML('star', 20)}${beaten}/4 admirals</span>
-        ${region && REGIONS[region] ? `<span>${iconHTML('map', 20)}${REGIONS[region].n}</span>` : ''}
+        <span>${iconHTML('gold', 40)}${d.gold | 0}</span>
+        <span>${iconHTML('anchor', 40)}${(d.ships || []).length} ship${(d.ships || []).length === 1 ? '' : 's'}</span>
+        <span>${iconHTML('star', 40)}${beaten}/4 admirals</span>
+        ${region && REGIONS[region] ? `<span>${iconHTML('map', 40)}${REGIONS[region].n}</span>` : ''}
       </div>`;
     } catch (e) { progress = ''; }
   }

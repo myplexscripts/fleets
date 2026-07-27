@@ -22,7 +22,7 @@
 .item.dis{opacity:.45}
 
 .itemhead{display:flex;align-items:center;gap:11px}
-.itemhead .itemic{width:clamp(30px,2.6vw,42px);height:clamp(30px,2.6vw,42px);flex-shrink:0}
+.itemhead .itemic{width:clamp(40px,3.2vw,54px);height:clamp(40px,3.2vw,54px);flex-shrink:0}
 .itemname{flex:1;min-width:0}
 .itemname b{
   display:block;font-family:var(--ui);font-weight:500;
@@ -83,10 +83,8 @@
 .rail{
   display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
-  padding:2px 2px 10px;margin:0 -2px;scrollbar-width:thin;
+  padding:2px 2px 10px;margin:0 -2px;
 }
-.rail::-webkit-scrollbar{height:5px}
-.rail::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
 
 .railcard{
   flex:0 0 clamp(178px,44vw,214px);scroll-snap-align:start;
@@ -132,7 +130,7 @@
 }
 .reqbar .chips{margin-top:0}
 .reqbar .chips.big .chip{font-size:clamp(18px,1.45vw,25px)}
-.reqbar .chips.big .chip .chipic{width:1.55em;height:1.55em}
+.reqbar .chips.big .chip .chipic{width:max(40px,1.55em);height:max(40px,1.55em)}
 .reqnote{
   font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim);
   margin-top:6px;

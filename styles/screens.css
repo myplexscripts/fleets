@@ -65,6 +65,8 @@
 #mapwrap{position:absolute;inset:0;background:#04161c}
 #mapsvg{width:100%;height:100%;display:block}
 .mapnode{cursor:pointer}
+/* labels sit in their own layer and are never the thing you tap */
+.maplabels{pointer-events:none}
 
 .legend{
   position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;
@@ -165,7 +167,7 @@
 /* ---- map key: symbol then name ---- */
 .maphint{display:flex;gap:clamp(12px,2vw,28px);align-items:center;justify-content:center;flex-wrap:wrap}
 .key{display:inline-flex;align-items:center;gap:6px}
-.key .keysh{flex-shrink:0;opacity:.95}
+.key .keysh{flex-shrink:0;opacity:.95;width:40px;height:40px}
 .key span{
   font-family:var(--ui);font-size:16px;letter-spacing:1.4px;
   text-transform:uppercase;color:var(--ink);
@@ -173,13 +175,13 @@
 
 /* legend: glyph plus number, not a sentence */
 .legdone{display:flex;align-items:center;gap:5px}
-.legdone .ic{width:1.15em;height:1.15em;flex-shrink:0}
+.legdone .ic{width:max(40px,1.15em);height:max(40px,1.15em);flex-shrink:0}
 .legdone i{font-style:normal;color:var(--dim);margin:0 .1em}
 .legdone.ready{color:#f0b0a6}
-.leg.lock .legrow .ic{width:1.05em;height:1.05em;opacity:.7}
+.leg.lock .legrow .ic{width:max(40px,1.05em);height:max(40px,1.05em);opacity:.7}
 
 /* hero stats carry their own glyph above the number */
-.hero .hstat .hstatic{display:block;width:clamp(22px,1.8vw,34px);height:clamp(22px,1.8vw,34px);margin:0 auto 3px;opacity:.9}
+.hero .hstat .hstatic{display:block;width:clamp(40px,3.4vw,58px);height:clamp(40px,3.4vw,58px);margin:0 auto 3px;opacity:.9}
 
 /* Ship rows carry five chips; keep them on one line where the width allows. */
 .shipmeta .chips,.flagcard .chips{gap:4px 10px;margin-top:6px}

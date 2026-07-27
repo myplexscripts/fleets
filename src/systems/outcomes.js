@@ -1,8 +1,9 @@
 /* What winning or losing a battle mission does to the world.
 
-   Battles never open a trade route any more — trade routes are always open. What
-   a patrol buys you is a quieter region, which makes cargo runs through it
-   safer; everything else pays in coin, materials and reputation. */
+   Battles never open a trade route — trade routes are always open. What a patrol
+   buys you is a quieter region, which makes every cargo run through it safer;
+   everything else pays in coin, materials and reputation. A patrol is the only
+   thing in the game that lowers danger. */
 
 import { S, syncFlag } from '../core/state.js';
 import { PATROL_MS } from '../core/config.js';
@@ -10,7 +11,7 @@ import { now } from '../core/dom.js';
 import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
-import { fmtDur, bossAsRoute, grant, sweepLane, sweepRegion, effDanger, sweepPay } from '../core/selectors.js';
+import { fmtDur, bossAsRoute, grant, calmRegion } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { goodsHaul, matsHaul } from './loot.js';
@@ -36,10 +37,10 @@ export function battleVictory(route, enemies) {
   let msg = 'The water is yours. What was floating out here is not any more.';
 
   if (route.type === 'patrol') {
-    /* The broad version of a sweep: every lane in the region drops a step, and
-       the water stays quiet for a while on top of that. */
+    /* Every lane in the region drops a step, and the water stays quiet for a
+       while on top of that. This is the only way danger ever comes down. */
     S.patrol[route.region] = now() + PATROL_MS;
-    const cleared = sweepRegion(route.region);
+    const cleared = calmRegion(route.region);
     msg = `Your patrol has the run of ${REGIONS[route.region].n}.`
       + (cleared ? ` ${cleared} lane${cleared === 1 ? '' : 's'} pushed back a step,` : '')
       + ` and the whole region stays a step quieter for ${fmtDur(PATROL_MS / 1000)}.`;
@@ -52,35 +53,6 @@ export function battleVictory(route, enemies) {
   showResult({
     route, success: true, msg, spoils,
     captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
-  });
-}
-
-/* Sweeping a cargo lane: the escort action that pushes one lane's danger down a
-   step. It never opens the lane — the lane was always open — it just makes the
-   next run through it a safer bet. */
-export function sweepVictory(route, enemies) {
-  /* Quoted on the sheet before the fight, so read the pay before the sweep
-     moves the lane out from under it. */
-  const pay = sweepPay(route);
-  const { before, after } = sweepLane(route);
-  grant(pay);
-  S.done['sweep_' + route.id] = (S.done['sweep_' + route.id] || 0) + 1;
-  const noto = addNoto(route);
-  const spoils = { goods: goodsHaul(route.region, before), mats: matsHaul(route.region, before) };
-
-  let msg = `The lane is swept. ${route.n} drops from ${DNAMES[before].toLowerCase()} to ${DNAMES[after].toLowerCase()}.`;
-  if (after === 0) msg += ' Nothing is working this water now.';
-
-  showResult({
-    route, success: true, msg, spoils,
-    captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
-  });
-}
-
-export function sweepLoss(route) {
-  showResult({
-    route, success: false,
-    msg: `They hold the lane. ${route.n} is still ${DNAMES[effDanger(route)].toLowerCase()}, and anything you send through it carries that risk.`
   });
 }
 

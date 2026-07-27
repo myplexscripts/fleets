@@ -29,7 +29,7 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   if (extra) for (const k in extra) paid[k] = (paid[k] || 0) + extra[k];
   const isBoss = route.type === 'boss', isCh = route.type === 'charter';
   const title = success
-    ? (isBoss ? 'Admiral Defeated' : (isCh ? 'Charter Fulfilled' : (fromVoyage ? 'Ships Returned' : 'Lane Swept')))
+    ? (isBoss ? 'Admiral Defeated' : (isCh ? 'Charter Fulfilled' : (fromVoyage ? 'Ships Returned' : 'The Water Is Yours')))
     : (isBoss ? 'Repulsed' : (fromVoyage ? 'Run Lost' : 'Battle Lost'));
 
   let h = `<div class="resulthead ${success ? 'good' : 'bad'}">${title}</div>

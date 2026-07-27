@@ -62,9 +62,9 @@ export function showBanner(kind) {
   if (win) {
     const prizes = b.enemies.filter(e => e.disabled && !e.isBoss).length;
     inner += `<div class="rewrow">
-        <span>${iconHTML('barrels', 26)} +1 barrel</span>
-        <span>${iconHTML('anchor', 26)} ${prizes} prize${prizes !== 1 ? 's' : ''}</span>
-        ${isBoss ? `<span>${iconHTML('star', 26)} ${b.boss.title}</span>` : ''}</div>
+        <span>${iconHTML('barrels', 40)} +1 barrel</span>
+        <span>${iconHTML('anchor', 40)} ${prizes} prize${prizes !== 1 ? 's' : ''}</span>
+        ${isBoss ? `<span>${iconHTML('star', 40)} ${b.boss.title}</span>` : ''}</div>
       <div class="stat"><div class="lbl"><span>lane status</span><span style="color:var(--grn)">securing</span></div>
       <div class="dbar"><i id="secbarFx" style="width:100%;background:var(--red)"></i></div></div>`;
   } else if (kind === 'loss') {

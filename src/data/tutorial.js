@@ -35,7 +35,7 @@ export const TUTSTEPS = [
     btn: 'Understood' },
 
   { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ship',
-    text: 'One ship sails a run. Read her cargo chip: left is what she holds, right is what this contract needs. Green means she can take it.',
+    text: 'One ship sails a run, and it rates her on three: cargo, power, speed. Left is what she has, right is what the run wants. Green means she is up to it.',
     wait: 'ships:1' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Send Her',
@@ -55,7 +55,7 @@ export const TUTSTEPS = [
     wait: 'route:c3' },
 
   { sel: '#sailBtn', lockTab: 'routes', title: 'Form the Line',
-    text: 'Up to three, and tap order sets the line: first fires first, second deals +25%, third takes −25%. The odds above are a forecast — if they look bad, look again for a different line-up.',
+    text: 'Up to three, and tap order sets the line: first fires first, second deals +25%, third takes −25%. The odds above are a forecast. These are the ships that are out there — if the odds look bad, come back with a better fleet.',
     wait: 'launch' },
 
   { modal: 1, when: 'battle', title: 'Broadsides',

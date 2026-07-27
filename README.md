@@ -4,10 +4,11 @@ A fleet-command game set in the age of sail. Three things to do, and they are
 kept separate on purpose:
 
 - **Cargo runs** — deliver X of a good to port Z, get paid. No fighting. A run
-  sails under **one ship**, so the question every contract asks is whether any
-  single hull you own has the cargo space for it. She comes home with coin *and*
-  whatever that port had going the other way, which is what keeps trade
-  self-sustaining.
+  sails under **one ship** and rates her on three counts: **cargo** to carry the
+  consignment, **power** to see off the water she crosses, **speed** to make the
+  passage. Only cargo is a hard gate; short on power costs you odds, short on
+  speed costs you hours. She comes home with coin *and* whatever that port had
+  going the other way, which is what keeps trade self-sustaining.
 - **Wreck dives** — send divers down; chests come up and sell on the quay. No
   enemies either, only depth, and depth is what your diving bell is for. Also one
   ship: her cargo space caps how many chests can come up in a trip.
@@ -22,22 +23,22 @@ a ship joins your fleet only by being taken from someone else. What the market
 does is sell the dull stuff — materials, a deeper diving bell, another berth —
 and buy your surplus cargo when you want coin instead.
 
-**Danger is alive.** Every cargo lane's danger climbs on its own in real time, at
-its own rate and up to its own ceiling — home water drifts slowly and never gets
-worse than Hazardous; the Grand Fleet Route is Treacherous again within the hour.
-Danger never blocks trade. It only decides how roughly a run is handled.
+**Danger is alive**, and it has three levels: **Safe, Risky, Hazardous**. Every
+cargo lane climbs on its own in real time, at its own rate and up to its own
+ceiling — home water drifts slowly and never gets past Risky; the Grand Fleet
+Route is Hazardous again within the hour. Danger never blocks trade. It only
+decides how roughly a run is handled.
 
-Pushing it back down is the fight you choose to have. A lane above Safe is two
-jobs, and its sheet says so with two tabs: **run it** as it stands under one
-hull, or **sweep it** with a battle line of three and take a step of danger off
-it first. Both tabs show their own numbers — the sweep quotes what it pays, what
-the lane becomes, and who is waiting, with the same look-again reroll as any
-other fight. A **patrol** is the broad version: it steps every lane in its
+**Patrolling a region is the only thing that lowers danger**, anywhere. There is
+no per-lane escort job to buy your way out of a bad passage: either you patrol,
+or you sail it as it is with a ship strong enough to take it.
+
+**You face the ships that are out there.** No rerolling the enemy for an easier
+line-up — the answer to a match-up you cannot win is a better fleet, and a button
+that reshuffles the opposition is a button that makes building one pointless. You
+see the odds before you commit, and walking away is always allowed. A **patrol** is the broad version: it steps every lane in its
 region down at once and keeps the water quiet for a while. A Safe lane offers
 nothing to fight, which is the point.
-
-Before any battle you see who is out there and your **estimated odds**, and you
-can stand off and look again for a different line-up as often as you like.
 
 Fill a region's notoriety bar and its admiral comes looking for you. Beat the
 admiral and the next region of the chart unlocks. Trade never unlocks anything —
@@ -60,7 +61,10 @@ always a **stepper** (`− 3 +`) and never a row of preset buttons. A set of thi
 you choose between is a **rail** that scrolls sideways, so it can't push what you
 are checking off the screen. What a job requires goes in a **requirement bar** in
 the sheet head, where it cannot scroll away — and the button that commits it sits
-in the sheet foot, where it also cannot. The rules are written at the top of that
+in the sheet foot, where it also cannot. Every mission sheet is the same three
+bands — **head** says what the job asks for, **body** is the ships and who is
+waiting, **foot** is Cancel and the one button that commits — so nothing numeric
+ever appears below the fold on one screen and above it on another. The rules are written at the top of that
 module; the fix for something that doesn't fit is to change a rule, not to invent
 a style in a screen.
 
@@ -68,7 +72,7 @@ a style in a screen.
 sharing, and the key lists exactly the shapes currently drawn — so it grows an
 Admiral entry the moment she sails and can never leave a shape unexplained.
 
-**No text below 16px, ever**, and no icon either. Screens carry numbers, not
+**No text below 16px and no icon below 40px, ever.** Screens carry numbers, not
 paragraphs: a mission tip is one clause, an upgrade says `+10` and its price, and
 an empty screen says "No ships at sea." rather than explaining what a ship is
 for.
@@ -137,7 +141,7 @@ src/
   art/                procedural ship sprites and icons (SVG → canvas)
   fx/                 sound, toasts, transitions, coins, mist, haptics
   systems/            voyages (cargo + dives), notoriety, collectibles, loot,
-                      enemy generation, battle outcomes (including lane sweeps)
+                      enemy generation, battle outcomes
   ui/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
@@ -182,10 +186,10 @@ stops a full hull bar from looking like a failure. `priceChips(cost)` is the one
 to reach for on anything the player pays for. Add a glyph to `art/icons.js`
 before reaching for a word.
 
-**16px is the floor.** `tools/check-min-size.js` fails on any authored
-`font-size` below it — including a `clamp()` minimum, an inverted `clamp()`, or a
-relative size with no `max(16px, …)` floor — and on any `iconHTML()` call asking
-for fewer pixels. Run it with plain node for those:
+**The size floors are enforced, not remembered.** `tools/check-min-size.js` fails
+on any authored `font-size` below 16px — including a `clamp()` minimum, an inverted `clamp()`, or a
+relative size with no `max(…)` floor — and on any `iconHTML()` call asking for
+fewer than 40 pixels. Run it with plain node for those:
 
 ```sh
 node tools/check-min-size.js
@@ -194,6 +198,10 @@ node tools/check-min-size.js
 With `playwright-core` on hand and the game being served it also measures what
 the browser actually computes, across three viewports and nine surfaces — screens
 and overlays alike — which is how a `0.5em` sub-label got caught.
+
+**No scrollbars.** Anywhere. A scrollbar is browser chrome, and browser chrome is
+the loudest thing on screen saying "this is a web page". Scrolling works exactly
+as before; it just does not draw a track.
 
 **The bus exists to break cycles.** `ui/shell.js` owns rendering and imports
 every screen, so screens cannot import it back. They call `render()` from

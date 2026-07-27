@@ -16,12 +16,12 @@ export const BATTLE_SHIPS = 3;
 
 /* Lane danger.
 
-   A lane's danger climbs on its own in real time and is pushed back down one
-   step by sweeping it. Trade is never blocked by it — danger only decides how
-   roughly a cargo run is handled on the way. Each lane sets its own `riseMin`
-   and `dangerCap`, so the home waters stay gentle and the deep routes do not. */
+   A lane's danger climbs on its own in real time. Patrolling its region is the
+   only thing that pushes it back down. Trade is never blocked by it — danger
+   only decides how roughly a cargo run is handled on the way. Each lane sets its
+   own `riseMin` and `dangerCap`, so home waters stay gentle and deep routes do
+   not. */
 export const DANGER_RISE_MIN_DEFAULT = 25;
-export const SWEEP_STEP = 1;          // danger steps removed by one won sweep
 
 /* A patrol clears a whole region at once, and wears off. */
 export const PATROL_MS = 10 * 60 * 1000;

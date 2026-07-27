@@ -157,7 +157,7 @@ h1,h2,h3{font-weight:500}
 /* ---- small type ---- */
 .pips{color:var(--gold);letter-spacing:2px;font-size:16px}
 
-.tag,.mtype,.slot,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
+.tag,.mtype,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
 .tag{padding:3px 9px;border-left:3px solid;color:var(--ink);background:rgba(0,0,0,.4)}
 .t0{border-color:var(--grn);color:var(--grn)}
 .t1{border-color:var(--yel);color:var(--yel)}
@@ -168,8 +168,6 @@ h1,h2,h3{font-weight:500}
 .mtype{color:var(--dim);border:1px solid var(--line);padding:2px 9px}
 .mtype.boss{color:#f0b0a6;border-color:#8a463e}
 .mtype.gold{color:var(--goldhi);border-color:var(--brass)}
-.slot{color:var(--gold);border:1px solid var(--brass);padding:2px 8px;letter-spacing:1.5px}
-.slot.blu{color:#bcd8f0;border-color:#2c5a8a}
 .statechip{letter-spacing:1.5px}
 
 .clock{font-family:var(--ui);font-size:clamp(18px,1.35vw,25px);letter-spacing:2px;color:#bcd8f0}
@@ -238,7 +236,7 @@ h1,h2,h3{font-weight:500}
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
 }
-.chip .chipic{width:1.35em;height:1.35em;flex-shrink:0;vertical-align:middle}
+.chip .chipic{width:max(40px,1.35em);height:max(40px,1.35em);flex-shrink:0;vertical-align:middle}
 .chip b{font-weight:500}
 .chip i{font-style:normal;color:var(--dim);margin:0 .1em}
 .chip.ok b{color:var(--grn)}
@@ -247,4 +245,12 @@ h1,h2,h3{font-weight:500}
 .chip.dim,.chip.dim b{color:var(--dim)}
 .chip.gold b{color:var(--goldhi)}
 .chips.big .chip{font-size:clamp(17px,1.3vw,22px)}
-.chips.big .chip .chipic{width:1.5em;height:1.5em}
+.chips.big .chip .chipic{width:max(40px,1.5em);height:max(40px,1.5em)}
+
+
+/* ---- scrollbars ----
+   None of them, anywhere. A scrollbar is browser chrome, and browser chrome is
+   the loudest thing on screen saying "this is a web page". Scrolling still
+   works exactly as before; it just does not draw a track. */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{width:0;height:0;display:none}

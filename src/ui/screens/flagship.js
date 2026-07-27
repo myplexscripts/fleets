@@ -101,14 +101,14 @@ export function renderFlagship() {
       <div class="setbar ${done ? 'full' : ''}"><i style="width:${have.length / set.pieces.length * 100}%"></i></div>
       <div class="pieces">${set.pieces.map(pc => {
         const got = have.includes(pc);
-        return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 20)}<span>${got ? esc(pc) : '???'}</span></div>`;
+        return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 40)}<span>${got ? esc(pc) : '???'}</span></div>`;
       }).join('')}</div></div>`;
   });
 
   const loose = S.collected.loose || [];
   if (loose.length) {
     h += `<div class="card" style="--i:${i++}"><h3>Oddments</h3>
-      <div class="pieces">${loose.map(pc => `<div class="piece got">${iconHTML('relic', 20)}<span>${esc(pc)}</span></div>`).join('')}</div></div>`;
+      <div class="pieces">${loose.map(pc => `<div class="piece got">${iconHTML('relic', 40)}<span>${esc(pc)}</span></div>`).join('')}</div></div>`;
   }
 
   $('main').innerHTML = h;

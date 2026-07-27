@@ -9,10 +9,15 @@
    Charters and admirals are not here (see charters.js, bosses.js), and per-port
    cargo contracts are generated at runtime (see systems/contracts.js).
 
-   Cargo lanes also carry `riseMin` (how many real minutes before their danger
-   climbs a step) and `dangerCap` (how bad they are allowed to get). Home water
-   drifts slowly and never gets worse than Hazardous; the Grand Fleet Route will
-   be Treacherous again within the hour.
+   A cargo lane asks three things of the ship you send: `qty` of cargo space to
+   carry the consignment, `power` to see off whoever works that water, and
+   `speed` to make the passage in good time. Falling short of the last two does
+   not stop you sailing — it costs you odds and hours.
+
+   Lanes also carry `riseMin` (how many real minutes before their danger climbs
+   a step) and `dangerCap` (how bad they are allowed to get). Home water drifts
+   slowly and never gets worse than Risky; the Grand Fleet Route is Hazardous
+   again within the hour.
 
    Built by a factory because lane progress lives in the save, not here. */
 
@@ -20,7 +25,7 @@ export function makeRoutes() {
   return [
     /* ---- Caribbean ---- */
     { id: 'c1', region: 'caribbean', n: 'Havana → Nassau', type: 'cargo',
-      good: 'sugar', qty: 8, dest: 'Nassau', riseMin: 30, dangerCap: 1, danger: 0, len: 1,
+      good: 'sugar', qty: 8, power: 10, speed: 4, dest: 'Nassau', riseMin: 30, dangerCap: 1, danger: 0, len: 1,
       rew: { gold: 300 }, x: 150, y: 392 },
 
     { id: 'c6', region: 'caribbean', n: 'Wreck of the Santa Ana', type: 'dive',
@@ -28,7 +33,7 @@ export function makeRoutes() {
       rew: { metal: 3, wood: 2 }, x: 132, y: 440 },
 
     { id: 'c2', region: 'caribbean', n: 'Nassau → Tortuga', type: 'cargo',
-      good: 'rum', qty: 10, dest: 'Tortuga', riseMin: 25, dangerCap: 2, danger: 1, len: 2,
+      good: 'rum', qty: 10, power: 16, speed: 5, dest: 'Tortuga', riseMin: 25, dangerCap: 2, danger: 1, len: 2,
       rew: { gold: 620 }, x: 98, y: 420 },
 
     { id: 'c3', region: 'caribbean', n: 'Patrol Windward Passage', type: 'patrol',
@@ -42,7 +47,7 @@ export function makeRoutes() {
 
     /* ---- Gulf Coast ---- */
     { id: 'g1', region: 'gulf', n: 'Tortuga → New Orleans', type: 'cargo',
-      good: 'rum', qty: 18, dest: 'New Orleans', riseMin: 20, dangerCap: 3, danger: 1, len: 3,
+      good: 'rum', qty: 18, power: 30, speed: 5, dest: 'New Orleans', riseMin: 20, dangerCap: 2, danger: 1, len: 3,
       rew: { gold: 1150 }, x: 60, y: 286 },
 
     { id: 'g5', region: 'gulf', n: 'Graveyard Shoals', type: 'dive',
@@ -56,15 +61,15 @@ export function makeRoutes() {
       danger: 2, power: 70, rew: { gold: 1200, cloth: 10, metal: 6 }, x: 146, y: 222 },
 
     { id: 'g3', region: 'gulf', n: 'Veracruz Tobacco Run', type: 'cargo',
-      good: 'tobacco', qty: 22, dest: 'Veracruz', riseMin: 18, dangerCap: 3, danger: 2, len: 3,
+      good: 'tobacco', qty: 22, power: 44, speed: 6, dest: 'Veracruz', riseMin: 18, dangerCap: 2, danger: 2, len: 3,
       rew: { gold: 1900 }, x: 54, y: 206 },
 
     { id: 'g4', region: 'gulf', n: 'Raid Navy Convoy', type: 'raid',
-      danger: 3, power: 100, rew: { gold: 1700, metal: 16, wood: 10 }, x: 112, y: 180 },
+      danger: 2, power: 100, rew: { gold: 1700, metal: 16, wood: 10 }, x: 112, y: 180 },
 
     /* ---- Atlantic ---- */
     { id: 'a1', region: 'atlantic', n: 'Charleston Wine Run', type: 'cargo',
-      good: 'wine', qty: 26, dest: 'Charleston', riseMin: 15, dangerCap: 3, danger: 2, len: 4,
+      good: 'wine', qty: 26, power: 58, speed: 6, dest: 'Charleston', riseMin: 15, dangerCap: 2, danger: 2, len: 4,
       rew: { gold: 3100 }, x: 238, y: 300 },
 
     { id: 'a4', region: 'atlantic', n: 'Bermuda Deeps', type: 'dive',
@@ -79,7 +84,7 @@ export function makeRoutes() {
       rew: { gold: 200, metal: 15, cloth: 8 }, x: 350, y: 268 },
 
     { id: 'a3', region: 'atlantic', n: 'Azores Blockade Break', type: 'blockade',
-      danger: 3, power: 160, rew: { gold: 4000, metal: 22, wood: 14 }, x: 328, y: 212 },
+      danger: 2, power: 160, rew: { gold: 4000, metal: 22, wood: 14 }, x: 328, y: 212 },
 
     /* ---- Grand Fleet Route ---- */
     { id: 'gr2', region: 'grand', n: 'The Abyssal Shelf', type: 'dive',
@@ -87,7 +92,7 @@ export function makeRoutes() {
       rew: { gold: 400, metal: 24, cloth: 14 }, requiresBoss: 'atlantic', x: 268, y: 78 },
 
     { id: 'gr1', region: 'grand', n: 'The Grand Fleet Route', type: 'cargo',
-      good: 'spice', qty: 40, dest: 'Marseille', riseMin: 12, dangerCap: 3, danger: 3, len: 6,
+      good: 'spice', qty: 40, power: 90, speed: 8, dest: 'Marseille', riseMin: 12, dangerCap: 2, danger: 2, len: 6,
       rew: { gold: 10300 }, final: true, requiresBoss: 'grand', x: 314, y: 96 }
   ];
 }

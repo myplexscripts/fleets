@@ -33,7 +33,7 @@ function draw() {
   const inFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
   $('pauseScr').innerHTML = `
     <div class="pausebox">
-      <div class="pausehead">${iconHTML('wheel', 30)}<span>Ship's Orders</span></div>
+      <div class="pausehead">${iconHTML('wheel', 40)}<span>Ship's Orders</span></div>
       <div class="pausebody">
         <div class="optlist">
           ${TOGGLES.map(t => `

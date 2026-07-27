@@ -1,4 +1,4 @@
-/* Nothing readable may render below 16px: no text, no icon.
+/* Text never below 16px. Icons never below 40px.
 
    Three passes: the authored CSS, every iconHTML() call with an explicit pixel
    size, then what the browser actually computes across three viewports and nine
@@ -13,7 +13,8 @@ for (const where of ['playwright-core', require('path').join(process.cwd(), 'nod
   try { chromium = require(where).chromium; break; } catch (e) { /* try the next */ }
 }
 const ROOT = path.resolve(__dirname, '..');
-const MIN = 16;
+const MIN_TEXT = 16;
+const MIN_ICON = 40;
 const errors = [];
 
 /* ---- 1. authored CSS ---- */
@@ -22,15 +23,15 @@ for (const f of fs.readdirSync(path.join(ROOT, 'styles')).filter(n => n.endsWith
   s.split('\n').forEach((line, i) => {
     const where = 'styles/' + f + ':' + (i + 1);
     for (const m of line.matchAll(/font-size:\s*clamp\(\s*([0-9.]+)px\s*,[^,]+,\s*([0-9.]+)px/g)) {
-      if (+m[1] < MIN) errors.push(where + ' clamp min ' + m[1] + 'px');
+      if (+m[1] < MIN_TEXT) errors.push(where + ' clamp min ' + m[1] + 'px');
       if (+m[2] < +m[1]) errors.push(where + ' clamp max ' + m[2] + 'px below min ' + m[1] + 'px');
     }
     for (const m of line.matchAll(/font-size:\s*([0-9.]+)px/g)) {
-      if (+m[1] < MIN) errors.push(where + ' font-size ' + m[1] + 'px');
+      if (+m[1] < MIN_TEXT) errors.push(where + ' font-size ' + m[1] + 'px');
     }
     /* a relative font-size can land anywhere, so it must carry a max() floor */
     for (const m of line.matchAll(/font-size:\s*([0-9.]+)(em|rem|%)/g)) {
-      if (!/max\(/.test(line)) errors.push(where + ' relative font-size ' + m[1] + m[2] + ' with no 16px floor');
+      if (!/max\(/.test(line)) errors.push(where + ' relative font-size ' + m[1] + m[2] + ' with no max() floor');
     }
   });
 }
@@ -46,7 +47,7 @@ for (const f of jsFiles) {
   s.split('\n').forEach((line, i) => {
     for (const m of line.matchAll(/iconHTML\([^,)]+,\s*([0-9]+)/g)) {
       /* 0 means "size it from CSS", which rule 3 measures. */
-      if (+m[1] !== 0 && +m[1] < MIN) errors.push(path.relative(ROOT, f) + ':' + (i + 1) + ' iconHTML size ' + m[1]);
+      if (+m[1] !== 0 && +m[1] < MIN_ICON) errors.push(path.relative(ROOT, f) + ':' + (i + 1) + ' iconHTML size ' + m[1]);
     }
   });
 }
@@ -55,7 +56,9 @@ for (const f of jsFiles) {
 const done = () => {
   const uniq = [...new Set(errors)];
   uniq.forEach(e => console.log(' * ' + e));
-  console.log(uniq.length ? '=== ' + uniq.length + ' under ' + MIN + 'px ===' : 'nothing under ' + MIN + 'px');
+  console.log(uniq.length
+    ? '=== ' + uniq.length + ' below the floor (text ' + MIN_TEXT + 'px, icons ' + MIN_ICON + 'px) ==='
+    : 'text >= ' + MIN_TEXT + 'px and icons >= ' + MIN_ICON + 'px everywhere');
   process.exit(uniq.length ? 1 : 0);
 };
 
@@ -88,7 +91,7 @@ const done = () => {
     await p.waitForSelector('#app.on'); await p.waitForTimeout(800);
 
     const measure = async label => {
-      const bad = await p.evaluate(min => {
+      const bad = await p.evaluate(lim => {
         const out = [];
         document.querySelectorAll('body *').forEach(el => {
           const cs = getComputedStyle(el);
@@ -99,16 +102,16 @@ const done = () => {
           const own = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
           if (own) {
             const fs = parseFloat(cs.fontSize);
-            if (fs < min) out.push('text ' + fs.toFixed(1) + 'px <' + el.tagName.toLowerCase()
+            if (fs < lim.text) out.push('text ' + fs.toFixed(1) + 'px <' + el.tagName.toLowerCase()
               + '.' + (el.className || '') + '> "' + el.textContent.trim().slice(0, 24) + '"');
           }
           if (el.tagName === 'IMG' && el.classList.contains('ic')) {
-            if (r.width < min || r.height < min) out.push('icon ' + r.width.toFixed(1) + 'x'
+            if (r.width < lim.icon || r.height < lim.icon) out.push('icon ' + r.width.toFixed(1) + 'x'
               + r.height.toFixed(1) + ' .' + (el.className || ''));
           }
         });
         return [...new Set(out)];
-      }, MIN);
+      }, { text: MIN_TEXT, icon: MIN_ICON });
       bad.forEach(x => errors.push(vp.width + 'px ' + label + ': ' + x));
     };
 

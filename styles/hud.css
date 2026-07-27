@@ -88,7 +88,7 @@ nav button:first-child{border-radius:3px 0 0 3px}
 nav button:last-child{border-radius:0 3px 3px 0}
 nav button:not(:first-child){border-left:none}
 
-nav .navic{width:clamp(20px,1.7vw,26px);height:auto;opacity:.62;transition:opacity .2s,filter .2s}
+nav .navic{width:clamp(40px,3vw,48px);height:auto;opacity:.62;transition:opacity .2s,filter .2s}
 nav .navlbl{font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;line-height:1}
 
 nav button.on{

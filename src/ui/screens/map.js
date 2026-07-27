@@ -121,12 +121,20 @@ export function renderMap() {
 
   /* Transparent tap targets. The marker gets a circle; a labelled node also gets
      a patch covering the gap down to its label, so the words are part of the
-     button and there is no dead strip between the two. */
+     button and there is no dead strip between the two.
+
+     A patch as wide as the words, though, reaches past the marker and on a
+     crowded chart swallows taps meant for a neighbour. So it only widens to the
+     text where the nodes are far enough apart to afford it; otherwise it stays
+     exactly as wide as the marker's own circle, which bridges the gap without
+     covering anything the marker was not already covering. */
+  const roomy = minGap === Infinity || minGap > HIT * 5;
   const hitShapes = (x, y, label, size, drop) => {
     let out = `<circle cx="${x}" cy="${y}" r="${HIT}" fill="${'transparent'}"/>`;
     if (label) {
-      const half = Math.min(HIT * 2.2, Math.max(HIT, label.length * size * 0.32));
-      const lx = labelX(x, label, size);
+      const wide = Math.min(HIT * 2.2, Math.max(HIT, label.length * size * 0.32));
+      const half = roomy ? wide : HIT;
+      const lx = roomy ? labelX(x, label, size) : x;
       out += `<rect x="${(lx - half).toFixed(1)}" y="${y.toFixed(1)}" width="${(half * 2).toFixed(1)}"`
         + ` height="${(drop + size).toFixed(1)}" fill="transparent"/>`;
     }
@@ -134,7 +142,17 @@ export function renderMap() {
   };
 
   const hx = MX(HOME.x), hy = MY(HOME.y);
-  let lines = '', nodes = '', bossNodes = '', voyLines = '';
+  let lines = '', nodes = '', bossNodes = '', voyLines = '', labels = '';
+
+  /* Labels are drawn in their own layer, not inside the node they belong to.
+     A node's group is its tap target, and anything in the group counts toward
+     the box a tap is aimed at — so a label hanging below the marker drags that
+     box down until the middle of it is empty water. Keeping the words out means
+     a node's box is the marker, which is what you are aiming at anyway. */
+  const labelAt = (x, y, text, size, fill, stroke, spacing) =>
+    `<text x="${labelX(x, text, LBL)}" y="${y}" text-anchor="middle" fill="${fill}"`
+    + ` font-size="${size}" font-family="Oswald" letter-spacing="${spacing}"`
+    + ` style="paint-order:stroke" stroke="${stroke}" stroke-width="3">${esc(text)}</text>`;
 
   rs.forEach(r => {
     const isCh = r.type === 'charter', isDive = r.type === 'dive';
@@ -162,8 +180,8 @@ export function renderMap() {
         : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${nodeShape({ ...r, x, y }, col, MS)}`}
       ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
       ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
-      ${label ? `<text x="${labelX(x, label, LBL)}" y="${y + 18 * MS + LBL}" text-anchor="middle" fill="${labelColor}" font-size="${LBL}" font-family="Oswald" letter-spacing="1" style="paint-order:stroke" stroke="#04161c" stroke-width="3">${esc(label)}</text>` : ''}
     </g>`;
+    if (label) labels += labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#04161c', 1);
   });
 
   bossKeys.forEach(rk => {
@@ -182,8 +200,8 @@ export function renderMap() {
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
       ${hitShapes(x, y, b.n.toUpperCase(), LBL, 22 * MS)}
       <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#d94a3a"/>
-      <path d="${starPath(x, y, 10 * MS)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/>
-      <text x="${labelX(x, b.n.toUpperCase(), LBL)}" y="${y + 22 * MS + LBL}" text-anchor="middle" fill="#f0b0a6" font-size="${LBL}" font-family="Oswald" letter-spacing="1.2" style="paint-order:stroke" stroke="#0a0507" stroke-width="3">${esc(b.n.toUpperCase())}</text></g>`;
+      <path d="${starPath(x, y, 10 * MS)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/></g>`;
+    labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#f0b0a6', '#0a0507', 1.2);
   });
 
   const svg = `<svg id="mapsvg" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
@@ -204,9 +222,11 @@ export function renderMap() {
       <g>
         <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
         <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
-        <text x="${labelX(hx, 'HOME PORT', HLBL)}" y="${hy + 22 * MS + HLBL}" text-anchor="middle" fill="#d9c98a" font-size="${HLBL}" font-family="Oswald" letter-spacing="2" style="paint-order:stroke" stroke="#04161c" stroke-width="3">HOME PORT</text>
       </g>
       ${nodes}${bossNodes}
+      <g class="maplabels">${labels}
+        ${labelAt(hx, hy + 22 * MS + HLBL, 'HOME PORT', HLBL, '#d9c98a', '#04161c', 2)}
+      </g>
     </svg>`;
 
   /* Behind the legend that is already in the DOM. */
@@ -234,7 +254,7 @@ function keySwatch(type, col) {
   const inner = (type === 'charter' || type === 'boss')
     ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="${type === 'boss' ? '#5e1a1a' : '#8a793e'}" stroke-width="1.2"/>`
     : nodeShape({ type, x: 12, y: 12 }, col, 1.5);
-  return `<svg class="keysh" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">${inner}</svg>`;
+  return `<svg class="keysh" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">${inner}</svg>`;
 }
 
 function shapeKey(rs, liveBosses) {
@@ -250,7 +270,7 @@ function buildLegend(rs) {
     li++;
     if (!S.unlocked.includes(rk))
       return `<div class="leg lock" style="--i:${li}"><div class="legrow"><i style="background:#173238"></i>`
-        + `${iconHTML('lock', 17)}<span>${esc(REGIONS[rk].n)}</span></div></div>`;
+        + `${iconHTML('lock', 40)}<span>${esc(REGIONS[rk].n)}</span></div></div>`;
 
     const mine = rs.filter(r => r.region === rk);
     const maxd = mine.length ? Math.max(...mine.map(effDanger)) : 0;
@@ -261,17 +281,17 @@ function buildLegend(rs) {
 
     /* Counts of things worth a tap, as glyph + number. */
     const meta = [
-      patrolActive(rk) ? `<span title="Patrol in force">${iconHTML('flag', 18)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : '',
-      chn ? `<span style="color:#efe3ae" title="Charters on offer">${iconHTML('star', 18)}${chn}</span>` : '',
-      openN ? `<span style="color:#63c06a" title="Ready to sail">${iconHTML('anchor', 18)}${openN}</span>` : ''
+      patrolActive(rk) ? `<span title="Patrol in force">${iconHTML('flag', 40)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : '',
+      chn ? `<span style="color:#efe3ae" title="Charters on offer">${iconHTML('star', 40)}${chn}</span>` : '',
+      openN ? `<span style="color:#63c06a" title="Ready to sail">${iconHTML('anchor', 40)}${openN}</span>` : ''
     ].filter(Boolean).join('');
 
     /* The admiral bar is a have/need on notoriety: fill it and she sails out. */
     const noto = done
-      ? `<div class="legdone" title="${esc(b.n)} defeated">${iconHTML('flag', 17)}${esc(b.n)}</div>`
+      ? `<div class="legdone" title="${esc(b.n)} defeated">${iconHTML('flag', 40)}${esc(b.n)}</div>`
       : `<div class="notobar ${cur >= need ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></div>
          <div class="legdone ${cur >= need ? 'ready' : ''}" title="${cur >= need ? 'Admiral ready — attack' : 'Notoriety'}">
-           ${iconHTML('noto', 17)}${cur}<i>/</i>${need}</div>`;
+           ${iconHTML('noto', 40)}${cur}<i>/</i>${need}</div>`;
 
     return `<div class="leg" style="--i:${li}">
       <div class="legrow"><i style="background:${DHEX[maxd]}"></i><span>${esc(REGIONS[rk].n)}</span></div>
