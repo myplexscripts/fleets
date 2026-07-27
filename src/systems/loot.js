@@ -23,6 +23,20 @@ export function goodsHaul(region, danger) {
 export const haulLine = h =>
   h ? `${h.n} ${h.unit} of ${h.name.toLowerCase()} came out of their holds.` : '';
 
+/* The return cargo. A delivered ship does not sail home empty — she is paid in
+   coin and loaded with whatever that port had going the other way, which is
+   never what she just dropped off. This is what keeps trade self-sustaining now
+   that no counter sells goods: run a contract, come home able to run another. */
+export function returnCargo(region, delivered, qty) {
+  const tier = REGIONS[region] ? REGIONS[region].tier : 1;
+  const choices = goodsForTier(tier * 2).filter(g => g !== delivered);
+  if (!choices.length) return null;
+  const good = pick(choices);
+  const n = Math.max(2, Math.round(qty * rnd(0.4, 0.75)));
+  S.goods[good] += n;
+  return { good, n, unit: GOODS[good].unit, name: GOODS[good].n };
+}
+
 /* Timber, ingots and canvas stripped off a beaten hull. Every win yields some,
    so a captain who has run out of gold can always fight their way back to a
    refit instead of being stuck. */

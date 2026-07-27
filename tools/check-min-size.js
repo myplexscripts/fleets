@@ -126,7 +126,7 @@ const done = () => {
 
     await p.click('#tabRoutes'); await p.waitForTimeout(1300);
     await p.click('#node_c1'); await p.waitForTimeout(900); await measure('cargo sheet');
-    await p.locator('#shipPicks .pick.flag').click(); await p.waitForTimeout(600);
+    await p.locator('#shipPicks .railcard.flag').click(); await p.waitForTimeout(600);
     await measure('cargo sheet picked');
     await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
     await p.click('#node_c3'); await p.waitForTimeout(900); await measure('battle sheet');

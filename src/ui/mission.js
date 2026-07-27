@@ -33,8 +33,10 @@ import {
   chestCap, bellDepth, laneRiseIn, needsSweep, sweepPay, battleOdds
 } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
+import { shipHTML } from '../art/ships.js';
 import { chip, have, chipRow, bagChips, shipChips } from './format.js';
-import { openSheet, closeSheet } from './sheet.js';
+import { rail, railCard, reqBar } from './components.js';
+import { openSheet, closeSheet, setSheetFoot } from './sheet.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
 import { wipe } from '../fx/wipe.js';
@@ -103,28 +105,28 @@ function togSel(id) {
   drawMission();
 }
 
-/* Ship picker, shared by both panels. `need` is the cargo a cargo run wants, so
-   every hull carries a green or red 📦 have/need chip and the right ship for the
-   job can be picked without reading a word. */
+/* Ship picker. A rail, not a column: the ships scroll sideways under the
+   requirement bar, so what the job needs stays on screen while you look through
+   the fleet for a hull that meets it. `need` is the cargo a cargo run wants, so
+   every card carries a green or red have/need chip. */
 function shipPicks(voyage, need) {
   const bz = busyIds();
-  const slots = voyage
-    ? ['SAILS']
-    : ['FRONT', 'CENTRE', 'REAR'];
+  const slots = voyage ? ['SAILS'] : ['FRONT', 'CENTRE', 'REAR'];
 
-  return allShips().map(s => {
+  return rail(allShips().map(s => {
     const i = sel.indexOf(s.id);
     const crip = s.hull <= 0, atSea = bz.has(s.id), dis = crip || atSea, isF = s.id === 'FLAG';
-    const state = crip
-      ? chip('hull', 'CRIPPLED', 'bad')
-      : atSea ? chip('time', 'AT SEA', 'dim') : '';
-    return `<div class="pick ${i > -1 ? 'sel' : ''} ${dis ? 'dis' : ''} ${isF ? 'flag' : ''}"
-        ${dis ? '' : `data-act="pick-ship" data-id="${s.id}"`}>
-      <div class="row"><b>${isF ? iconHTML('flag', 21) + ' ' : ''}${esc(s.name)}</b>
-        <span class="picktail">${state}${i > -1 ? `<span class="slot ${voyage ? 'blu' : ''}">${slots[i]}</span>` : ''}</span></div>
-      <div class="picksub">${tname(s)}</div>
-      ${shipChips(s, '', need)}</div>`;
-  }).join('');
+    return railCard({
+      cls: (i > -1 ? 'sel ' : '') + (dis ? 'dis ' : '') + (isF ? 'flag' : ''),
+      attrs: dis ? '' : ` data-act="pick-ship" data-id="${s.id}"`,
+      art: shipHTML(isF ? 'flagship' : s.type, isF ? 'flag' : 'player', 0.62),
+      name: s.name,
+      tag: crip ? 'CRIPPLED' : atSea ? 'AT SEA' : (i > -1 ? slots[i] : ''),
+      tagCls: crip ? 'bad' : atSea ? 'blu' : (voyage ? 'blu' : ''),
+      sub: tname(s),
+      chips: shipChips(s, '', need)
+    });
+  }).join(''), 'shipPicks');
 }
 
 /* The line-up on offer, with the odds of beating it using the ships picked so
@@ -189,22 +191,77 @@ function drawMission() {
   } else {
     head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
   }
-  head += `<div class="sub quote" style="margin-top:6px">${esc(
-    sweeping ? 'Beat them and this lane drops a step. What they carry comes home with you.'
-      : isBoss ? r.bossDef.desc : MTYPE[r.type].tip)}</div>`;
+  /* What the job asks for goes in the head, above the rail and outside the
+     scroller. Checking a requirement should never cost a scroll. */
+  head += requirements(r, isBoss, isCh);
   $('sheetHead').innerHTML = head;
 
-  /* ---- body ---- */
-  $('sheetBody').innerHTML = sweeping ? sweepBody(r)
+  /* ---- body and the action that commits it ---- */
+  const panel = sweeping ? sweepBody(r)
     : canVoyage(r) ? voyageBody(r)
     : battleBody(r, isBoss, isCh);
+  $('sheetBody').innerHTML = panel.body;
+  setSheetFoot(`<div class="grid2">
+      <button class="btn" data-act="close-sheet">Cancel</button>
+      <button class="btn ${panel.cls}" id="${panel.id}" ${panel.ready ? '' : 'disabled'} data-act="${panel.act}">${esc(panel.label)}</button>
+    </div>`);
   refreshTut();
 }
 
-/* One line of instruction above the picker, and the count it asks for. */
-function pickHint(n, extra) {
+/* What this job asks of you, in the head where it stays put. Everything here is
+   a test or a headline number — the small print stays in the body. */
+function requirements(r, isBoss, isCh) {
+  const fleet = sel.map(findShip).filter(Boolean);
+
+  if (sweeping) {
+    const d = effDanger(r);
+    return reqBar([
+      chip('danger', `${DNAMES[d]} <em>&rarr;</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok', 'What a won sweep does to this lane'),
+      chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
+      bagChips(sweepPay(r))
+    ], 'Beat them and this lane drops a step. What they carry comes home with you.');
+  }
+
+  if (r.type === 'cargo') {
+    const g = GOODS[r.good];
+    const held = goodsHeld(r.good);
+    const cap = holdCap(fleet);
+    return reqBar([
+      have(r.good, held, r.qty, `${g.n} in store, of ${r.qty} the contract wants`),
+      have('cargo', cap, r.qty, 'Cargo space on the ship you have picked'),
+      chip('dest', esc(r.dest), '', 'Destination'),
+      chip('crew', VOY_SHIPS, '', 'Ships this takes')
+    ], esc(MTYPE.cargo.tip));
+  }
+
+  if (r.type === 'dive') {
+    return reqBar([
+      have('depth', bellDepth(), r.depth, `${BELL_NAMES[S.bell]} reaches depth ${bellDepth()}; this wreck lies at ${r.depth}`),
+      chip('crew', VOY_SHIPS, '', 'Ships this takes'),
+      chip('target', '100%', 'ok', 'No enemies here — a wreck dive is never a fight')
+    ], esc(MTYPE.dive.tip));
+  }
+
+  const fp = fleetPower(fleet);
+  return reqBar([
+    r.power ? have('power', fp, r.power, 'Fleet power against what this fight is rated for')
+            : chip('power', fp, '', 'Fleet power'),
+    chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
+    foes && fleet.length
+      ? chip('target', battleOdds(fleet, foes) + '%',
+          battleOdds(fleet, foes) >= 85 ? 'ok' : battleOdds(fleet, foes) >= 60 ? 'warn' : 'bad', 'Estimated odds')
+      : '',
+    chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory')
+  ], isBoss
+    ? esc(r.bossDef.desc) + ' <span class="bad">Your flagship sails or nobody does.</span>'
+    : esc(MTYPE[r.type].tip));
+}
+
+/* One line above the rail: how many ships, and what the order means. */
+function pickHint(n) {
   return `<div class="pickhint"><span class="crewn">${iconHTML('crew', 20)}<b>${n}</b></span>`
-    + `<span>${n === 1 ? 'Pick one ship.' : 'Pick up to three — tap order sets the line.'}${extra || ''}</span></div>`;
+    + `<span>${n === 1 ? 'Pick one ship.' : 'Pick up to three — tap order sets the line.'}</span></div>`;
 }
 
 /* ---- cargo runs and dives ---- */
@@ -214,9 +271,9 @@ function voyageBody(r) {
   const already = S.voyages.find(v => v.routeId === r.id);
   const slotOK = S.voyages.length < VOY_MAX_ACTIVE;
   const dur = fleet.length ? voyDuration(r, fleet) : r.len * 90;
-
-  let manifest = '', warn = '', ready = false, label = 'Send Ship';
   const need = r.type === 'cargo' ? r.qty : null;
+
+  let detail = '', warn = '', ready = false, label = 'Send Ship';
 
   if (r.type === 'cargo') {
     const g = GOODS[r.good];
@@ -227,20 +284,15 @@ function voyageBody(r) {
     ready = haveGoods && holdOK && !!fleet.length;
     label = 'Load & Sail';
 
-    manifest = `<div class="card manifest" style="--i:0">
-        ${chipRow([
-          have(r.good, held, r.qty, `${g.n} in store, of ${r.qty} the contract wants`),
-          have('cargo', cap, r.qty, 'Cargo space on the ship you picked'),
-          chip('dest', esc(r.dest), '', 'Destination'),
-          chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
-          chip('target', fleet.length ? odds + '%' : '—',
-            fleet.length ? (odds >= 85 ? 'ok' : odds >= 65 ? 'warn' : 'bad') : '', 'Chance it arrives intact'),
-          chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on delivery')
-        ], 'big')}
-        ${chipRow([bagChips(r.rew)], 'tight')}
-      </div>`;
+    detail = chipRow([
+      chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
+      chip('target', fleet.length ? odds + '%' : '—',
+        fleet.length ? (odds >= 85 ? 'ok' : odds >= 65 ? 'warn' : 'bad') : '', 'Chance it arrives intact'),
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on delivery'),
+      bagChips(r.rew)
+    ], 'big');
 
-    if (!haveGoods) warn = `${r.qty - held} short — buy ${g.n.toLowerCase()} in the Market.`;
+    if (!haveGoods) warn = `${r.qty - held} short — run more contracts or take some off the enemy.`;
     else if (!holdOK && fleet.length) warn = 'That hull is too small.';
     else if (already) warn = 'Already running this contract.';
   } else {
@@ -250,58 +302,47 @@ function voyageBody(r) {
     ready = reach && !!fleet.length;
     label = 'Send Divers';
 
-    manifest = `<div class="card manifest" style="--i:0">
-        ${chipRow([
-          have('depth', bellDepth(), r.depth, `${BELL_NAMES[S.bell]} — reaches depth ${bellDepth()}, this wreck lies at ${r.depth}`),
-          chip('target', '100%', 'ok', 'No enemies here — a wreck dive is never a fight'),
-          chip('chest', fleet.length ? chests : '—', 'gold', 'Chests expected'),
-          chip('gold', fleet.length ? chests * value : value, 'gold',
-            fleet.length ? 'Sold on the quay as they come up' : 'Per chest'),
-          chip('cargo', fleet.length ? chestCap(fleet) : '—', '',
-            `Chests this hull can carry — ${CARGO_PER_CHEST} cargo space each`),
-          chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
-          chip('noto', '+' + notoGain(r), 'gold', 'Notoriety')
-        ], 'big')}
-        ${chipRow([bagChips(r.rew)], 'tight')}
-      </div>`;
+    detail = chipRow([
+      chip('chest', fleet.length ? chests : '—', 'gold', 'Chests expected'),
+      chip('gold', fleet.length ? chests * value : value, 'gold',
+        fleet.length ? 'Sold on the quay as they come up' : 'Per chest'),
+      chip('cargo', fleet.length ? chestCap(fleet) : '—', '',
+        `Chests this hull can carry — ${CARGO_PER_CHEST} cargo space each`),
+      chip('time', fleet.length ? fmtDur(dur) : '—', '', 'Time away'),
+      chip('noto', '+' + notoGain(r), 'gold', 'Notoriety'),
+      bagChips(r.rew)
+    ], 'big');
 
-    if (!reach) warn = `Upgrade it in the Market — your bell reaches ${bellDepth()}.`;
+    if (!reach) warn = `Upgrade the bell in the Market — yours reaches ${bellDepth()}.`;
   }
 
-  return `${manifest}
-    ${pickHint(VOY_SHIPS)}
-    <div id="shipPicks">${shipPicks(true, need)}</div>
-    ${warn ? `<div class="sub center warnline">${esc(warn)}</div>` : ''}
-    <div class="grid2">
-      <button class="btn" data-act="close-sheet">Cancel</button>
-      <button class="btn blu" id="sailBtn" ${ready && slotOK && !already ? '' : 'disabled'} data-act="send-ships">${label}</button>
-    </div>
-    ${!slotOK ? `<div class="sub center warnline">All ${VOY_MAX_ACTIVE} fleets are at sea.</div>` : ''}`;
+  if (!slotOK) warn = `All ${VOY_MAX_ACTIVE} fleets are at sea.`;
+
+  return {
+    body: `${pickHint(VOY_SHIPS)}
+      ${shipPicks(true, need)}
+      <div class="card" style="--i:1">${detail}</div>
+      ${warn ? `<div class="sub center warnline">${esc(warn)}</div>` : ''}`,
+    label, act: 'send-ships', id: 'sailBtn', cls: 'blu',
+    ready: ready && slotOK && !already
+  };
 }
 
-/* The sweep: a battle line against whatever is working this water. What it does
-   is shown as a transition — this lane now, this lane after — because two danger
-   names side by side never say which is which. */
+/* The sweep: a battle line against whatever is working this water. */
 function sweepBody(r) {
   const fleet = sel.map(findShip).filter(Boolean);
-  const d = effDanger(r);
-  return `<div class="card manifest" style="--i:0">
-      ${chipRow([
-        chip('danger', `${DNAMES[d]} <em>→</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok', 'What a won sweep does to this lane'),
-        chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory')
-      ], 'big')}
-      ${chipRow([bagChips(sweepPay(r))], 'tight')}
-    </div>
-    ${pickHint(BATTLE_SHIPS)}
-    <div id="shipPicks">${shipPicks(false)}</div>
-    ${foesCard(r, fleet)}
-    <button class="btn gold wide" id="sweepBtn" ${fleet.length ? '' : 'disabled'} data-act="sweep">Sweep the Lane</button>`;
+  return {
+    body: `${pickHint(BATTLE_SHIPS)}
+      ${shipPicks(false)}
+      ${foesCard(r, fleet)}`,
+    label: 'Sweep the Lane', act: 'sweep', id: 'sweepBtn', cls: 'gold',
+    ready: !!fleet.length
+  };
 }
 
 /* ---- battle missions ---- */
 function battleBody(r, isBoss, isCh) {
   const fleet = sel.map(findShip).filter(Boolean);
-  const fp = fleetPower(fleet);
   const flagOK = !isBoss || sel.includes('FLAG');
 
   /* Charter extras: what it opens, what it pays, what else is on offer here. */
@@ -322,28 +363,21 @@ function battleBody(r, isBoss, isCh) {
     if (prizes || more) extra = `<div class="card chartercard" style="--i:0">${prizes}${more}</div>`;
   }
 
-  const odds = foes ? battleOdds(fleet, foes) : 0;
-
-  return `${extra}
-    ${pickHint(BATTLE_SHIPS, isBoss ? ' Your flagship sails or nobody does.' : '')}
-    <div id="shipPicks">${shipPicks(false)}</div>
-    ${foesCard(r, fleet)}
-    <div class="card ${isBoss ? 'bosscard' : ''}" style="--i:1">
-      ${chipRow([
-        r.power ? have('power', fp, r.power, 'Fleet power against what this fight is rated for')
-                : chip('power', fp, '', 'Fleet power'),
-        foes && fleet.length ? chip('target', odds + '%',
-          odds >= 85 ? 'ok' : odds >= 60 ? 'warn' : 'bad', 'Estimated odds') : '',
-        chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory — fills the bar that summons the admiral')
-      ], 'big')}
-      ${chipRow([bagChips(r.rew)], 'tight')}
-      ${isBoss && r.bossDef.unlocks ? chipRow([chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory')], 'tight') : ''}
-    </div>
-    <div class="grid2">
-      <button class="btn" data-act="close-sheet">Cancel</button>
-      <button class="btn ${isBoss ? 'red' : 'gold'}" id="sailBtn" ${sel.length && flagOK ? '' : 'disabled'} data-act="attack">${isCh ? 'Accept' : 'Attack'}</button>
-    </div>
-    ${!flagOK ? '<div class="sub center warnline">Add your flagship to the line.</div>' : ''}`;
+  return {
+    body: `${extra}
+      ${pickHint(BATTLE_SHIPS)}
+      ${shipPicks(false)}
+      ${foesCard(r, fleet)}
+      <div class="card ${isBoss ? 'bosscard' : ''}" style="--i:1">
+        ${chipRow([
+          bagChips(r.rew),
+          isBoss && r.bossDef.unlocks ? chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory') : ''
+        ], 'big')}
+      </div>`,
+    label: isCh ? 'Accept' : 'Attack', act: 'attack', id: 'sailBtn',
+    cls: isBoss ? 'red' : 'gold',
+    ready: !!sel.length && flagOK
+  };
 }
 
 /* ---- launching ---- */

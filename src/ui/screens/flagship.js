@@ -13,7 +13,8 @@ import {
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar, chip, chipRow, priceChips } from '../format.js';
+import { hullBar, chip, chipRow, outOf, priceChips } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect } from '../components.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { promptDlg } from '../dialog.js';
@@ -38,51 +39,57 @@ export function renderFlagship() {
         ${hstat('cargo', f.cargo, 'Cargo')}
         ${hstat('power', power(f), 'Power')}
       </div></div>
-    <div class="card flagcard" style="--i:1">
-      <div class="row"><h3 style="color:var(--goldhi)">Condition</h3>
-        <span class="statechip" style="color:${bz ? 'var(--blu)' : condColor(c)}">${bz ? 'AT SEA' : c}</span></div>
-      ${hullBar(f)}
-      <div class="row" style="margin-top:11px">
-        <button class="btn sm" ${f.hull >= f.max || bz ? 'disabled' : ''} data-act="repair" data-id="FLAG">${f.hull >= f.max ? 'No Repairs' : 'Repair'}</button>
-        ${f.hull >= f.max ? '' : priceChips({ gold: repairCost(f) })}
-        <button class="btn sm" data-act="rename-flag">Rename</button>
-      </div></div>`;
+    ${itemCard({
+      icon: 'flag', name: 'Condition', sub: bz ? 'At sea' : c,
+      held: chipRow([chip('hull', Math.max(0, f.hull) + '<i>/</i>' + f.max,
+        f.hull < f.max * 0.6 ? 'warn' : 'ok', 'Hull')], 'tight'),
+      body: hullBar(f),
+      price: f.hull >= f.max ? '' : priceChips({ gold: repairCost(f) }),
+      action: itemAction('Rename', 'rename-flag', {}, { cls: '' })
+        + itemAction(f.hull >= f.max ? 'No Repairs' : 'Repair', 'repair', { id: 'FLAG' },
+            { disabled: f.hull >= f.max || bz }),
+      cls: 'owned'
+    })}`;
 
   if (S.flagBoons.length) {
-    h += `<div class="card flagcard" style="--i:${i++}"><h3 style="color:var(--goldhi)">Legendary Refits</h3>
-      ${S.flagBoons.map(b => `<div class="upline"><b>${esc(BOONS[b].n)}</b><span>${esc(BOONS[b].desc)}</span></div>`).join('')}</div>`;
+    h += sect('Legendary Refits', i++);
+    h += itemGrid(S.flagBoons.map(b => itemCard({
+      icon: 'relic', name: BOONS[b].n, sub: BOONS[b].desc, cls: 'owned'
+    })).join(''));
   }
 
-  /* ---- upgrades: name, what one level gives, pips, price, button ---- */
-  h += `<div class="sect" style="--i:${i++}">Upgrades</div>`;
-  Object.entries(FLAGTIERS).forEach(([k, d]) => {
-    const t = f.tiers[k], maxed = t >= MAXTIER, cost = tierCost(k, t), can = !maxed && canPay(cost);
-    h += `<div class="card uprow" style="--i:${i++}">
-      <div class="row">
-        <h3>${iconHTML(d.icon, 30)} ${d.n}</h3>
-        <span class="pips">${'●'.repeat(t)}${'○'.repeat(MAXTIER - t)}</span>
-      </div>
-      <div class="row">
-        ${chipRow([chip(d.stat, d.eff, 'ok', 'Per level')], 'tight')}
-        <button class="btn sm gold" ${can ? '' : 'disabled'} data-act="up-flag" data-key="${k}">${maxed ? 'MAX' : 'Upgrade'}</button>
-      </div>
-      ${maxed ? '' : priceChips(cost)}</div>`;
-  });
+  /* ---- upgrades: name, level, what one more gives, price, button ---- */
+  h += sect('Upgrades', i++);
+  h += itemGrid(Object.entries(FLAGTIERS).map(([k, d]) => {
+    const t = f.tiers[k], maxed = t >= MAXTIER, cost = tierCost(k, t);
+    return itemCard({
+      icon: d.icon, name: d.n, sub: maxed ? 'Fully fitted' : 'Per level',
+      held: `<span class="pips">${'●'.repeat(t)}${'○'.repeat(MAXTIER - t)}</span>`,
+      body: chipRow([chip(d.stat, d.eff, 'ok', 'What one more level gives')], 'tight'),
+      price: maxed ? '' : priceChips(cost),
+      action: itemAction(maxed ? 'Max' : 'Upgrade', 'up-flag', { key: k },
+        { disabled: maxed || !canPay(cost) }),
+      cls: maxed ? 'owned' : ''
+    });
+  }).join(''));
 
-  h += `<div class="sect" style="--i:${i++}">Fittings</div>`;
-  Object.entries(FITTINGS).forEach(([k, d]) => {
-    const owned = hasFit(k), can = !owned && canPay(d.cost);
-    h += `<div class="card uprow ${owned ? 'owned' : ''}" style="--i:${i++}">
-      <div class="row">
-        <h3 style="${owned ? 'color:var(--goldhi)' : ''}">${d.n}</h3>
-        <button class="btn sm gold" ${can ? '' : 'disabled'} data-act="buy-fit" data-key="${k}">${owned ? 'FITTED' : 'Fit'}</button>
-      </div>
-      <div class="upline"><span>${d.desc}</span></div>
-      ${owned ? '' : priceChips(d.cost)}</div>`;
-  });
+  h += sect('Fittings', i++);
+  h += itemGrid(Object.entries(FITTINGS).map(([k, d]) => {
+    const owned = hasFit(k);
+    return itemCard({
+      icon: 'plate', name: d.n, sub: d.desc,
+      held: owned ? chipRow([chip('flag', 'FITTED', 'gold')], 'tight') : '',
+      price: owned ? '' : priceChips(d.cost),
+      action: itemAction(owned ? 'Fitted' : 'Fit', 'buy-fit', { key: k },
+        { disabled: owned || !canPay(d.cost) }),
+      cls: owned ? 'owned' : ''
+    });
+  }).join(''));
 
   /* ---- Captain's Quarters: the collection ---- */
-  h += `<div class="sect" style="--i:${i++}">Captain's Quarters — ${totalPieces()} pieces · ${completedSets()}/${SET_KEYS.length} sets</div>`;
+  h += sect("Captain's Quarters", i++, chipRow([
+    chip('relic', totalPieces(), 'gold', 'Pieces found'),
+    outOf('star', completedSets(), SET_KEYS.length, 'gold', 'Sets completed')], 'tight'));
 
   SET_KEYS.forEach(key => {
     const set = SETS[key];

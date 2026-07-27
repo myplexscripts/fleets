@@ -18,7 +18,7 @@ export const TUTSTEPS = [
     text: 'A flagship, three worn-out ships and 500 gold. Make it the most feared fleet on the ocean.',
     btn: 'Begin' },
 
-  { sel: '#main .card', lockTab: 'fleet', title: 'Your Ships',
+  { sel: '#main .item', lockTab: 'fleet', title: 'Your Ships',
     text: 'Four numbers each: speed, guns, hull, cargo. At zero hull a ship is crippled until you repair her here.',
     btn: 'Next' },
 
@@ -31,7 +31,7 @@ export const TUTSTEPS = [
     wait: 'route:c1' },
 
   { modal: 1, title: 'How Trade Works',
-    text: 'Goods leave your warehouse when the ship sails, and the contract pays on delivery. No fighting on a run — danger only decides how roughly she is handled.',
+    text: 'Goods leave your warehouse when the ship sails, and the contract pays on delivery — in gold, and in whatever that port had going the other way. No counter sells cargo: you earn it by running routes and by taking it off the ships you beat.',
     btn: 'Understood' },
 
   { sel: '#shipPicks', lockTab: 'routes', title: 'Load the Ship',
@@ -67,7 +67,7 @@ export const TUTSTEPS = [
     wait: 'battle:end' },
 
   { sel: '#cap0', when: 'prize', title: 'Prizes of War',
-    text: 'Each choice shows what it gives you. Keep needs a free berth; scuttling strips her for materials.',
+    text: 'Each choice shows what it gives you. Keep needs a free berth — and capturing is the only way to add a ship, so berths are worth having.',
     wait: ['prize', 'sheet:close'] },
 
   { sel: '#tabFlag', lockTab: 'flag', title: 'Your Flagship',

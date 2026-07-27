@@ -50,24 +50,19 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
         ${shipChips({ speed: t.speed, guns: t.guns, hull: Math.round(t.hull * 0.33), max: t.hull, cargo: t.cargo })}
         <div class="sub"></div></div></div>
         <div class="prizeopts">
-          <div class="prizeopt">
-            ${chipRow([outOf('crew', S.ships.length, S.docks, full ? 'bad' : 'ok', 'Berths in use')], 'tight')}
-            <button class="btn sm gold" ${full ? 'disabled' : ''} data-act="cap" data-i="${i}" data-mode="capture" data-type="${e.type}">Keep</button></div>
-          <div class="prizeopt">
-            ${chipRow([bagChips({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD })], 'tight')}
-            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="salvage" data-type="${e.type}">Scuttle</button></div>
-          ${e.derelict ? '' : `<div class="prizeopt">
-            ${chipRow([chip('gold', t.ransom, 'gold', 'Ransom')], 'tight')}
-            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ransom" data-type="${e.type}">Ransom</button></div>`}
-          <div class="prizeopt">
-            <button class="btn sm" data-act="cap" data-i="${i}" data-mode="ignore" data-type="${e.type}">Let Go</button></div>
+          ${prizeOpt(chipRow([outOf('crew', S.ships.length, S.docks, full ? 'bad' : 'ok', 'Berths in use')], 'tight'),
+            'Keep', i, 'capture', e.type, full, 'gold')}
+          ${prizeOpt(chipRow([bagChips({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD })], 'tight'),
+            'Scuttle', i, 'salvage', e.type)}
+          ${e.derelict ? '' : prizeOpt(chipRow([chip('gold', t.ransom, 'gold', 'Ransom')], 'tight'),
+            'Ransom', i, 'ransom', e.type)}
+          ${prizeOpt('', 'Let Go', i, 'ignore', e.type)}
         </div></div>`;
     });
   }
 
-  h += `<button class="btn gold wide" style="margin-top:12px" data-act="close-sheet">Continue</button>`;
-
-  setSheet(`<h3>${esc(route.n)}</h3>`, h);
+  setSheet(`<h3>${esc(route.n)}</h3>`, h,
+    `<button class="btn gold wide" data-act="close-sheet">Continue</button>`);
   openSheet();
 
   if (success && paid.gold) {
@@ -78,6 +73,14 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   refreshTut();
 }
 
+
+/* One prize choice. Same shape as an item footer everywhere else: what you get
+   on the left, the button that takes it on the right. */
+function prizeOpt(gets, label, i, mode, type, disabled, cls) {
+  return `<div class="prizeopt"><div class="itemprice">${gets}</div>`
+    + `<button class="btn sm ${cls || ''} itemact"${disabled ? ' disabled' : ''}`
+    + ` data-act="cap" data-i="${i}" data-mode="${mode}" data-type="${type}">${label}</button></div>`;
+}
 
 /* Notoriety, as a bar reading rather than a sentence: what this win added, and
    where the region now stands against its admiral. */

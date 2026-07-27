@@ -14,6 +14,15 @@ export function openSheet() {
   requestAnimationFrame(() => o.classList.add('vis'));
 }
 
+/* The head and the foot do not scroll. Whatever the player has to keep checking
+   while they choose — what the job needs, what the button will do — belongs in
+   one of them, never in the middle where it scrolls out of sight. */
+export function setSheetFoot(html) {
+  const f = $('sheetFoot');
+  f.innerHTML = html || '';
+  f.classList.toggle('empty', !html);
+}
+
 export function closeSheet() {
   const o = $('overlay');
   if (!o.classList.contains('on')) return;
@@ -25,7 +34,8 @@ export function closeSheet() {
 
 export const sheetOpen = () => $('overlay').classList.contains('on');
 
-export function setSheet(headHTML, bodyHTML) {
+export function setSheet(headHTML, bodyHTML, footHTML) {
   $('sheetHead').innerHTML = headHTML;
   $('sheetBody').innerHTML = bodyHTML;
+  setSheetFoot(footHTML);
 }

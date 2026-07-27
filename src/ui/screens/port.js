@@ -11,6 +11,7 @@ import {
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, shipChips, chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect } from '../components.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -20,38 +21,44 @@ export function renderPort() {
   const f = S.flag, fc = cond(f), fBusy = isBusy('FLAG');
   let i = 0;
 
-  let h = `<div class="card flagcard ${fBusy ? 'atsea' : ''}" style="--i:${i++}"><div class="row">
-      <div style="flex:1"><h3 style="color:var(--goldhi)">${iconHTML('flag', 24)} ${esc(f.name)}</h3>
-      ${shipChips(f, chip('power', power(f), '', 'Power'))}
-      <div class="sub" style="color:${fBusy ? 'var(--blu)' : condColor(fc)}">${fBusy ? 'AT SEA' : fc}</div></div>
-      <button class="btn sm gold" data-act="goto" data-tab="flag">Upgrade</button></div></div>`;
+  let h = itemCard({
+    icon: 'flag', name: f.name, sub: 'Flagship',
+    held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
+    body: shipChips(f, chip('power', power(f), '', 'Power')) + hullBar(f),
+    action: itemAction('Upgrade', 'goto', { tab: 'flag' }),
+    cls: 'owned' + (fBusy ? ' atsea' : '')
+  });
 
-  h += `<div class="sect" style="--i:${i++}">Your Ships ${outOf('crew', S.ships.length, S.docks, S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')}</div>`;
+  h += sect('Your Ships', i++, chipRow([
+    outOf('crew', S.ships.length, S.docks, S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')], 'tight'));
 
   if (!S.ships.length) {
-    h += `<div class="card sub" style="--i:${i++}">No ships in port.</div>`;
+    h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships in port. Take one off an enemy.</div></div>`;
   }
 
-  S.ships.forEach(s => {
+  h += itemGrid(S.ships.map(s => {
     const c = cond(s), bz = isBusy(s.id), v = bz ? voyageOf(s.id) : null;
-    i++;
-    h += `<div class="card ${bz ? 'atsea' : ''}" style="--i:${i}"><div class="shiprow">
-      <div class="fleetship">${shipHTML(s.type, 'player', 1.0, bz ? 'sea' : '')}</div>
-      <div class="shipmeta">
-        <div class="row"><h3>${esc(s.name)}</h3>
-          <span class="statechip" style="color:${bz ? 'var(--blu)' : condColor(c)}">${bz ? 'AT SEA' : c}</span></div>
-        <div class="sub">${tname(s)}${bz ? ' · ' + esc(v.routeName) : ''}</div>
-        ${hullBar(s)}
-        ${shipChips(s, chip('power', power(s), '', 'Power'))}
-        ${bz
-          ? `<div class="row" style="margin-top:11px"><span class="sub">${iconHTML('time', 19)}</span>
-             <span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span></div>`
-          : `<div class="row" style="margin-top:11px">
-             <button class="btn sm" ${s.hull >= s.max ? 'disabled' : ''} data-act="repair" data-id="${s.id}">${s.hull >= s.max ? 'No Repairs' : 'Repair'}</button>
-             ${s.hull >= s.max ? '' : priceChips({ gold: repairCost(s) })}
-             <button class="btn sm red" data-act="scuttle" data-id="${s.id}">Scuttle</button></div>`}
-      </div></div></div>`;
-  });
+    const whole = s.hull >= s.max;
+    return itemCard({
+      name: s.name, sub: tname(s) + (bz ? ' · ' + v.routeName : ''),
+      held: chipRow([chip('hull', bz ? 'AT SEA' : c,
+        bz ? 'dim' : (c === 'CRIPPLED' ? 'bad' : c === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
+      body: `<div class="shiprow">
+          <div class="fleetship">${shipHTML(s.type, 'player', 1.0, bz ? 'sea' : '')}</div>
+          <div class="shipmeta">${shipChips(s, chip('power', power(s), '', 'Power'))}${hullBar(s)}</div>
+        </div>`,
+      price: bz
+        ? chipRow([chip('time', fmtDur((v.endsAt - now()) / 1000), 'dim', 'Home in')], 'tight')
+        : (whole ? '' : priceChips({ gold: repairCost(s) })),
+      /* Scuttle is always the lesser of the two, so Repair keeps the primary
+         slot on the right whether or not she needs it. */
+      action: bz
+        ? `<span class="clock" data-endsat="${v.endsAt}">${fmtDur((v.endsAt - now()) / 1000)}</span>`
+        : itemAction('Scuttle', 'scuttle', { id: s.id }, { cls: 'red' })
+          + itemAction(whole ? 'No Repairs' : 'Repair', 'repair', { id: s.id }, { disabled: whole }),
+      cls: bz ? 'atsea' : ''
+    });
+  }).join(''));
 
   $('main').innerHTML = h;
 }

@@ -8,6 +8,7 @@ import { VOY_MAX_ACTIVE } from '../../core/config.js';
 import { GOODS } from '../../data/goods.js';
 import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
 import { chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect } from '../components.js';
 import { toast } from '../../fx/toast.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -15,8 +16,8 @@ import { collectVoyage } from '../../systems/voyages.js';
 
 export function renderSea() {
   let i = 0;
-  let h = `<div class="sect" style="--i:${i++}">Ships at Sea ${chipRow([
-    outOf('sea', S.voyages.length, VOY_MAX_ACTIVE, '', 'Fleets at sea')], 'tight')}</div>`;
+  let h = sect('Ships at Sea', i++, chipRow([
+    outOf('sea', S.voyages.length, VOY_MAX_ACTIVE, '', 'Fleets at sea')], 'tight'));
 
   if (!S.voyages.length) {
     h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships at sea.</div></div>`;
@@ -24,31 +25,35 @@ export function renderSea() {
     return;
   }
 
+  const cards = [];
   S.voyages.slice().sort((a, b) => a.endsAt - b.endsAt).forEach(v => {
     const rdy = voyReady(v);
     const tot = (v.endsAt - v.startedAt) / 1000, left = (v.endsAt - now()) / 1000;
     const pct = Math.max(0, Math.min(100, (1 - left / tot) * 100));
     const crew = v.ships.map(id => { const s = findShip(id); return s ? s.name : '—'; }).join(', ');
 
-    h += `<div class="card ${rdy ? 'ready' : 'atsea'}" style="--i:${i++}" data-voy="${v.id}">
-      <div class="row"><h3>${esc(v.routeName)}</h3><span class="tag ${rdy ? 't0' : 'blu'}">${rdy ? 'MADE PORT' : 'AT SEA'}</span></div>
-      <div class="sub">${esc(crew)}</div>
-      ${manifest(v)}
-      <div class="vbar ${rdy ? 'done' : ''}"><i style="width:${rdy ? 100 : pct}%"></i></div>
-      <div class="row" style="margin-top:8px">
-        ${chipRow([v.type === 'dive'
-          ? chip('target', '100%', 'ok', 'A dive is never a fight')
-          : chip('target', v.odds + '%', v.odds >= 85 ? 'ok' : v.odds >= 65 ? 'warn' : 'bad', 'Chance it arrives intact')], 'tight')}
-        <span class="clock ${rdy ? 'done' : ''}" data-endsat="${v.endsAt}">${rdy ? 'READY' : fmtDur(left)}</span></div>
-      <div class="row" style="margin-top:11px">
-        ${rdy
-          ? `<button class="btn sm grn" data-act="collect-voy" data-id="${v.id}">Collect</button>`
-          : `<button class="btn sm blu" data-act="rush-voy" data-id="${v.id}">Speed Up</button>
-             ${priceChips({ gold: rushCost(v) })}
-             <button class="btn sm red" data-act="recall-voy" data-id="${v.id}">Call Back</button>`}
-      </div></div>`;
+    cards.push(itemCard({
+      icon: v.type === 'dive' ? 'chest' : v.good, name: v.routeName, sub: crew,
+      held: chipRow([chip(rdy ? 'anchor' : 'sea', rdy ? 'IN PORT' : 'AT SEA',
+        rdy ? 'ok' : 'dim')], 'tight'),
+      body: `${manifest(v)}
+        <div class="vbar ${rdy ? 'done' : ''}"><i style="width:${rdy ? 100 : pct}%"></i></div>
+        ${chipRow([
+          v.type === 'dive'
+            ? chip('target', '100%', 'ok', 'A dive is never a fight')
+            : chip('target', v.odds + '%', v.odds >= 85 ? 'ok' : v.odds >= 65 ? 'warn' : 'bad', 'Chance it arrives intact'),
+          chip('time', rdy ? 'READY' : fmtDur(left), rdy ? 'ok' : '', 'Time left')
+        ], 'tight')}`,
+      price: rdy ? '' : priceChips({ gold: rushCost(v) }),
+      action: rdy
+        ? itemAction('Collect', 'collect-voy', { id: v.id }, { cls: 'grn' })
+        : itemAction('Call Back', 'recall-voy', { id: v.id }, { cls: 'red' })
+          + itemAction('Speed Up', 'rush-voy', { id: v.id }, { cls: 'blu' }),
+      cls: rdy ? 'ready owned' : 'atsea'
+    }));
   });
 
+  h += itemGrid(cards.join(''));
   $('main').innerHTML = h;
 }
 

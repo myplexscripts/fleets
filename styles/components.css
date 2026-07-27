@@ -1,0 +1,155 @@
+/* ============================================================
+   components — the shared vocabulary
+   ============================================================
+
+   Item cards, steppers, rails, requirement bars. Every screen builds from
+   these, so a layout learned in one place holds in every other. The rules are
+   written out in src/ui/components.js; this file is only how they look.
+
+   The load-bearing one: an item card's footer is always price on the left,
+   action on the right. Nothing overrides it.
+   ============================================================ */
+
+/* ---- item card ---------------------------------------------- */
+.item{
+  position:relative;display:flex;flex-direction:column;
+  border:1px solid var(--line);border-radius:4px;
+  background:linear-gradient(180deg,rgba(14,42,48,.55),rgba(6,22,26,.75));
+  padding:clamp(11px,.9vw,16px) clamp(12px,1vw,18px);
+  animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*60ms);
+}
+.item.owned{border-color:var(--brass);background:linear-gradient(180deg,rgba(58,47,20,.4),rgba(20,16,8,.6))}
+.item.dis{opacity:.45}
+
+.itemhead{display:flex;align-items:center;gap:11px}
+.itemhead .itemic{width:clamp(30px,2.6vw,42px);height:clamp(30px,2.6vw,42px);flex-shrink:0}
+.itemname{flex:1;min-width:0}
+.itemname b{
+  display:block;font-family:var(--ui);font-weight:500;
+  font-size:clamp(17px,1.25vw,23px);letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--ink);line-height:1.2;
+}
+.itemname span{
+  display:block;font-family:var(--ui);font-size:16px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--dim);margin-top:1px;
+}
+.itemhead .chips{margin-top:0;flex-shrink:0}
+
+.itembody{margin-top:9px}
+.itembody .chips{margin-top:0}
+.itembody .chips + .chips{margin-top:7px}
+
+/* the invariant: price left, actions right, primary rightmost — always */
+.itemfoot{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.itemprice{flex:1;min-width:0}
+.itemprice .chips{margin-top:0}
+.itemprice:empty{display:none}
+.itemacts{display:flex;align-items:center;gap:7px;flex-shrink:0;margin-left:auto}
+.itemact{flex-shrink:0}
+/* the primary action is the last one, and it is the one that looks primary */
+.itemacts .btn:not(:last-child){opacity:.85}
+
+.itemgrid{display:grid;gap:clamp(9px,.9vw,15px);grid-template-columns:1fr}
+@media (min-width:560px){ .itemgrid{grid-template-columns:1fr 1fr} }
+@media (min-width:900px) and (orientation:landscape){
+  .itemgrid{grid-template-columns:repeat(auto-fill,minmax(clamp(300px,23vw,460px),1fr))}
+}
+
+/* ---- stepper ------------------------------------------------- */
+.stepper{
+  display:inline-flex;align-items:center;
+  border:1px solid var(--line2);border-radius:3px;overflow:hidden;background:var(--panel2);
+}
+.stepbtn{
+  width:44px;min-height:44px;border:none;background:transparent;color:var(--goldhi);
+  font-family:var(--ui);font-size:24px;line-height:1;cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.stepbtn:hover:not(:disabled){background:#123a41}
+.stepbtn:active:not(:disabled){background:#17505a}
+.stepbtn:disabled{color:#3d5257;cursor:default}
+.stepn{
+  min-width:56px;text-align:center;font-family:var(--ui);
+  font-size:clamp(19px,1.4vw,25px);color:var(--ink);letter-spacing:1px;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+  padding:0 6px;line-height:44px;
+}
+
+/* ---- rail ---------------------------------------------------- */
+.rail{
+  display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+  padding:2px 2px 10px;margin:0 -2px;scrollbar-width:thin;
+}
+.rail::-webkit-scrollbar{height:5px}
+.rail::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+
+.railcard{
+  flex:0 0 clamp(178px,44vw,214px);scroll-snap-align:start;
+  border:1px solid var(--line);border-radius:4px;background:var(--panel2);
+  padding:9px 11px 11px;cursor:pointer;
+  transition:border-color .2s,box-shadow .2s,transform .15s,background .2s;
+}
+.railcard:active{transform:scale(.97)}
+.railcard.sel{
+  border-color:var(--gold);background:rgba(58,47,20,.3);
+  box-shadow:0 0 12px rgba(217,201,138,.25),inset 0 0 12px rgba(217,201,138,.07);
+}
+.railcard.dis{opacity:.4;cursor:default}
+.railcard.flag{border-left:3px solid var(--gold)}
+
+.railart{
+  height:clamp(52px,13vw,68px);display:flex;align-items:center;justify-content:center;
+  margin-bottom:5px;pointer-events:none;
+}
+.railart svg{max-width:100%;max-height:100%}
+.railname{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.15vw,20px);
+  letter-spacing:1.1px;text-transform:uppercase;color:var(--ink);line-height:1.2;
+}
+.railtag{
+  flex-shrink:0;font-family:var(--ui);font-size:16px;letter-spacing:1px;
+  color:var(--gold);border:1px solid var(--brass);padding:1px 6px;border-radius:2px;
+}
+.railtag.blu{color:#bcd8f0;border-color:#2c5a8a}
+.railtag.bad{color:#e88a7a;border-color:#8a463e}
+.railsub{
+  font-family:var(--ui);font-size:16px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--dim);margin-top:1px;
+}
+.railcard .chips{margin-top:6px;gap:3px 8px}
+
+/* ---- requirement bar ----------------------------------------- */
+.reqbar{
+  border:1px solid var(--brass);border-radius:4px;
+  background:linear-gradient(180deg,rgba(58,47,20,.32),rgba(28,22,10,.42));
+  padding:9px 12px;margin-top:10px;
+}
+.reqbar .chips{margin-top:0}
+.reqbar .chips.big .chip{font-size:clamp(18px,1.45vw,25px)}
+.reqbar .chips.big .chip .chipic{width:1.55em;height:1.55em}
+.reqnote{
+  font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim);
+  margin-top:6px;
+}
+.reqnote.bad{color:#e88a7a}
+
+/* ---- sheet footer -------------------------------------------- */
+/* The primary action never scrolls away from the thing it acts on. */
+.sheet-foot{
+  flex-shrink:0;padding:11px 18px calc(env(safe-area-inset-bottom) + 13px);
+  border-top:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(8,26,30,.6),rgba(4,14,17,.95));
+}
+.sheet-foot.empty{display:none}
+.sheet-foot .grid2{margin-top:0}
+.sheet-foot .btn{margin-top:0}
+
+/* ---- section heading ----------------------------------------- */
+.secttrail{margin-left:auto;display:flex;align-items:center;gap:8px}
+.secttrail .chips{margin-top:0}

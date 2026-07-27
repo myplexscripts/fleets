@@ -122,7 +122,19 @@ export function refreshTut() {
 
   hi.className = '';
   const el = st.sel ? qs(st.sel) : null;
-  if (!el) { tutTarget = null; hide(); return; }
+  /* A step whose target has been renamed out from under it used to hide the card
+     entirely, which leaves the player with nothing to read and no way forward.
+     Fall back to the centred treatment so the step is always completable. */
+  if (!el) {
+    tutTarget = null;
+    lastRect = null;
+    hi.className = 'full';
+    hi.style.display = 'block';
+    renderTip(st);
+    placeTip(null);
+    tutShownStep = S.tut;
+    return;
+  }
 
   const fresh = tutShownStep !== S.tut || tutTarget !== el;
   tutTarget = el;

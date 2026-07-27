@@ -20,6 +20,7 @@ import {
 } from '../core/selectors.js';
 import { addNoto } from './notoriety.js';
 import { rollDrop } from './collectibles.js';
+import { returnCargo } from './loot.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
 import { showResult } from '../ui/result.js';
@@ -87,13 +88,15 @@ export function collectVoyage(id) {
 function finishCargo(v, fleet) {
   const success = Math.random() * 100 < v.odds;
   const g = GOODS[v.good];
-  let msg = '', evt = '';
+  let msg = '', evt = '', back = null;
 
   if (success) {
     grant(v.rew);
     S.done[v.routeId] = (S.done[v.routeId] || 0) + 1;
     if (v.portId) clearContract(v.portId);   // the port draws a new one
-    msg = `The consignment of ${v.qty} ${g.unit} of ${g.n.toLowerCase()} was landed at ${v.dest} and signed for.`;
+    /* She comes home loaded with whatever was going the other way. */
+    back = returnCargo(v.region, v.good, v.qty);
+    msg = `The consignment was landed at ${v.dest} and signed for.`;
     play('arrive');
   } else {
     /* The cargo is already gone — it was deducted at launch. */
@@ -114,7 +117,8 @@ function finishCargo(v, fleet) {
 
   showResult({
     route: { id: v.routeId, n: v.routeName, region: v.region, type: v.type, rew: v.rew },
-    success, msg, evt, noto, fromVoyage: true
+    success, msg, evt, noto, fromVoyage: true,
+    spoils: back ? { goods: back } : null
   });
 }
 

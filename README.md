@@ -3,9 +3,11 @@
 A fleet-command game set in the age of sail. Three things to do, and they are
 kept separate on purpose:
 
-- **Cargo runs** — buy goods, deliver X of them to port Z, get paid. No fighting.
-  A run sails under **one ship**, so the question every contract asks is whether
-  any single hull you own has the cargo space for it.
+- **Cargo runs** — deliver X of a good to port Z, get paid. No fighting. A run
+  sails under **one ship**, so the question every contract asks is whether any
+  single hull you own has the cargo space for it. She comes home with coin *and*
+  whatever that port had going the other way, which is what keeps trade
+  self-sustaining.
 - **Wreck dives** — send divers down; chests come up and sell on the quay. No
   enemies either, only depth, and depth is what your diving bell is for. Also one
   ship: her cargo space caps how many chests can come up in a trip.
@@ -13,6 +15,12 @@ kept separate on purpose:
   of up to three, and the tap order sets it. These pay in gold, materials, and
   trade goods taken off the enemy — so a captain who runs out of money can fight
   their way back to a full store of timber, metal and cloth.
+
+**Nothing important is for sale.** The market does not stock trade goods and does
+not stock ships: cargo comes off the routes you run and the holds you empty, and
+a ship joins your fleet only by being taken from someone else. What the market
+does is sell the dull stuff — materials, a deeper diving bell, another berth —
+and buy your surplus cargo when you want coin instead.
 
 **Danger is alive.** Every cargo lane's danger climbs on its own in real time, at
 its own rate and up to its own ceiling — home water drifts slowly and never gets
@@ -43,6 +51,18 @@ the consignment, and `10/25` says it cannot. Speed, guns, hull, cargo, time away
 power, odds, depth and notoriety all read the same way, and **every price in the
 game** is written have/need too — repairs, upgrades, fittings, hulls, berths, the
 diving bell — so "can I afford this" is never a question you have to work out.
+
+**One layout, everywhere.** `src/ui/components.js` holds the whole vocabulary and
+every screen builds from it, so a player learns a shape once. An item card is
+always identity → what you hold → what it is → a footer with **the price on the
+left and the action on the right**, primary button rightmost. Quantities are
+always a **stepper** (`− 3 +`) and never a row of preset buttons. A set of things
+you choose between is a **rail** that scrolls sideways, so it can't push what you
+are checking off the screen. What a job requires goes in a **requirement bar** in
+the sheet head, where it cannot scroll away — and the button that commits it sits
+in the sheet foot, where it also cannot. The rules are written at the top of that
+module; the fix for something that doesn't fit is to change a rule, not to invent
+a style in a screen.
 
 **The chart's key names every symbol on it.** One shape per mission type, no
 sharing, and the key lists exactly the shapes currently drawn — so it grows an
@@ -89,7 +109,8 @@ vendor/phaser.min.js  pinned Phaser 3.90.0 (arcade build, no Matter)
 fonts/                self-hosted woff2 subsets
 styles/
   fonts.css           @font-face declarations
-  base.css            reset, design tokens, typography, shared components
+  base.css            reset, design tokens, typography, chips
+  components.css      how the shared vocabulary looks
   hud.css             top bar, resource plates, nav rail
   screens.css         port, flagship hero, relics, chart
   battle.css          battle view
@@ -121,6 +142,8 @@ src/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
     format.js         the chip vocabulary every screen reads numbers through
+    components.js     item cards, steppers, rails, requirement bars — and the
+                      rules they must not break
     mission.js        mission sheet and launch
     result.js         after-action report and prizes
     stores.js         Ship's Stores sheet (goods, materials, bell)
