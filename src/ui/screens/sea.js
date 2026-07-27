@@ -33,6 +33,9 @@ export function renderSea() {
     const crew = v.ships.map(id => { const s = findShip(id); return s ? s.name : '—'; }).join(', ');
 
     cards.push(itemCard({
+      /* data-voy lets the world ticker patch this card's clock and bar every
+         second without re-rendering the screen under the player's finger. */
+      attrs: ` data-voy="${v.id}"`,
       icon: v.type === 'dive' ? 'chest' : v.good, name: v.routeName, sub: crew,
       held: chipRow([chip(rdy ? 'anchor' : 'sea', rdy ? 'IN PORT' : 'AT SEA',
         rdy ? 'ok' : 'dim')], 'tight'),
@@ -42,7 +45,10 @@ export function renderSea() {
           v.type === 'dive'
             ? chip('target', '100%', 'ok', 'A dive is never a fight')
             : chip('target', v.odds + '%', v.odds >= 85 ? 'ok' : v.odds >= 65 ? 'warn' : 'bad', 'Chance it arrives intact'),
-          chip('time', rdy ? 'READY' : fmtDur(left), rdy ? 'ok' : '', 'Time left')
+          /* A live element, patched in place by the ticker — a countdown that
+             only moves when the screen is rebuilt is not a countdown. */
+          chip('time', `<span class="clock${rdy ? ' done' : ''}" data-endsat="${v.endsAt}">`
+            + `${rdy ? 'READY' : fmtDur(left)}</span>`, rdy ? 'ok' : '', 'Time left')
         ], 'tight')}`,
       price: rdy ? '' : priceChips({ gold: rushCost(v) }),
       action: rdy

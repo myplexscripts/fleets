@@ -219,3 +219,21 @@
 #mapscroll.pannable{cursor:grab}
 #mapscroll.panning{cursor:grabbing}
 #mapscroll #mapsvg{display:block}
+
+/* ---- the key folds away ----
+   Useful until you know it, then it is covering water. */
+.legtoggle{
+  position:absolute;top:10px;right:10px;z-index:5;
+  width:56px;height:56px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(30,80,88,.7);border-radius:4px;
+  background:rgba(3,12,15,.85);cursor:pointer;
+  transition:background .2s,border-color .2s;
+}
+.legtoggle .ic{opacity:.75;transition:opacity .2s}
+.legtoggle:active{background:#123a41}
+#mapwrap.nolegend .legtoggle .ic{opacity:.4}
+#mapwrap.nolegend .legend,
+#mapwrap.nolegend .maphint{display:none}
+/* the toggle sits where the legend starts, so give the legend room for it */
+.legend{padding-right:66px}
+.legend.narrow{right:74px}

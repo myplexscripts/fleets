@@ -32,11 +32,13 @@ import { chipRow } from './format.js';
    Anything ownable, buyable or sellable. `price` and `action` may be empty for
    a card that is only showing you something. */
 export function itemCard(o) {
+  /* `attrs` is a raw attribute string — the world ticker finds live cards by
+     data attribute, so a card has to be able to carry one. */
   const foot = (o.price || o.action)
     ? `<div class="itemfoot"><div class="itemprice">${o.price || ''}</div>`
       + `<div class="itemacts">${o.action || ''}</div></div>`
     : '';
-  return `<div class="item ${o.cls || ''}"${o.id ? ` id="${o.id}"` : ''}>
+  return `<div class="item ${o.cls || ''}"${o.id ? ` id="${o.id}"` : ''}${o.attrs || ''}>
       <div class="itemhead">
         ${o.icon ? iconHTML(o.icon, 0, 'itemic') : ''}
         <div class="itemname"><b>${esc(o.name)}</b>${o.sub ? `<span>${esc(o.sub)}</span>` : ''}</div>

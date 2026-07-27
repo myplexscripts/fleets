@@ -6,7 +6,7 @@ import { on } from '../core/bus.js';
 import { action } from '../core/actions.js';
 import { anyBossReady, readyCount, fmtDur } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
-import { updateRes } from './hud.js';
+import { updateRes, showPurse } from './hud.js';
 import { wipe } from '../fx/wipe.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
@@ -51,6 +51,7 @@ export function gotoTab(t, immediate) {
 export function render() {
   if (!S) return;
   updateRes();
+  showPurse(tab);
 
   qsa('nav button').forEach(b => b.classList.remove('on', 'alert'));
   const cur = SCREENS.find(s => s.key === tab) || SCREENS[0];
@@ -83,8 +84,8 @@ export function startTicker() {
       if (left <= 0) { el.textContent = 'READY'; el.classList.add('done'); }
       else { el.textContent = fmtDur(left); el.classList.remove('done'); }
     });
-    qsa('.card[data-voy] .vbar i').forEach(i => {
-      const card = i.closest('.card[data-voy]');
+    qsa('[data-voy] .vbar i').forEach(i => {
+      const card = i.closest('[data-voy]');
       const v = S.voyages.find(x => x.id === card.dataset.voy);
       if (!v) return;
       const tot = (v.endsAt - v.startedAt) / 1000, left = (v.endsAt - now()) / 1000;

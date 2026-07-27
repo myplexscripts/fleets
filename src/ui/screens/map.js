@@ -13,6 +13,13 @@ import {
   patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
+import { actions } from '../../core/actions.js';
+import { render } from '../../core/bus.js';
+
+/* Whether the region cards and the shape key are on screen. They are useful
+   until you know them and then they are just covering water, so they fold away
+   and the chart takes the room back. Screen state, not save state. */
+let legendShown = true;
 
 /* The closest two markers are never nearer than this on screen. A thumb is
    about 44px; a marker plus breathing room either side is roughly double. */
@@ -92,18 +99,22 @@ export function renderMap() {
   /* The legend is absolutely positioned; on a narrow screen it sits above the
      chart, so measure it and keep the chart clear of it. Written first so the
      SVG (inserted afterwards) lands behind it. */
-  $('main').innerHTML = `<div id="mapwrap">
+  const anyBeaten = Object.keys(S.bossBeaten || {}).some(rk => S.bossBeaten[rk]);
+  $('main').innerHTML = `<div id="mapwrap" class="${legendShown ? '' : 'nolegend'}">
     <div id="mapscroll"></div>
     <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
-    <div class="maphint">${shapeKey(rs, bossKeys.some(rk => !S.bossBeaten[rk]))}</div>
+    <div class="maphint">${shapeKey(rs, bossKeys.some(rk => !S.bossBeaten[rk]), anyBeaten)}</div>
+    <button class="legtoggle" data-act="legend" aria-label="Show or hide the key"
+      title="${legendShown ? 'Hide the key' : 'Show the key'}">${iconHTML('map', 40)}</button>
   </div>`;
   const legendEl = host.querySelector('.legend');
   const hintEl = host.querySelector('.maphint');
-  const legW = wide ? Math.min(320, CW * 0.17) + 46 : 0;
-  const legH = wide ? 0 : ((legendEl ? legendEl.offsetHeight : 0) + 18);
+  const legW = (wide && legendShown) ? Math.min(320, CW * 0.17) + 46 : 0;
+  const legH = (wide || !legendShown) ? 0 : ((legendEl ? legendEl.offsetHeight : 0) + 18);
   /* Node labels hang below their marker, so the bottom needs the hint's real
-     height plus a line of headroom — otherwise HOME PORT sits under it. */
-  const hintH = (hintEl ? hintEl.offsetHeight : 40) + 16;
+     height plus a line of headroom — otherwise HOME PORT sits under it. And a
+     folded-away key takes none of it. */
+  const hintH = legendShown ? ((hintEl ? hintEl.offsetHeight : 40) + 16) : 20;
 
   const padX = Math.max(40, CW * 0.05);
   const padTop = Math.max(46, CH * 0.07) + legH;
@@ -238,10 +249,7 @@ export function renderMap() {
     const x = MX(b.x), y = MY(b.y);
 
     if (S.bossBeaten[rk]) {
-      /* A struck flag marks a beaten admiral. */
-      bossNodes += `<g><circle cx="${x}" cy="${y}" r="${9 * MS}" fill="none" stroke="#d9c98a" stroke-width="1.8" opacity=".6"/>
-        <path d="M${x - 3.5 * MS},${y - 5 * MS} v${10 * MS} M${x - 3.5 * MS},${y - 5 * MS} h${7.5 * MS} l${-2.4 * MS},${2.6 * MS} l${2.4 * MS},${2.6 * MS} h${-7.5 * MS}"
-          fill="#d9c98a" stroke="#d9c98a" stroke-width="${1.2 * MS}" stroke-linejoin="round"/></g>`;
+      bossNodes += `<g>${struckFlag(x, y, MS, '#d9c98a')}</g>`;
       return;
     }
 
@@ -300,26 +308,40 @@ export function renderMap() {
    It lists only what is actually drawn right now, which is what keeps it both
    complete and short: the Caribbean alone needs five entries, an admiral adds
    hers the moment she sails, and a shape can never appear unnamed. */
-const KEY_ORDER = ['cargo', 'dive', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss'];
+const KEY_ORDER = ['cargo', 'dive', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
 const KEY_WORD = {
   cargo: 'Cargo', dive: 'Wreck', patrol: 'Patrol', escort: 'Escort',
-  raid: 'Raid', blockade: 'Blockade', charter: 'Charter', boss: 'Admiral'
+  raid: 'Raid', blockade: 'Blockade', charter: 'Charter',
+  boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
   cargo: '#63c06a', dive: '#7ab0e0', patrol: '#e0a03a', escort: '#e0a03a',
-  raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae', boss: '#f0b0a6'
+  raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae',
+  boss: '#f0b0a6', beaten: '#d9c98a'
 };
 
+/* An admiral you have already beaten leaves her struck colours on the chart —
+   the one marker that is a record rather than a thing to tap. Same silhouette
+   here as out there, so the key answers it like everything else. */
+function struckFlag(x, y, k, col) {
+  return `<circle cx="${x}" cy="${y}" r="${9 * k}" fill="none" stroke="${col}" stroke-width="1.8" opacity=".6"/>`
+    + `<path d="M${x - 3.5 * k},${y - 5 * k} v${10 * k} M${x - 3.5 * k},${y - 5 * k} h${7.5 * k}`
+    + ` l${-2.4 * k},${2.6 * k} l${2.4 * k},${2.6 * k} h${-7.5 * k}"`
+    + ` fill="${col}" stroke="${col}" stroke-width="${1.2 * k}" stroke-linejoin="round"/>`;
+}
+
 function keySwatch(type, col) {
-  const inner = (type === 'charter' || type === 'boss')
-    ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="${type === 'boss' ? '#5e1a1a' : '#8a793e'}" stroke-width="1.2"/>`
-    : nodeShape({ type, x: 12, y: 12 }, col, 1.5);
+  const inner = type === 'beaten' ? struckFlag(12, 12, 1.1, col)
+    : (type === 'charter' || type === 'boss')
+      ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="${type === 'boss' ? '#5e1a1a' : '#8a793e'}" stroke-width="1.2"/>`
+      : nodeShape({ type, x: 12, y: 12 }, col, 1.5);
   return `<svg class="keysh" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">${inner}</svg>`;
 }
 
-function shapeKey(rs, liveBosses) {
+function shapeKey(rs, liveBosses, beaten) {
   const kinds = new Set(rs.map(r => r.type));
   if (liveBosses) kinds.add('boss');
+  if (beaten) kinds.add('beaten');
   return KEY_ORDER.filter(k => kinds.has(k)).map(k =>
     `<span class="key">${keySwatch(k, KEY_COL[k])}<span>${KEY_WORD[k]}</span></span>`).join('');
 }
@@ -360,3 +382,5 @@ function buildLegend(rs) {
     </div>`;
   }).join('');
 }
+
+actions({ legend: () => { legendShown = !legendShown; render(); } });

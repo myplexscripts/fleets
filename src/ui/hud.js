@@ -1,29 +1,38 @@
-/* The resource strip and its little count-up animations.
+/* The purse.
 
-   Five plates fit comfortably on a phone; goods and materials show as totals and
-   open the Ship's Stores sheet when tapped. */
+   One number and one door. Gold is the only figure worth carrying on every
+   screen — everything else the player owns has a screen of its own that says it
+   better, and five plates of running totals above a map is a spreadsheet
+   header, not a game. The second plate opens the Ship's Stores and carries no
+   number at all: it is a way in, not a readout.
+
+   It shows on Port and Market, where money is the thing you are thinking about,
+   and nowhere else. */
 
 import { $ } from '../core/dom.js';
 import { S } from '../core/state.js';
-import { busyIds, readyCount, totalGoods, totalMats } from '../core/selectors.js';
+import { readyCount } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 
-/* [key, value element id, plate element id, label, opens stores?] */
-const RES_DEFS = [
-  ['gold',    'rGold',    'wGold',    'Gold',   false],
-  ['cargo',   'rGoods',   'wGoods',   'Goods',  true],
-  ['mats',    'rMats',    'wMats',    'Materials', true],
-  ['barrels', 'rBarrels', 'wBarrels', 'Powder', false],
-  ['sea',     'rSea',     'wSea',     'At Sea', false]
-];
+/* Screens where money is part of the decision in front of you. */
+const PURSE_TABS = ['fleet', 'port'];
 
-const shown = {};
+let shownGold = null;
 
 export function buildResStrip() {
-  $('resStrip').innerHTML = RES_DEFS.map(([ic, vid, wid, lbl, opens]) =>
-    `<div class="resitem${opens ? ' tappable' : ''}" id="${wid}" title="${lbl}"
-       ${opens ? 'data-act="stores"' : ''}>${iconHTML(ic, 0, 'resic')}<b id="${vid}">0</b><span${lbl.length > 7 ? ' class="tight"' : ''}>${lbl}</span></div>`
-  ).join('');
+  $('resStrip').innerHTML =
+    `<div class="resitem" id="wGold" title="Gold">
+       ${iconHTML('gold', 0, 'resic')}<b id="rGold">0</b><span>Gold</span>
+     </div>
+     <div class="resitem tappable" id="wStores" title="Ship's Stores" data-act="stores">
+       ${iconHTML('cargo', 0, 'resic')}<span>Stores</span>
+     </div>`;
+}
+
+/* Called on every render — the strip belongs to two screens, not all five. */
+export function showPurse(tab) {
+  const el = $('resStrip');
+  if (el) el.classList.toggle('hide', !PURSE_TABS.includes(tab));
 }
 
 export function bump(id) {
@@ -35,24 +44,22 @@ export function bump(id) {
 
 export function updateRes() {
   if (!S) return;
-  const vals = {
-    gold: S.gold, cargo: totalGoods(), mats: totalMats(),
-    barrels: S.barrels, sea: busyIds().size
-  };
-  RES_DEFS.forEach(([key, vid, wid]) => {
-    const el = $(vid);
-    if (!el) return;
-    const to = vals[key], from = shown[key] ?? to;
-    shown[key] = to;
-    if (from === to) { el.textContent = to; return; }
-    bump(wid);
-    const t0 = performance.now();
-    (function tick(t) {
-      const p = Math.min(1, (t - t0) / 450);
-      el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
-      if (p < 1) requestAnimationFrame(tick);
-    })(t0);
-  });
+  const el = $('rGold');
+  if (el) {
+    const to = S.gold, from = shownGold ?? to;
+    shownGold = to;
+    if (from === to) {
+      el.textContent = to;
+    } else {
+      bump('wGold');
+      const t0 = performance.now();
+      (function tick(t) {
+        const p = Math.min(1, (t - t0) / 450);
+        el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    }
+  }
 
   const b = $('voyBadge');
   if (b) {

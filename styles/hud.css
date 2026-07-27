@@ -37,7 +37,19 @@ header{
 .iconbtn:active{transform:scale(.9) rotate(-18deg)}
 
 /* ---- resource plates ---- */
-.res{display:flex;gap:5px;margin-top:9px}
+.res{display:flex;gap:7px;margin-top:9px}
+/* The purse belongs to Port and Market. Everywhere else the header is a title
+   bar and nothing more — a row of running totals over a chart is a spreadsheet
+   header, not a game. */
+.res.hide{display:none}
+/* Two plates, not five: gold reads wide, the way in reads narrow. */
+.res .resitem{flex:0 0 auto;padding:8px 18px 6px;flex-direction:row;gap:9px;align-items:center}
+.res #wGold{flex:1}
+.res .resitem b{font-size:clamp(22px,1.9vw,34px);line-height:1}
+.res .resitem span{
+  font-size:clamp(16px,1.2vw,19px);letter-spacing:1.6px;line-height:1;
+}
+.res #wStores span{color:var(--gold)}
 @media (min-width:900px) and (orientation:landscape){
   header{padding:12px 26px 10px}
   .res{max-width:760px;margin-left:auto;gap:7px}

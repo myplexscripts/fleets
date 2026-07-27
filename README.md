@@ -138,6 +138,7 @@ tools/
   check-min-size.js   fails on text under 16px or icons under 40px
   check-overflow.js   fails on any screen that scrolls sideways
   check-map-spacing.js  fails if two markers land closer than a thumb apart
+  check-hud.js        the purse, the folding key, the live countdown
 src/
   main.js             boot sequence
   core/
@@ -164,6 +165,7 @@ src/
     screens/          one module per screen
     format.js         the chip vocabulary every screen reads numbers through
     result.js         the after-action screen and the prize decisions
+    hud.js            the purse: gold, and the way into the stores
     components.js     item cards, steppers, rails, requirement bars — and the
                       rules they must not break
     mission.js        mission sheet and launch
@@ -229,6 +231,17 @@ collectible, a refit — anything earned — comes up as a card with the thing d
 large and a button to take it, because an award that slides past unnoticed is
 the moment the whole loop exists to produce. A purchase is the opposite: the
 `+20` leaps off the button you just pressed and your eye never leaves it.
+
+**The header carries one number.** Gold, and a door to the Ship's Stores with no
+count on it — everything else you own has a screen that says it better, and a row
+of running totals above a chart is a spreadsheet header, not a game. It shows on
+Port and Market, where money is part of the decision in front of you, and nowhere
+else.
+
+**The chart's key folds away.** It is useful until you know it and then it is
+covering water, so a button in the corner hides it and the chart takes the room
+back. The struck colours of an admiral you have already beaten are named in it
+like everything else.
 
 **No scrollbars, and nothing scrolls sideways.** A scrollbar is browser chrome, and browser chrome is
 the loudest thing on screen saying "this is a web page". Scrolling works exactly
