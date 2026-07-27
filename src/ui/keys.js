@@ -5,8 +5,10 @@
 
 import { $ } from '../core/dom.js';
 import { dialogOpen, dialogKey } from './dialog.js';
+import { awardOpen, awardKey } from '../fx/award.js';
 import { pauseOpen, togglePause, closePause } from './pause.js';
 import { sheetOpen, closeSheet } from './sheet.js';
+import { resultOpen, closeResult } from './result.js';
 import { SCREENS, gotoTab } from './shell.js';
 import { onTitle } from './title.js';
 import { ORDERS, bannerOpen } from '../battle/hud.js';
@@ -27,6 +29,8 @@ export function initKeys() {
       return;
     }
     if (dialogOpen()) { dialogKey(ev); ev.preventDefault(); return; }
+    /* An award sits above everything and wants acknowledging first. */
+    if (awardOpen()) { awardKey(ev); ev.preventDefault(); return; }
 
     const k = ev.key;
 
@@ -62,7 +66,14 @@ export function initKeys() {
       return;
     }
 
-    /* Mission or result sheet. */
+    /* The after-action screen. It refuses to close while prizes are undecided,
+       so Escape and Enter both go through the same door as the button. */
+    if (resultOpen()) {
+      if (k === 'Escape' || k === 'Enter') { closeResult(); ev.preventDefault(); }
+      return;
+    }
+
+    /* Mission sheet. */
     if (sheetOpen()) {
       if (k === 'Escape') { closeSheet(); ev.preventDefault(); return; }
       if (k === 'Enter') { click('sailBtn'); ev.preventDefault(); return; }

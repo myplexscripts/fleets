@@ -16,17 +16,26 @@ import { addNoto } from './notoriety.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { goodsHaul, matsHaul } from './loot.js';
 import { showResult } from '../ui/result.js';
-import { toast } from '../fx/toast.js';
-import { play } from '../fx/sound.js';
+import { award } from '../fx/award.js';
 import { buzz } from '../fx/haptics.js';
 
 const prizesFrom = enemies => enemies.filter(e => e.disabled);
 
-/* Beaten ships occasionally give up something for the great cabin. */
+/* Beaten ships occasionally give up something for the great cabin. A find is
+   never a line of text you might miss — it stops the game and asks to be taken,
+   which is also why the tutorial never produces one: a modal that lands on top
+   of a scripted step is fighting the script. */
 function battleDrop() {
-  return Math.random() < 0.16 ? rollDrop('battle') : null;
+  if (typeof S.tut === 'number') return null;
+  const d = Math.random() < 0.16 ? rollDrop('battle') : null;
+  if (d) {
+    setTimeout(() => award({
+      icon: 'relic', kind: 'Taken Off Her', title: d.name,
+      text: `${d.setName} — ${d.have} of ${d.of}.`, ok: 'To the Cabin'
+    }), 700);
+  }
+  return d;
 }
-const dropLine = d => (d ? `${d.name} was taken off her — ${d.setName}, ${d.have} of ${d.of}.` : '');
 
 export function battleVictory(route, enemies) {
   grant(route.rew);
@@ -50,10 +59,8 @@ export function battleVictory(route, enemies) {
     msg = 'The blockade is broken open and the ships behind it are already moving.';
   }
 
-  showResult({
-    route, success: true, msg, spoils,
-    captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
-  });
+  battleDrop();
+  showResult({ route, success: true, msg, spoils, captives: prizesFrom(enemies), noto });
 }
 
 /* Clearing a cargo lane: the fight you may take on a lane that has gone bad,
@@ -72,10 +79,8 @@ export function laneVictory(route, enemies) {
   let msg = `The water is yours. ${route.n} drops from ${DNAMES[before].toLowerCase()} to ${DNAMES[after].toLowerCase()}.`;
   if (after === 0) msg += ' Nothing is working this lane now.';
 
-  showResult({
-    route, success: true, msg, spoils,
-    captives: prizesFrom(enemies), noto, prizeMsg: dropLine(battleDrop())
-  });
+  battleDrop();
+  showResult({ route, success: true, msg, spoils, captives: prizesFrom(enemies), noto });
 }
 
 export function laneLoss(route) {
@@ -96,23 +101,34 @@ export function charterVictory(route, enemies) {
 
   if (c.dest && !S.ports.includes(c.dest)) {
     S.ports.push(c.dest);
-    msg += ` ${PORTS[c.dest].n} is charted — it will offer you cargo contracts from now on.`;
-    setTimeout(() => toast('New port charted: ' + PORTS[c.dest].n, 'gold'), 800);
+    setTimeout(() => award({
+      icon: 'port', kind: 'New Port', title: PORTS[c.dest].n,
+      text: 'Charted for good. It will keep a cargo contract open for you.',
+      ok: 'Chart It'
+    }), 700);
   }
 
   if (c.prize) {
     if (c.prize.piece) {
       const got = awardPiece(c.prize.piece);
-      prizeMsg = got
-        ? `${got.name} — ${got.setName}, ${got.have} of ${got.of}.`
-        : `${c.prize.piece} again. You already have one; it goes in a drawer.`;
+      if (got) {
+        setTimeout(() => award({
+          icon: 'relic', kind: 'Collectible', title: got.name,
+          text: `${got.setName} — ${got.have} of ${got.of}.`, ok: 'To the Cabin'
+        }), 900);
+      } else {
+        prizeMsg = `${c.prize.piece} again. You already have one; it goes in a drawer.`;
+      }
     }
     if (c.prize.boon) {
       S.flagBoons.push(c.prize.boon);
       syncFlag();
       const b = BOONS[c.prize.boon];
-      prizeMsg = 'Refit: ' + b.n + ' — ' + b.desc + ', fitted aboard the ' + S.flag.name + '.';
-      setTimeout(() => { play('upgrade'); toast(b.n + ' fitted.', 'gold'); }, 1200);
+      setTimeout(() => award({
+        icon: 'relic', kind: 'Legendary Refit', title: b.n, text: b.desc,
+        sound: 'upgrade', ok: 'Fit It'
+      }), 900);
+      prizeMsg = '';
     }
     if (c.prize.gold) {
       S.gold += c.prize.gold;
@@ -126,6 +142,7 @@ export function charterVictory(route, enemies) {
 
 export function bossVictory(boss, enemies) {
   S.bossBeaten[boss.region] = true;
+  battleDrop();
   grant(boss.rew);
   buzz('win');
 
@@ -134,21 +151,27 @@ export function bossVictory(boss, enemies) {
 
   if (boss.unlocks && !S.unlocked.includes(boss.unlocks)) {
     S.unlocked.push(boss.unlocks);
-    msg += ` The chart opens: ${REGIONS[boss.unlocks].n} lies before you.`;
-    setTimeout(() => toast('New waters charted: ' + REGIONS[boss.unlocks].n, 'gold'), 800);
+    setTimeout(() => award({
+      icon: 'map', kind: 'New Waters', title: REGIONS[boss.unlocks].n,
+      text: 'The chart opens. Fresh water, richer cargo, heavier ships.',
+      sound: 'victory', ok: 'Set Course'
+    }), 700);
   } else if (!boss.unlocks) {
     msg += ' Nothing stands between you and the Grand Fleet Route now.';
     if (!S.won) {
       S.won = true;
-      setTimeout(() => { play('victory'); toast('The Grand Fleet Route lies open.', 'gold'); }, 800);
+      setTimeout(() => award({
+        icon: 'star', kind: 'The Ocean Is Yours', title: 'Grand Fleet Route',
+        text: 'Nothing stands between you and it now.',
+        sound: 'victory', ok: 'At Last'
+      }), 800);
     }
   }
 
   showResult({
     route: bossAsRoute(boss), success: true, msg,
     spoils: { goods: goodsHaul(boss.region, 3), mats: matsHaul(boss.region, 3) },
-    captives: enemies.filter(e => e.disabled && !e.isBoss), noto: 0,
-    prizeMsg: dropLine(rollDrop('battle'))
+    captives: enemies.filter(e => e.disabled && !e.isBoss), noto: 0
   });
 }
 

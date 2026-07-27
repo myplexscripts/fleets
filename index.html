@@ -49,6 +49,13 @@
 <!-- title screen -->
 <div id="titleScr"></div>
 
+<!-- after-action: its own screen, not a drawer -->
+<div id="resultScr">
+  <div class="rhead" id="rHead"></div>
+  <div class="rbody" id="rBody"></div>
+  <div class="rfoot" id="rFoot"></div>
+</div>
+
 <!-- mission / result drawer -->
 <div class="overlay" id="overlay">
   <div class="sheet">
@@ -64,8 +71,7 @@
     <div class="h" id="bTitle">Broadsides — Round 1</div>
     <div class="sub" id="bHint">Tap an enemy to target it, then choose one order below</div>
   </div>
-  <div id="phaserHost"></div>
-  <div class="blog" id="blog"></div>
+  <div id="phaserHost"><div class="blog" id="blog"></div></div>
   <div class="bcmds" id="bcmds"></div>
   <div class="banner" id="banner"></div>
 </div>

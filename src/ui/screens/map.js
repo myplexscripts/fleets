@@ -14,6 +14,40 @@ import {
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 
+/* The closest two markers are never nearer than this on screen. A thumb is
+   about 44px; a marker plus breathing room either side is roughly double. */
+const MIN_NODE_GAP = 96;
+
+/* And no bigger than this in either direction, however tight the authoring. */
+const MAX_CHART = 2600;
+
+/* Drag to pan. Touch scrolls the container by itself; this is for a mouse, and
+   it deliberately does not swallow taps — a drag under the slop threshold still
+   lands on whatever node was under the pointer. */
+function enablePan(el) {
+  let down = false, sx = 0, sy = 0, l0 = 0, t0 = 0, moved = 0;
+  el.onpointerdown = ev => {
+    if (ev.pointerType === 'touch') return;      // native scrolling handles it
+    down = true; moved = 0;
+    sx = ev.clientX; sy = ev.clientY;
+    l0 = el.scrollLeft; t0 = el.scrollTop;
+  };
+  el.onpointermove = ev => {
+    if (!down) return;
+    const dx = ev.clientX - sx, dy = ev.clientY - sy;
+    moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+    if (moved > 6) {
+      el.classList.add('panning');
+      el.scrollLeft = l0 - dx;
+      el.scrollTop = t0 - dy;
+    }
+  };
+  const up = () => { down = false; el.classList.remove('panning'); };
+  el.onpointerup = up;
+  el.onpointercancel = up;
+  el.onpointerleave = up;
+}
+
 function starPath(x, y, r) {
   return `M${x},${y - r} L${x + r * 0.35},${y - r * 0.35} L${x + r},${y} L${x + r * 0.35},${y + r * 0.35} ` +
          `L${x},${y + r} L${x - r * 0.35},${y + r * 0.35} L${x - r},${y} L${x - r * 0.35},${y - r * 0.35} Z`;
@@ -59,6 +93,7 @@ export function renderMap() {
      chart, so measure it and keep the chart clear of it. Written first so the
      SVG (inserted afterwards) lands behind it. */
   $('main').innerHTML = `<div id="mapwrap">
+    <div id="mapscroll"></div>
     <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
     <div class="maphint">${shapeKey(rs, bossKeys.some(rk => !S.bossBeaten[rk]))}</div>
   </div>`;
@@ -85,38 +120,52 @@ export function renderMap() {
   const minY = Math.min(...ys), maxY = Math.max(...ys);
   const bw = Math.max(70, maxX - minX), bh = Math.max(70, maxY - minY);
   const availW = Math.max(80, x1 - x0), availH = Math.max(80, y1 - y0);
-  const k = Math.min(availW / bw, availH / bh);
-  const ox = x0 + (availW - bw * k) / 2 - minX * k;
-  const oy = y0 + (availH - bh * k) / 2 - minY * k;
+
+  /* The chart used to be squeezed into the viewport no matter how many nodes it
+     held, so every region unlocked made the markers smaller and closer until
+     they were unhittable. It is drawn at a scale that guarantees a thumb's worth
+     of space between the two closest nodes instead, and when that will not fit
+     on screen the chart pans. A map you drag is a map; a map you squint at is
+     a diagram. */
+  let tightest = Infinity;
+  for (let a = 0; a < pts.length; a++) {
+    for (let b = a + 1; b < pts.length; b++) {
+      const dd = Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y);
+      if (dd > 0.5) tightest = Math.min(tightest, dd);
+    }
+  }
+  const kFit = Math.min(availW / bw, availH / bh);
+  const kGap = tightest === Infinity ? kFit : MIN_NODE_GAP / tightest;
+  /* Bounded by how big a chart is still reasonable to drag around, not by a
+     multiple of the fitted scale — two nodes authored almost on top of each
+     other would otherwise never get their gap. */
+  const kMax = Math.min(MAX_CHART / bw, MAX_CHART / bh);
+  const k = Math.max(kFit, Math.min(kGap, kMax));
+  const minGap = tightest === Infinity ? 999 : tightest * k;
+
+  /* The drawing is as big as it needs to be; the viewport is the window onto it. */
+  const contentW = Math.max(CW, Math.round(bw * k + (x0 + (CW - x1)) + legW));
+  const contentH = Math.max(CH, Math.round(bh * k + padTop + padBot));
+  const ox = legW + Math.max(padX, (contentW - legW - bw * k) / 2) - minX * k;
+  const oy = Math.max(padTop, (contentH - padTop - padBot - bh * k) / 2 + padTop) - minY * k;
 
   const MX = x => +(ox + x * k).toFixed(1);
   const MY = y => +(oy + y * k).toFixed(1);
-  const NR = Math.max(1.0, Math.min(CW / 900, CH / 620) * 1.5);   // node radius scale
+  const NR = Math.max(1.35, Math.min(contentW / 900, contentH / 620) * 1.5);   // node radius scale
   const LBL = Math.max(16, Math.round(13 * NR));
   const HLBL = Math.max(18, Math.round(14.5 * NR));
-  const LSX = CW / 360, LSY = CH / 560;
+  const LSX = contentW / 360, LSY = contentH / 560;
 
-  /* How close together the nodes actually landed. As more regions unlock the
-     same screen has to hold more of the chart, and a fixed tap target would
-     start swallowing its neighbours — so both the marker and its hit circle
-     shrink to fit the tightest gap on screen. */
-  let minGap = Infinity;
-  for (let a = 0; a < pts.length; a++) {
-    for (let b = a + 1; b < pts.length; b++) {
-      const dx = (pts[a].x - pts[b].x) * k, dy = (pts[a].y - pts[b].y) * k;
-      const dd = Math.hypot(dx, dy);
-      if (dd > 0.5) minGap = Math.min(minGap, dd);
-    }
-  }
-  const HIT = Math.max(9, Math.min(22 * NR, (minGap === Infinity ? 999 : minGap) / 2 - 1));
-  /* Markers follow the hit circle down, but never below legibility. */
-  const MS = Math.max(NR * 0.55, Math.min(NR, HIT / 16));
+  /* With the spacing guaranteed, the tap target can be as big as the gap allows
+     rather than as small as the crowding demands. */
+  const HIT = Math.max(26, Math.min(24 * NR, minGap / 2 - 2));
+  const MS = Math.max(NR * 0.7, Math.min(NR, HIT / 15));
 
   /* Labels are centre-anchored on their node, so one near an edge would run off
      screen. Nudge the text (not the marker) far enough in to stay readable. */
   const labelX = (x, text, size) => {
     const half = text.length * size * 0.32;
-    return +Math.min(Math.max(x, legW + 6 + half), CW - 6 - half).toFixed(1);
+    return +Math.min(Math.max(x, legW + 6 + half), contentW - 6 - half).toFixed(1);
   };
 
   /* Transparent tap targets. The marker gets a circle; a labelled node also gets
@@ -204,13 +253,14 @@ export function renderMap() {
     labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#f0b0a6', '#0a0507', 1.2);
   });
 
-  const svg = `<svg id="mapsvg" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
+  const svg = `<svg id="mapsvg" width="${contentW}" height="${contentH}"
+      viewBox="0 0 ${contentW} ${contentH}" preserveAspectRatio="none">
       <defs>
         <radialGradient id="seabg" cx="45%" cy="40%" r="80%">
           <stop offset="0%" stop-color="#0e3a40"/><stop offset="55%" stop-color="#082830"/><stop offset="100%" stop-color="#04161c"/>
         </radialGradient>
       </defs>
-      <rect width="${CW}" height="${CH}" fill="url(#seabg)"/>
+      <rect width="${contentW}" height="${contentH}" fill="url(#seabg)"/>
       <g transform="scale(${LSX},${LSY})" opacity=".85">
         <path d="M-10,470 Q60,430 120,462 Q180,494 250,470 Q320,448 370,478 L370,570 L-10,570 Z" fill="#0a2f2c"/>
         <path d="M-10,60 Q40,90 20,150 Q0,210 30,240 L-10,260 Z" fill="#0a2f2c"/>
@@ -229,8 +279,18 @@ export function renderMap() {
       </g>
     </svg>`;
 
-  /* Behind the legend that is already in the DOM. */
-  host.querySelector('#mapwrap').insertAdjacentHTML('afterbegin', svg);
+  const scroller = host.querySelector('#mapscroll');
+  scroller.innerHTML = svg;
+  scroller.classList.toggle('pannable', contentW > CW + 2 || contentH > CH + 2);
+
+  /* Open centred on home port — that is where the player's eye starts, and on a
+     chart bigger than the screen it is the only sensible anchor. The legend
+     covers the top and the key covers the foot, so centre it on the water that
+     is actually visible between them rather than on the raw viewport. */
+  const seenTop = legH, seenBot = hintH;
+  scroller.scrollLeft = Math.max(0, MX(HOME.x) - (legW + CW) / 2);
+  scroller.scrollTop = Math.max(0, MY(HOME.y) + HLBL + 26 - (seenTop + (CH - seenTop - seenBot)));
+  enablePan(scroller);
 }
 
 /* The map key: each marker silhouette against the word for what it is. A legend

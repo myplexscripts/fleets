@@ -172,3 +172,10 @@
 .mtab.on{background:linear-gradient(180deg,#14424a,#0d2e34);color:var(--goldhi)}
 .mtab.on .ic{opacity:1}
 .mtab:active{background:#123a41}
+
+/* Tabs at the top of a screen rather than a sheet — the market's two counters.
+   Sticky, so switching counters never means scrolling back up. */
+.mtabs.sticky{
+  position:sticky;top:-14px;z-index:4;margin:-4px 0 12px;
+  background:var(--bg);box-shadow:0 6px 12px -6px rgba(0,0,0,.7);
+}

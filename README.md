@@ -43,6 +43,11 @@ and a button that reshuffles the opposition is a button that makes building one
 pointless. You see the odds before you commit, and walking away is always
 allowed.
 
+**The after-action report gets the whole screen**, and the haul is the biggest
+thing on it: a strongbox of chips before any words, with the account of the
+fight kept to a line or two underneath. You were there — you do not need it
+narrated.
+
 **A prize is a decision, not a payout.** Beat a ship and nothing is granted
 automatically — keep her and she takes a berth, scuttle her for materials, ransom
 the crew, or let her drift. The after-action sheet will not close until every
@@ -132,6 +137,7 @@ styles/
 tools/
   check-min-size.js   fails on text under 16px or icons under 40px
   check-overflow.js   fails on any screen that scrolls sideways
+  check-map-spacing.js  fails if two markers land closer than a thumb apart
 src/
   main.js             boot sequence
   core/
@@ -150,13 +156,14 @@ src/
                       goods, materials, salvage/bell tables, collectible sets,
                       flagship upgrades, flavour text, tutorial script
   art/                procedural ship sprites and icons (SVG → canvas)
-  fx/                 sound, toasts, transitions, coins, mist, haptics
+  fx/                 sound, toasts, awards, pops, transitions, coins, haptics
   systems/            voyages (cargo + dives), notoriety, collectibles, loot,
                       enemy generation, battle outcomes
   ui/
     shell.js          screen router, nav, world ticker
     screens/          one module per screen
     format.js         the chip vocabulary every screen reads numbers through
+    result.js         the after-action screen and the prize decisions
     components.js     item cards, steppers, rails, requirement bars — and the
                       rules they must not break
     mission.js        mission sheet and launch
@@ -209,6 +216,19 @@ node tools/check-min-size.js
 With `playwright-core` on hand and the game being served it also measures what
 the browser actually computes, across three viewports and nine surfaces — screens
 and overlays alike — which is how a `0.5em` sub-label got caught.
+
+**The chart pans.** It is drawn at whatever scale keeps the two closest markers
+96px apart — a thumb — rather than being squeezed into the viewport, so
+unlocking a region spreads the map out instead of shrinking every marker on it.
+When that is bigger than the screen you drag it. `tools/check-map-spacing.js`
+walks three stages of progression, measures the tightest pair, and clicks
+markers to prove they are reachable.
+
+**Good news stops the game; small change does not.** A new port, a new region, a
+collectible, a refit — anything earned — comes up as a card with the thing drawn
+large and a button to take it, because an award that slides past unnoticed is
+the moment the whole loop exists to produce. A purchase is the opposite: the
+`+20` leaps off the button you just pressed and your eye never leaves it.
 
 **No scrollbars, and nothing scrolls sideways.** A scrollbar is browser chrome, and browser chrome is
 the loudest thing on screen saying "this is a web page". Scrolling works exactly

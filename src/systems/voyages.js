@@ -24,6 +24,7 @@ import { returnCargo } from './loot.js';
 import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
 import { showResult } from '../ui/result.js';
+import { award } from '../fx/award.js';
 
 export function launchVoyage(route, fleet) {
   if (!voyageOpen(route)) return false;
@@ -134,16 +135,22 @@ function finishDive(v, fleet) {
   play('coin');
 
   const msg = `${chests} chest${chests === 1 ? '' : 's'} came up off the wreck and went straight to the buyers on the quay for ${takings} gold.`;
-  const found = Math.random() < diveFindChance(v.depth) ? rollDrop('dive') : null;
-  const prizeMsg = found
-    ? `${found.name} came up with the last chest — ${found.setName}, ${found.have} of ${found.of}.`
-    : '';
+  /* No finds during the tutorial — an award modal over a scripted step fights
+     the script. Same reason the side events are held back. */
+  const found = (typeof S.tut !== 'number' && Math.random() < diveFindChance(v.depth))
+    ? rollDrop('dive') : null;
+  if (found) {
+    setTimeout(() => award({
+      icon: 'relic', kind: 'Came Up With the Last Chest', title: found.name,
+      text: `${found.setName} — ${found.have} of ${found.of}.`, ok: 'To the Cabin'
+    }), 700);
+  }
 
   const noto = addNoto({ region: v.region, id: v.routeId, type: v.type, danger: 0 }, v.noto);
 
   showResult({
     route: { id: v.routeId, n: v.routeName, region: v.region, type: v.type, rew: v.rew },
-    success: true, msg, evt: sideEvent(fleet), noto, prizeMsg,
+    success: true, msg, evt: sideEvent(fleet), noto,
     extra: { gold: takings }, fromVoyage: true
   });
 }

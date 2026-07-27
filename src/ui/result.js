@@ -1,35 +1,39 @@
-/* The after-action report, and what you do with captured ships.
+/* The after-action report.
+
+   Its own full screen, not a drawer. What you won is the point of it, so the
+   haul is the biggest thing on it — a strongbox of chips at the top, before any
+   words. The account of what happened is one line underneath, because you were
+   there.
 
    A prize is a decision, not a payout. Nothing about a beaten ship is granted
    automatically: keep her and she takes a berth, scuttle her for materials,
-   ransom the crew for coin, or let her drift. The sheet will not close until
+   ransom the crew for coin, or let her drift. The screen will not close until
    every prize taken has been answered for — deciding is the reward. */
 
-import { $, esc } from '../core/dom.js';
+import { $, esc, reflow } from '../core/dom.js';
 import { S, save, newShip } from '../core/state.js';
 import { actions } from '../core/actions.js';
+import { render } from '../core/bus.js';
 import { rnd } from '../core/rng.js';
 import { grant } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
-import { SCRAP_YIELD } from '../data/materials.js';
-
-/* What the loose fittings off a broken-up prize fetch. */
-const SCRAP_GOLD = 200;
+import { SCRAP_YIELD, MAT_KEYS } from '../data/materials.js';
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
-import { fmt, chip, have, chipRow, outOf, bagChips, shipChips } from './format.js';
-import { GOODS } from '../data/goods.js';
-import { MAT_KEYS } from '../data/materials.js';
-import { setSheet, openSheet, setSheetFoot, holdSheet } from './sheet.js';
+import { chip, have, chipRow, outOf, bagChips, shipChips } from './format.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
 import { toast } from '../fx/toast.js';
 import { tutEvent, refreshTut } from './tutorial.js';
 
+/* What the loose fittings off a scuttled prize fetch. */
+const SCRAP_GOLD = 200;
+
+/* Prizes still waiting on a decision. */
+let pending = 0;
+
 export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, spoils = null, fromVoyage = false }) {
-  /* A dive's chest money is not part of the route reward, so fold it in for the
-     payout line and the coin shower. */
   const paid = { ...(route.rew || {}) };
   if (extra) for (const k in extra) paid[k] = (paid[k] || 0) + extra[k];
   const isBoss = route.type === 'boss', isCh = route.type === 'charter';
@@ -37,20 +41,25 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     ? (isBoss ? 'Admiral Defeated' : (isCh ? 'Charter Fulfilled' : (fromVoyage ? 'Ships Returned' : 'The Water Is Yours')))
     : (isBoss ? 'Repulsed' : (fromVoyage ? 'Run Lost' : 'Battle Lost'));
 
-  let h = `<div class="resulthead ${success ? 'good' : 'bad'}">${title}</div>
-    <div class="sub center">${success && fmt(paid) ? '<b style="color:var(--goldhi)">' + fmt(paid) + '</b> paid into the strongbox. ' : ''}${esc(msg || '')}</div>
-    ${spoilsRow(spoils)}
-    ${prizeMsg ? `<div class="evt prize">${esc(prizeMsg)}</div>` : ''}
-    ${notoRow(route, noto)}
-    ${evt ? `<div class="evt">${esc(evt)}</div>` : ''}`;
+  /* ---- head: the verdict, and where it happened ---- */
+  $('rHead').innerHTML = `<div class="rverdict ${success ? 'good' : 'bad'}">${title}</div>
+    <div class="rwhere">${esc(route.n)}</div>`;
+
+  /* ---- body: the haul first, everything else after ---- */
+  let h = strongbox(paid, spoils);
+
+  const lines = [msg, prizeMsg, evt].filter(Boolean);
+  if (lines.length) {
+    h += `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>`;
+  }
+  h += notoRow(route, noto);
 
   if (captives.length) {
-    h += `<div class="sect" style="margin-top:14px;--i:1">Prizes of War</div>`;
-    h += `<div class="sub center prizehint" id="prizeHint">${captives.length === 1
-      ? 'Decide what becomes of her.' : 'Decide what becomes of each of them.'}</div>`;
+    h += `<div class="sect" style="--i:1">Prizes of War</div>
+      <div class="sub center prizehint" id="prizeHint">${captives.length === 1
+        ? 'Decide what becomes of her.' : 'Decide what becomes of each of them.'}</div>`;
     captives.forEach((e, i) => {
       const t = TYPES[e.type], full = S.ships.length >= S.docks;
-      /* Each option shows what it gives you, so choosing needs no paragraph. */
       h += `<div class="card" style="--i:${i + 2}" id="cap${i}"><div class="shiprow">
         <div>${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
         <div class="shipmeta"><h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
@@ -67,42 +76,37 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
         </div></div>`;
     });
   }
+  $('rBody').innerHTML = h;
+  $('rBody').scrollTop = 0;
 
   pending = captives.length;
-  setSheet(`<h3>${esc(route.n)}</h3>`, h, footHTML());
-  openSheet();
-  /* Undecided prizes hold the sheet open — against Escape and the scrim too. */
-  holdSheet(() => pending > 0);
+  drawFoot();
+  openResult();
 
   if (success && paid.gold) {
-    setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.gold / 200))), 500);
+    setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.gold / 200))), 420);
   }
   save();
   updateRes();
   refreshTut();
 }
 
+/* The haul, big, before any prose. One frame, one chip per thing — the contract
+   money and the materials off the enemy are the same metal, so they are added
+   rather than listed twice. */
+function strongbox(paid, sp) {
+  const bag = { ...paid };
+  if (sp && sp.mats) MAT_KEYS.forEach(m => { if (sp.mats[m]) bag[m] = (bag[m] || 0) + sp.mats[m]; });
 
-/* How many prizes are still waiting on a decision. */
-let pending = 0;
+  const won = [bagChips(bag)];
+  if (sp && sp.goods && sp.goods.n) won.push(chip(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
 
-/* Continue is only a button once every prize has been answered for. */
-function footHTML() {
-  return pending
-    ? `<button class="btn wide" disabled>${pending} prize${pending === 1 ? '' : 's'} undecided</button>`
-    : `<button class="btn gold wide" data-act="close-sheet">Continue</button>`;
+  const inner = chipRow(won, 'big');
+  if (!inner) return '';
+  return `<div class="strongbox"><div class="sboxlbl">Taken</div>${inner}</div>`;
 }
 
-/* One prize choice. Same shape as an item footer everywhere else: what you get
-   on the left, the button that takes it on the right. */
-function prizeOpt(gets, label, i, mode, type, disabled, cls) {
-  return `<div class="prizeopt"><div class="itemprice">${gets}</div>`
-    + `<button class="btn sm ${cls || ''} itemact"${disabled ? ' disabled' : ''}`
-    + ` data-act="cap" data-i="${i}" data-mode="${mode}" data-type="${type}">${label}</button></div>`;
-}
-
-/* Notoriety, as a bar reading rather than a sentence: what this win added, and
-   where the region now stands against its admiral. */
+/* Notoriety as a bar reading: what this added, and where the region stands. */
 function notoRow(route, noto) {
   if (!noto) return '';
   const need = BOSSES[route.region] ? BOSSES[route.region].noto : 0;
@@ -113,14 +117,37 @@ function notoRow(route, noto) {
   ], 'tight')}</div>`;
 }
 
-/* What came off the enemy, as chips rather than a sentence. */
-function spoilsRow(sp) {
-  if (!sp) return '';
-  const list = [];
-  if (sp.goods && sp.goods.n) list.push(chip(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
-  if (sp.mats) MAT_KEYS.forEach(m => { if (sp.mats[m]) list.push(chip(m, sp.mats[m], 'gold', m)); });
-  if (!list.length) return '';
-  return `<div class="spoils"><span class="spoilslbl">Taken</span>${chipRow(list, 'tight')}</div>`;
+/* One prize choice: what you get on the left, the button that takes it right. */
+function prizeOpt(gets, label, i, mode, type, disabled, cls) {
+  return `<div class="prizeopt"><div class="itemprice">${gets}</div>`
+    + `<button class="btn sm ${cls || ''} itemact"${disabled ? ' disabled' : ''}`
+    + ` data-act="cap" data-i="${i}" data-mode="${mode}" data-type="${type}">${label}</button></div>`;
+}
+
+function drawFoot() {
+  $('rFoot').innerHTML = pending
+    ? `<button class="btn wide" disabled>${pending} prize${pending === 1 ? '' : 's'} undecided</button>`
+    : `<button class="btn gold wide" data-act="close-result">Continue</button>`;
+}
+
+/* ---- the screen itself ---- */
+function openResult() {
+  const el = $('resultScr');
+  el.classList.add('on');
+  reflow(el);
+  el.classList.add('vis');
+}
+
+export const resultOpen = () => $('resultScr').classList.contains('on');
+
+export function closeResult() {
+  const el = $('resultScr');
+  if (!el.classList.contains('on')) return;
+  if (pending) return;                     // decisions first
+  el.classList.remove('vis');
+  setTimeout(() => el.classList.remove('on'), 320);
+  tutEvent('sheet:close');
+  render();
 }
 
 function capAct(i, mode, type) {
@@ -132,10 +159,8 @@ function capAct(i, mode, type) {
     if (S.ships.length >= S.docks) return toast('Every berth is full, Captain.', 'bad');
     S.ships.push(newShip(type, rnd(0.25, 0.45)));
     sub.textContent = 'Yours, damaged. Repair her in Port.';
-    toast('The ' + t.n + ' flies your colours now.', 'gold');
   } else if (mode === 'salvage') {
-    const yld = SCRAP_YIELD[type];
-    grant(yld);
+    grant(SCRAP_YIELD[type]);
     S.gold += SCRAP_GOLD;
     sub.textContent = 'Scuttled for materials.';
   } else if (mode === 'ransom') {
@@ -151,7 +176,7 @@ function capAct(i, mode, type) {
   el.classList.add('decided');
 
   pending = Math.max(0, pending - 1);
-  setSheetFoot(footHTML());
+  drawFoot();
   const hint = $('prizeHint');
   if (hint && !pending) hint.remove();
 
@@ -161,5 +186,6 @@ function capAct(i, mode, type) {
 }
 
 actions({
-  cap: d => capAct(+d.i, d.mode, d.type)
+  cap: d => capAct(+d.i, d.mode, d.type),
+  'close-result': closeResult
 });

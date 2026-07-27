@@ -66,7 +66,7 @@
 
 /* ---- map ---- */
 #mapwrap{position:absolute;inset:0;background:#04161c}
-#mapsvg{width:100%;height:100%;display:block}
+#mapsvg{display:block}
 .mapnode{cursor:pointer}
 /* labels sit in their own layer and are never the thing you tap */
 .maplabels{pointer-events:none}
@@ -207,3 +207,15 @@
 /* store rows carry their count as a chip, so the name needs no unit word */
 .sname{flex-wrap:wrap}
 .sname .chips{margin-top:0}
+
+/* ---- the chart pans ----
+   The drawing is sized so the two closest markers always have a thumb between
+   them; when that is bigger than the screen, this is the window onto it. */
+#mapscroll{
+  position:absolute;inset:0;overflow:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  touch-action:pan-x pan-y;
+}
+#mapscroll.pannable{cursor:grab}
+#mapscroll.panning{cursor:grabbing}
+#mapscroll #mapsvg{display:block}

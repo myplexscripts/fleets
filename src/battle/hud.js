@@ -19,10 +19,11 @@ export const ORDERS = [
   { id: 'retreat', label: 'Retreat',      hot: '6', cls: 'red' }
 ];
 
-/* Log lines: newest last, three at a time. */
+/* Log lines: newest last, two at a time. The log floats over the water, so
+   every line it keeps is a line of the battle it covers up. */
 export function blog(m, c) {
   BT.b.log.push({ m, c });
-  if (BT.b.log.length > 3) BT.b.log.shift();
+  if (BT.b.log.length > 2) BT.b.log.shift();
   $('blog').innerHTML = BT.b.log.map(l => `<div class="${l.c || ''}">${l.m}</div>`).join('');
 }
 
@@ -30,7 +31,7 @@ export function drawHud() {
   $('bTitle').textContent = (BT.b.boss ? BT.b.boss.n + ' — ' : 'Broadsides — ') + 'Round ' + BT.b.round;
   $('bHint').innerHTML = BT.b.telegraph
     ? `<span class="warn">${BT.b.boss.n} is running out her lower deck — BRACE</span>`
-    : 'Tap an enemy to target it, then choose one order below';
+    : 'Tap an enemy, then give one order';
 
   $('bcmds').innerHTML = ORDERS.map(o => {
     const dis = o.needsBarrel && !S.barrels;
