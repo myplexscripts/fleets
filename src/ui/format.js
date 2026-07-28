@@ -84,19 +84,28 @@ export function chipRow(list, cls) {
   return inner ? `<div class="chips ${cls || ''}">${inner}</div>` : '';
 }
 
-/* The four numbers that describe any ship, in a fixed order so the eye learns
-   where to look: speed, guns, hull, cargo. Pass `need` and the cargo chip turns
-   into a have/need test — green if this hull can take the job, red if not. */
-export function shipChips(s, extra, need) {
-  return chipRow([
-    chip('speed', s.speed, '', 'Speed'),
-    chip('guns', s.guns, '', 'Guns'),
-    outOf('hull', Math.max(0, s.hull), s.max, s.hull <= 0 ? 'bad' : (s.hull < s.max * 0.6 ? 'warn' : ''), 'Hull'),
+/* The numbers that describe any ship, in a fixed order so the eye learns where
+   to look: speed, guns, hull, cargo, and what she is worth in a fight.
+
+   Tiles, not chips — this is rule 2b exactly. Five chips wrap onto three lines
+   on a phone at 40px a glyph, which turns every ship card into a wall; five
+   tiles sit on one grid row and line up with the tiles on the ship beside her,
+   so two hulls can be compared by looking down a column.
+
+   Pass `need` and the cargo tile becomes a have/need test — green if this hull
+   can take the job, red if it cannot. */
+export function shipTiles(s, power, need) {
+  return tileRow([
+    tile('speed', s.speed, '', 'Speed'),
+    tile('guns', s.guns, '', 'Guns'),
+    tile('hull', `${Math.max(0, s.hull)}<i>/</i>${s.max}`,
+      s.hull <= 0 ? 'bad' : (s.hull < s.max * 0.6 ? 'warn' : ''), 'Hull'),
     need == null
-      ? chip('cargo', s.cargo, '', 'Cargo space')
-      : have('cargo', s.cargo, need, 'Cargo space vs this consignment'),
-    extra || ''
-  ]);
+      ? tile('cargo', s.cargo, '', 'Cargo space')
+      : tile('cargo', `${s.cargo}<i>/</i>${need}`, s.cargo >= need ? 'ok' : 'bad',
+        'Cargo space vs this consignment'),
+    power == null ? '' : tile('power', power, '', 'Power')
+  ], 'grid5');
 }
 
 /* "12 barrels of rum" — still spelled out where the words carry meaning. */

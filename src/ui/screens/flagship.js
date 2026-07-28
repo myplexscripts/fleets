@@ -3,7 +3,7 @@
 import { $, esc } from '../../core/dom.js';
 import { S, syncFlag } from '../../core/state.js';
 import { render } from '../../core/bus.js';
-import { actions } from '../../core/actions.js';
+import { actions, actionSource } from '../../core/actions.js';
 import { MAXTIER } from '../../core/config.js';
 import { FLAGTIERS, FITTINGS, BOONS, tierCost } from '../../data/flagship.js';
 import { SETS, SET_KEYS } from '../../data/collectibles.js';
@@ -15,7 +15,7 @@ import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, chip, chipRow, outOf, priceChips } from '../format.js';
 import { itemCard, itemAction, itemGrid, sect } from '../components.js';
-import { toast } from '../../fx/toast.js';
+import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { promptDlg } from '../dialog.js';
 import { doRepair } from './port.js';
@@ -118,27 +118,28 @@ function upFlag(k) {
   const t = S.flag.tiers[k];
   if (t >= MAXTIER) return;
   const c = tierCost(k, t);
-  if (!canPay(c)) return toast('Not enough to pay for that upgrade.', 'bad');
+  if (!canPay(c)) return deny('Cannot pay for that');
   pay(c);
   S.flag.tiers[k]++;
   syncFlag();
   play('upgrade');
-  toast(FLAGTIERS[k].n + ' brought up to tier ' + S.flag.tiers[k] + '.', 'gold');
+  say(FLAGTIERS[k].eff, 'ok', FLAGTIERS[k].icon);
   render();
 }
 
 function buyFit(k) {
   if (hasFit(k)) return;
   const d = FITTINGS[k];
-  if (!canPay(d.cost)) return toast('Not enough to pay for that upgrade.', 'bad');
+  if (!canPay(d.cost)) return deny('Cannot pay for that');
   pay(d.cost);
   S.flag.fittings.push(k);
   play('upgrade');
-  toast(d.n + ' fitted aboard the ' + S.flag.name + '.', 'gold');
+  say('Fitted', 'ok', 'relic');
   render();
 }
 
 async function renameFlag() {
+  const from = actionSource();
   const n = await promptDlg({
     title: 'Name Your Flagship',
     text: 'A ship answers to her name. Choose well.',
@@ -148,7 +149,7 @@ async function renameFlag() {
   const trimmed = n.trim().slice(0, 20);
   if (!trimmed) return;
   S.flag.name = trimmed;
-  toast('Flagship renamed to ' + S.flag.name + '.');
+  pop(from, 'Christened', 'gold', 'flag');
   render();
 }
 

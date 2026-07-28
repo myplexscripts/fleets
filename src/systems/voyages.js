@@ -21,7 +21,7 @@ import {
 import { addNoto } from './notoriety.js';
 import { rollDrop } from './collectibles.js';
 import { returnCargo } from './loot.js';
-import { toast } from '../fx/toast.js';
+import { say, deny } from '../fx/pop.js';
 import { play } from '../fx/sound.js';
 import { showResult } from '../ui/result.js';
 import { award } from '../fx/award.js';
@@ -32,16 +32,16 @@ export function launchVoyage(route, fleet) {
      the fleet is big enough for the job — pooling three of them would answer it
      for free. */
   if (fleet.length !== 1) {
-    toast('A voyage sails under one ship. Pick the hull for the job.', 'bad');
+    deny('Pick one ship');
     return false;
   }
   if (S.voyages.length >= VOY_MAX_ACTIVE) {
-    toast('You already have as many fleets at sea as you can manage.', 'bad');
+    deny('No fleets to spare');
     return false;
   }
   if (route.type === 'cargo') {
     if (holdCap(fleet) < route.qty) {
-      toast('That ship cannot hold the whole consignment.', 'bad');
+      deny('Hold is too small');
       return false;
     }
     /* Goods leave the warehouse now — they are aboard. */
@@ -71,7 +71,7 @@ export function launchVoyage(route, fleet) {
 
   S.voyages.push(v);
   play('depart');
-  toast('Fleet away. Back in ' + fmtDur(dur) + '.', 'blu');
+  say(fmtDur(dur), 'blu', 'time');
   save();
   return true;
 }

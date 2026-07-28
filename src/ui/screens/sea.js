@@ -3,13 +3,13 @@
 import { $, esc, now } from '../../core/dom.js';
 import { S } from '../../core/state.js';
 import { render } from '../../core/bus.js';
-import { actions } from '../../core/actions.js';
+import { actions, actionSource } from '../../core/actions.js';
 import { VOY_MAX_ACTIVE } from '../../core/config.js';
 import { GOODS } from '../../data/goods.js';
 import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
 import { chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
 import { itemCard, itemAction, itemGrid, sect } from '../components.js';
-import { toast } from '../../fx/toast.js';
+import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
 import { collectVoyage } from '../../systems/voyages.js';
@@ -85,17 +85,18 @@ function rushVoyage(id) {
   const v = S.voyages.find(x => x.id === id);
   if (!v) return;
   const c = rushCost(v);
-  if (S.gold < c) return toast('Not enough gold to speed that up.', 'bad');
+  if (S.gold < c) return deny(`Needs ${c} gold`);
   S.gold -= c;
   v.endsAt = now();
   play('arrive');
-  toast('Voyage rushed — the fleet is docking now.', 'blu');
+  say('Docking', 'ok', 'anchor');
   render();
 }
 
 async function recallVoyage(id) {
   const v = S.voyages.find(x => x.id === id);
   if (!v) return;
+  const from = actionSource();
   const ok = await confirmDlg({
     title: 'Signal Them Home?',
     text: 'The cargo is lost and there is no payment.',
@@ -103,7 +104,7 @@ async function recallVoyage(id) {
   });
   if (!ok) return;
   S.voyages = S.voyages.filter(x => x.id !== id);
-  toast('Fleet recalled. Cargo and payment lost.', 'bad');
+  pop(from, 'Cargo lost', 'bad', 'cargo');
   render();
 }
 

@@ -12,7 +12,6 @@ import { iconHTML } from '../art/icons.js';
 import { pick } from '../core/rng.js';
 import { wipe } from '../fx/wipe.js';
 import { play, ambience } from '../fx/sound.js';
-import { toast } from '../fx/toast.js';
 import { confirmDlg } from './dialog.js';
 import { render, resetTicker } from './shell.js';
 import { refreshTut } from './tutorial.js';
@@ -90,7 +89,6 @@ async function titleNew() {
     if (!ok) return;
   }
   newGame();
-  toast('A flagship, three tired ships, and 500 gold. Make it count.', 'gold');
   enterGame();
 }
 

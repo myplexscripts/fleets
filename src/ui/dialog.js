@@ -45,7 +45,7 @@ function show(kind, opts) {
             value="${esc(opts.value || '')}" spellcheck="false" autocomplete="off">` : ''}
       </div>
       <div class="dlg-foot">
-        ${kind === 'alert' ? '' : `<button class="btn sm" data-dlg="cancel">${esc(opts.cancel || 'Belay')}</button>`}
+        ${kind === 'alert' ? '' : `<button class="btn sm quiet" data-dlg="cancel">${esc(opts.cancel || 'Belay')}</button>`}
         <button class="btn sm ${opts.danger ? 'red' : 'gold'}" data-dlg="ok">${esc(okLabel)}</button>
       </div>
     </div>`;

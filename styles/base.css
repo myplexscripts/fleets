@@ -16,6 +16,42 @@
   --prose:'Crimson Pro',Georgia,serif;        /* flavour text, briefings */
 
   --bevel:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.45);
+
+  /* ---- the moulded look -------------------------------------------------
+     Everything in this game is a physical object sitting on a surface: it has
+     a lit top face, a thickness you can see, and a shadow under it. That is
+     the whole difference between a screen that reads as a game and a screen
+     that reads as a website, and it comes from three numbers used everywhere
+     rather than a new treatment invented per component.
+
+       --r / --r-sm / --r-pill   how round a thing is
+       --lift                    how thick it is — the visible edge below it
+       --slab / --slab-sm        the shadow recipe that produces the edge
+
+     A pressable thing sinks by exactly --lift when pressed and loses its
+     edge, which is why buttons feel like buttons. Nothing overrides these. */
+  --r:16px; --r-sm:12px; --r-pill:999px;
+  --lift:5px;
+  --edge:rgba(2,10,12,.78);
+
+  --slab:
+    0 var(--lift) 0 var(--edge),
+    0 calc(var(--lift) + 7px) 18px rgba(0,0,0,.5),
+    inset 0 2px 0 rgba(255,255,255,.10);
+  --slab-sm:
+    0 3px 0 var(--edge),
+    0 7px 12px rgba(0,0,0,.45),
+    inset 0 1px 0 rgba(255,255,255,.10);
+  /* what a pressed thing looks like: flat on the surface, no edge left */
+  --slab-down:
+    0 0 0 var(--edge),
+    0 2px 4px rgba(0,0,0,.5),
+    inset 0 2px 0 rgba(255,255,255,.06),
+    inset 0 -2px 6px rgba(0,0,0,.35);
+  /* a recessed well — for anything a number sits *in* rather than *on* */
+  --well:
+    inset 0 2px 5px rgba(0,0,0,.55),
+    inset 0 -1px 0 rgba(255,255,255,.06);
 }
 
 html,body{height:100%}
@@ -68,13 +104,21 @@ h1,h2,h3{font-weight:500}
 .center{text-align:center}
 .warnline{margin-top:10px;color:var(--yel)}
 
+/* A section heading is a nameplate bolted to the page, not a line of small
+   caps over a hairline. It is the first thing the eye lands on when a screen
+   changes, so it gets a face, an edge and a shadow like everything else. */
 .sect{
-  font-family:var(--display);font-size:clamp(16px,1.1vw,19px);font-weight:600;
-  letter-spacing:2.5px;color:var(--gold);text-transform:uppercase;
-  margin:18px 0 10px;display:flex;align-items:center;gap:10px;
+  font-family:var(--display);font-size:clamp(17px,1.2vw,21px);font-weight:700;
+  letter-spacing:2.5px;color:var(--goldhi);text-transform:uppercase;
+  margin:20px 0 12px;display:flex;align-items:center;gap:10px;
+  width:fit-content;max-width:100%;
+  padding:8px 18px;border-radius:var(--r-sm);
+  background:linear-gradient(180deg,#1a4b56 0%,#123a44 48%,#0d2f37 52%,#0a2229 100%);
+  border:2px solid var(--line2);
+  box-shadow:var(--slab-sm);
+  text-shadow:0 2px 0 rgba(0,0,0,.6);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
-.sect::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
 
 .ic{display:inline-block;vertical-align:-.25em;image-rendering:auto}
 .btn .ic{margin-right:0;vertical-align:middle}
@@ -83,56 +127,95 @@ h1,h2,h3{font-weight:500}
 @keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
 .calm .card,.calm .sect,.calm .leg,.calm .hero{animation:none!important}
 
+/* A card is a moulded panel: lit face, visible edge, shadow underneath. The
+   old engraved corner brackets belonged to a flat page; at this radius the
+   corner is the light catching it instead. */
 .card{
-  position:relative;background:var(--panel);border:1px solid var(--line);border-radius:3px;
-  padding:clamp(13px,1vw,21px) clamp(15px,1.15vw,23px);
-  margin-bottom:clamp(11px,.85vw,17px);
-  box-shadow:0 3px 10px rgba(0,0,0,.45),var(--bevel);
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#092128 100%);
+  border:2px solid var(--line);border-radius:var(--r);
+  padding:clamp(14px,1vw,22px) clamp(15px,1.15vw,23px);
+  margin-bottom:clamp(13px,.9vw,19px);
+  box-shadow:var(--slab);
   animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
 }
-/* engraved corner brackets */
-.card::before,.card::after{content:'';position:absolute;width:15px;height:15px}
-.card::before{top:0;left:0;border-top:1px solid var(--line2);border-left:1px solid var(--line2)}
-.card::after{bottom:0;right:0;border-bottom:1px solid var(--line2);border-right:1px solid var(--line2)}
+/* the gloss across the top face */
+.card::before{
+  content:'';position:absolute;inset:0 0 auto;height:55%;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);
+}
+.card::after{content:none}
 
-.card.flagcard{border-color:var(--brass);box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(217,201,138,.07)}
-.card.flagcard::before,.card.flagcard::after{border-color:var(--gold)}
-.card.bosscard{border-color:#8a463e;box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(217,74,58,.08)}
+.card.flagcard{border-color:var(--brass);box-shadow:var(--slab),inset 0 0 28px rgba(217,201,138,.09)}
+.card.bosscard{border-color:#a05a4e;box-shadow:var(--slab),inset 0 0 28px rgba(217,74,58,.10)}
 .card.chartercard{border-color:var(--brass)}
 .card.owned{border-color:var(--brass)}
-.card.atsea{border-color:#2c5a8a;opacity:.92}
-.card.atsea::before,.card.atsea::after{border-color:var(--blu)}
-.card.ready{border-color:#3f7a44;box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 24px rgba(99,192,106,.09)}
+.card.atsea{border-color:#3d78ad;opacity:.94}
+.card.ready{border-color:#4f9a56;box-shadow:var(--slab),inset 0 0 28px rgba(99,192,106,.11)}
 
 /* ---- layout helpers ---- */
 .row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
 .btnset{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
 
-/* ---- buttons ---- */
+/* ---- buttons ----
+   A slab with a thickness. The two-tone face — bright above the midline, dark
+   below — is what makes it read as moulded rather than printed, and pressing
+   it drops it onto the surface by exactly the height of its own edge. That
+   travel is the whole feel of the game in one interaction, so every button in
+   every screen is this button. */
 .btn{
-  font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--ink);background:linear-gradient(180deg,#123a41,#0b262c);
-  border:1px solid var(--line2);border-radius:2px;
+  font-family:var(--ui);font-weight:500;
+  font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
+  color:#dff2f4;
+  background:linear-gradient(180deg,#256e7c 0%,#1a5460 49%,#123f4a 51%,#0d2f38 100%);
+  border:2px solid #2f7f8a;border-radius:var(--r-sm);
   padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
-  min-height:clamp(46px,3.6vw,58px);
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1.15;
-  box-shadow:var(--bevel),0 2px 6px rgba(0,0,0,.4);
-  transition:transform .12s cubic-bezier(.2,2,.4,1),filter .15s;
-  position:relative;overflow:hidden;
+  min-height:clamp(48px,3.6vw,58px);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
+  text-shadow:0 2px 0 rgba(0,0,0,.45);
+  box-shadow:var(--slab-sm);
+  transition:transform .1s ease,box-shadow .1s ease,filter .15s;
+  position:relative;
 }
-.btn:hover:not(:disabled){filter:brightness(1.12)}
-.btn:active:not(:disabled){transform:scale(.93)}
-.btn:disabled{opacity:.4;box-shadow:none}
-.btn.gold{background:linear-gradient(180deg,#4a4023,#332b14);border-color:var(--brass);color:var(--goldhi)}
-.btn.red{background:linear-gradient(180deg,#4a1d18,#2e110d);border-color:#8a463e;color:#f0b0a6}
-.btn.blu{background:linear-gradient(180deg,#173c5e,#0d2338);border-color:#2c5a8a;color:#bcd8f0}
-.btn.grn{background:linear-gradient(180deg,#1d4a22,#102e14);border-color:#3f7a44;color:#bce8bf}
+.btn:hover:not(:disabled){filter:brightness(1.14)}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:var(--slab-down)}
+.btn:disabled{
+  opacity:.42;filter:grayscale(.5);
+  transform:translateY(3px);box-shadow:var(--slab-down);
+}
+.btn.gold{
+  background:linear-gradient(180deg,#d3ab58 0%,#b08c3e 49%,#8a6c2c 51%,#66501f 100%);
+  border-color:#eddba0;color:#3a2c0c;text-shadow:0 1px 0 rgba(255,246,214,.45);
+}
+.btn.red{
+  background:linear-gradient(180deg,#c25a44 0%,#a04532 49%,#7d3324 51%,#5a2419 100%);
+  border-color:#e69682;color:#fff0eb;
+}
+.btn.blu{
+  background:linear-gradient(180deg,#4189c4 0%,#2e6ba2 49%,#22527f 51%,#183c5e 100%);
+  border-color:#8cc0ea;color:#f0f8ff;
+}
+.btn.grn{
+  background:linear-gradient(180deg,#48ad57 0%,#348741 49%,#256a30 51%,#1a4d23 100%);
+  border-color:#8ada92;color:#f2fff4;
+}
+/* Cancel, Belay, Not Now. It is still a slab and still presses, but it does
+   not compete with the button the player came here to hit. */
+.btn.quiet{
+  background:linear-gradient(180deg,#1b2f34 0%,#142629 49%,#0e1d20 51%,#0a1618 100%);
+  border-color:#2a4348;color:#9dbabd;
+}
 .btn.sm{
-  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;
-  padding:clamp(9px,.7vw,13px) clamp(11px,.9vw,17px);min-height:clamp(42px,3.2vw,52px);
+  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:10px;
+  padding:clamp(9px,.7vw,13px) clamp(13px,.9vw,19px);min-height:clamp(46px,3.2vw,54px);
 }
-.btn.wide{width:100%;font-size:clamp(18px,1.3vw,23px);padding:clamp(14px,1.1vw,20px)}
+.btn.wide{
+  width:100%;font-size:clamp(19px,1.4vw,25px);padding:clamp(15px,1.1vw,21px);
+  border-radius:var(--r);box-shadow:var(--slab);
+}
+.btn.wide:active:not(:disabled){transform:translateY(var(--lift));box-shadow:var(--slab-down)}
+.btn.wide:disabled{transform:translateY(var(--lift));box-shadow:var(--slab-down)}
 
 /* a text link that is still a real button */
 .linkbtn{
@@ -141,32 +224,46 @@ h1,h2,h3{font-weight:500}
 }
 
 /* ---- meters ---- */
-.bar,.vbar,.secbar,.dbar,.notobar{background:#03181c;border:1px solid #0e3a40;overflow:hidden}
-.bar{height:7px;margin-top:7px}
+.bar,.vbar,.secbar,.dbar,.notobar{
+  background:#020f12;border:none;border-radius:var(--r-pill);overflow:hidden;
+  box-shadow:var(--well);
+}
+.bar i,.vbar i,.secbar i,.dbar i,.notobar i{
+  border-radius:var(--r-pill);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.bar{height:12px;margin-top:9px}
 .bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .bar i.low{background:var(--yel)}
 .bar i.crit{background:var(--red)}
-.vbar{height:11px;margin-top:7px}
+.vbar{height:14px;margin-top:9px}
 .vbar i{display:block;height:100%;background:linear-gradient(90deg,#2c5a8a,#7ab0e0);transition:width 1s linear}
 .vbar.done i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
-.secbar{height:8px;margin-top:6px}
+.secbar{height:12px;margin-top:8px}
 .secbar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
 .secbar.clear i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
-.dbar{height:8px;margin-top:5px}
+.dbar{height:11px;margin-top:7px}
 .dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
 
 /* ---- small type ---- */
 .pips{color:var(--gold);letter-spacing:2px;font-size:16px}
 
 .tag,.mtype,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
-.tag{padding:3px 9px;border-left:3px solid;color:var(--ink);background:rgba(0,0,0,.4)}
+.tag{
+  padding:5px 12px;border-left:4px solid;border-radius:0 8px 8px 0;
+  color:var(--ink);background:linear-gradient(180deg,#12363e,#08222a);
+  box-shadow:var(--slab-sm);
+}
 .t0{border-color:var(--grn);color:var(--grn)}
 .t1{border-color:var(--yel);color:var(--yel)}
 .t2{border-color:var(--org);color:var(--org)}
 .t3{border-color:var(--red);color:var(--red)}
 .tag.gold{border-color:var(--gold);color:var(--goldhi)}
 .tag.blu{border-color:var(--blu);color:#bcd8f0}
-.mtype{color:var(--dim);border:1px solid var(--line);padding:2px 9px}
+.mtype{
+  color:var(--dim);border:2px solid var(--line);border-radius:8px;padding:4px 11px;
+  background:rgba(2,14,17,.5);box-shadow:var(--well);
+}
 .mtype.boss{color:#f0b0a6;border-color:#8a463e}
 .mtype.gold{color:var(--goldhi);border-color:var(--brass)}
 .statechip{letter-spacing:1.5px}
@@ -228,14 +325,19 @@ h1,h2,h3{font-weight:500}
 /* ---- stat chips: one glyph, one number ----
    The house unit for anything numeric. Cards are meant to be read at a glance,
    so these replace prose like "SPD 8 · GUNS 3" wherever a number will do. */
-.chips{display:flex;flex-wrap:wrap;align-items:center;gap:5px 12px;margin-top:7px}
-.chips.tight{gap:4px 9px;margin-top:5px}
-.chips.big{gap:7px 16px}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px}
+.chips.tight{gap:4px;margin-top:5px}
+.chips.big{gap:8px}
 
+/* A chip is a little plate the number is stamped into, not floating text with
+   a picture next to it. The plate is what makes a row of numbers read as a
+   readout rather than as a sentence someone forgot to finish. */
 .chip{
   display:inline-flex;align-items:center;gap:5px;
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
+  padding:2px 10px 2px 2px;border-radius:var(--r-pill);
+  background:rgba(2,14,17,.5);box-shadow:var(--well);
 }
 .chip .chipic{width:max(40px,1.35em);height:max(40px,1.35em);flex-shrink:0;vertical-align:middle}
 .chip b{font-weight:500}

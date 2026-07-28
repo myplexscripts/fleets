@@ -3,16 +3,16 @@
 import { $, esc } from '../../core/dom.js';
 import { S } from '../../core/state.js';
 import { render } from '../../core/bus.js';
-import { actions } from '../../core/actions.js';
+import { actions, actionSource } from '../../core/actions.js';
 import { SCRAP_YIELD } from '../../data/materials.js';
 import {
   cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar, shipChips, chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
+import { hullBar, shipTiles, chip, chipRow, outOf, bagChips, priceChips, bag } from '../format.js';
 import { itemCard, itemAction, itemGrid, sect } from '../components.js';
-import { toast } from '../../fx/toast.js';
+import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
 import { now } from '../../core/dom.js';
@@ -24,7 +24,7 @@ export function renderPort() {
   let h = itemCard({
     icon: 'flag', name: f.name, sub: 'Flagship',
     held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
-    body: shipChips(f, chip('power', power(f), '', 'Power')) + hullBar(f),
+    body: shipTiles(f, power(f)) + hullBar(f),
     action: itemAction('Upgrade', 'goto', { tab: 'flag' }),
     cls: 'owned' + (fBusy ? ' atsea' : '')
   });
@@ -45,7 +45,7 @@ export function renderPort() {
         bz ? 'dim' : (c === 'CRIPPLED' ? 'bad' : c === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
       body: `<div class="shiprow">
           <div class="fleetship">${shipHTML(s.type, 'player', 1.0, bz ? 'sea' : '')}</div>
-          <div class="shipmeta">${shipChips(s, chip('power', power(s), '', 'Power'))}${hullBar(s)}</div>
+          <div class="shipmeta">${shipTiles(s, power(s))}${hullBar(s)}</div>
         </div>`,
       price: bz
         ? chipRow([chip('time', fmtDur((v.endsAt - now()) / 1000), 'dim', 'Home in')], 'tight')
@@ -66,20 +66,23 @@ export function renderPort() {
 export function doRepair(id) {
   const s = findShip(id);
   if (!s) return;
-  if (isBusy(id)) return toast('That ship is away trading. Wait for it to return.', 'bad');
+  if (isBusy(id)) return deny('She is at sea');
   if (s.hull >= s.max) return;
   const c = repairCost(s);
-  if (S.gold < c) return toast('Not enough gold to repair that ship.', 'bad');
+  if (S.gold < c) return deny(`Needs ${c} gold`);
+  const mend = s.max - s.hull;
   S.gold -= c;
   s.hull = s.max;
   play('repair');
-  toast('The ' + s.name + ' is fully repaired.');
+  say('+' + mend, 'ok', 'hull');
   render();
 }
 
 async function doScuttle(id) {
   if (id === 'FLAG') return;
-  if (isBusy(id)) return toast('That ship is away trading. Wait for it to return.', 'bad');
+  if (isBusy(id)) return deny('She is at sea');
+  /* Grabbed before the dialog: by the time it resolves the card is going. */
+  const from = actionSource();
   const s = findShip(id);
   if (!s) return;
   const yld = SCRAP_YIELD[s.type];
@@ -92,7 +95,7 @@ async function doScuttle(id) {
   if (!ok) return;
   grant(yld);
   S.ships = S.ships.filter(x => x.id !== id);
-  toast('The ' + s.name + ' scuttled.');
+  pop(from, bag(yld, 40), 'ok');
   render();
 }
 

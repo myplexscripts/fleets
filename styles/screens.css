@@ -76,7 +76,9 @@
   width:clamp(200px,17vw,320px);
 }
 .leg{
-  background:rgba(3,12,15,.85);padding:6px 10px 7px;border:1px solid rgba(30,80,88,.5);
+  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#071b21 100%);
+  padding:8px 12px 9px;border:2px solid var(--line);border-radius:var(--r-sm);
+  box-shadow:var(--slab-sm);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*80ms);
 }
 .legrow{
@@ -89,14 +91,16 @@
 .leg.lock .legrow{color:#5b787b}
 .legdone{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);color:var(--gold);letter-spacing:1px;margin-top:4px}
 
-.notobar{height:6px;margin-top:5px}
+.notobar{height:10px;margin-top:6px}
 .notobar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
 .notobar.full i{background:linear-gradient(90deg,#a02c22,#e06a5a)}
 
 .maphint{
-  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
   font-size:clamp(16px,1.05vw,18px);color:var(--ink);
-  background:rgba(3,12,15,.85);padding:7px 14px;border:1px solid rgba(30,80,88,.5);
+  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#071b21 100%);
+  padding:11px 16px;border:2px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--slab);
   letter-spacing:.6px;width:max-content;max-width:calc(100% - 24px);text-align:center;line-height:1.5;
 }
 
@@ -124,8 +128,9 @@
 }
 .calm .goodsgrid{animation:none}
 .goodcard{
-  background:var(--panel);border:1px solid var(--line);border-radius:3px;
-  padding:10px 11px;box-shadow:var(--bevel),0 2px 8px rgba(0,0,0,.4);
+  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#092128 100%);
+  border:2px solid var(--line);border-radius:var(--r);
+  padding:12px 13px;box-shadow:var(--slab-sm);
   display:flex;flex-direction:column;gap:7px;
 }
 .ghead{display:flex;align-items:center;gap:9px}
@@ -137,18 +142,19 @@
 
 /* ---- collectible sets (Captain's Quarters) ---- */
 .card.setdone{border-color:var(--brass);box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 26px rgba(217,201,138,.08)}
-.card.setdone::before,.card.setdone::after{border-color:var(--gold)}
-.setbar{height:6px;background:#03181c;border:1px solid #0e3a40;margin-top:7px;overflow:hidden}
-.setbar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
+.card.setdone{border-color:var(--gold)}
+.setbar{height:11px;background:#020f12;border:none;border-radius:var(--r-pill);margin-top:8px;overflow:hidden;box-shadow:var(--well)}
+.setbar i{display:block;height:100%;border-radius:var(--r-pill);background:linear-gradient(90deg,#8a5a2c,#d9c98a);box-shadow:inset 0 2px 0 rgba(255,255,255,.28);transition:width .6s ease}
 .setbar.full i{background:linear-gradient(90deg,#3f7a44,#d9c98a)}
 .pieces{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:9px}
 .piece{
-  display:flex;align-items:center;gap:7px;padding:5px 8px;
-  border:1px solid rgba(30,80,88,.5);background:rgba(0,0,0,.24);
+  display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:10px;
+  border:2px solid rgba(30,80,88,.5);background:rgba(2,14,17,.45);
+  box-shadow:var(--well);
   font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.5px;color:#5b787b;
 }
 .piece .ic{opacity:.35}
-.piece.got{border-color:var(--brass);background:rgba(58,47,20,.32);color:var(--goldhi)}
+.piece.got{border-color:var(--brass);background:linear-gradient(180deg,#4a3d1c,#2a2209);box-shadow:var(--slab-sm);color:var(--goldhi)}
 .piece.got .ic{opacity:1}
 
 /* Narrow screens: the legend becomes a short scrollable chip strip instead of a
@@ -186,8 +192,8 @@
 /* hero stats carry their own glyph above the number */
 .hero .hstat .hstatic{display:block;width:clamp(40px,3.4vw,58px);height:clamp(40px,3.4vw,58px);margin:0 auto 3px;opacity:.9}
 
-/* Ship rows carry five chips; keep them on one line where the width allows. */
-.shipmeta .chips,.flagcard .chips{gap:4px 10px;margin-top:6px}
+/* A ship's five numbers are a tile grid; the row only has to hold it. */
+.shipmeta .tiles,.flagcard .tiles{margin-top:8px}
 
 /* ---- upgrade rows ----
    Modelled on a console upgrade panel: name and level on the top line, what one
@@ -196,7 +202,7 @@
 .uprow .row{gap:10px}
 .uprow .row + .row{margin-top:9px}
 .uprow .chips{margin-top:0}
-.uprow > .chips{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.uprow > .chips{margin-top:9px;padding-top:9px;border-top:1px solid rgba(0,0,0,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .upline{
   display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:6px;
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;color:var(--dim);
@@ -225,12 +231,13 @@
 .legtoggle{
   position:absolute;top:10px;right:10px;z-index:5;
   width:56px;height:56px;display:flex;align-items:center;justify-content:center;
-  border:1px solid rgba(30,80,88,.7);border-radius:4px;
-  background:rgba(3,12,15,.85);cursor:pointer;
-  transition:background .2s,border-color .2s;
+  border:2px solid #2f7f8a;border-radius:var(--r-sm);
+  background:linear-gradient(180deg,#256e7c 0%,#1a5460 49%,#123f4a 51%,#0d2f38 100%);
+  box-shadow:var(--slab-sm);cursor:pointer;
+  transition:transform .1s ease,box-shadow .1s ease,filter .2s;
 }
-.legtoggle .ic{opacity:.75;transition:opacity .2s}
-.legtoggle:active{background:#123a41}
+.legtoggle .ic{opacity:.85;transition:opacity .2s}
+.legtoggle:active{transform:translateY(3px);box-shadow:var(--slab-down)}
 #mapwrap.nolegend .legtoggle .ic{opacity:.4}
 #mapwrap.nolegend .legend,
 #mapwrap.nolegend .maphint{display:none}

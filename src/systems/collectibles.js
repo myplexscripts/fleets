@@ -4,7 +4,6 @@ import { S } from '../core/state.js';
 import { SETS, PIECE_SET, DROP_POOLS } from '../data/collectibles.js';
 import { hasPiece, setComplete } from '../core/selectors.js';
 import { pick } from '../core/rng.js';
-import { toast } from '../fx/toast.js';
 import { play } from '../fx/sound.js';
 
 /* Add a named piece. Returns a description of what happened, or null if it was
@@ -18,12 +17,9 @@ export function awardPiece(name) {
   const set = SETS[setKey];
   const complete = set && setComplete(setKey);
 
-  setTimeout(() => {
-    play(complete ? 'victory' : 'relic');
-    toast(complete
-      ? `${set.n} — set complete.`
-      : `Collectible found: ${name}`, 'gold');
-  }, 900);
+  /* The award card is raised by whoever asked for the piece — outcomes.js
+     and voyages.js both do it — so all that is owed here is the sound. */
+  setTimeout(() => play(complete ? 'victory' : 'relic'), 900);
 
   return {
     name, setKey, complete,

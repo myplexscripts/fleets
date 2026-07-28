@@ -11,7 +11,7 @@ import { refreshTut, tutEvent, tutRewindToCombat } from '../ui/tutorial.js';
 import { wipe } from '../fx/wipe.js';
 import { play, ambience } from '../fx/sound.js';
 import { buzz } from '../fx/haptics.js';
-import { toast } from '../fx/toast.js';
+import { award } from '../fx/award.js';
 import { BT, gim, aliveE, aliveP } from './state.js';
 import { BattleScene, phaserReady } from './scene.js';
 import { blog, drawHud, lockOrders, showBanner, bannerOpen } from './hud.js';
@@ -346,7 +346,11 @@ export function endBattle(kind) {
 
     if (kind === 'win') tutEvent('battle:end');
     else if (tutRewindToCombat()) {
-      toast('Repair your ships in Port and try that patrol again.', 'bad');
+      award({
+        icon: 'hull', kind: 'Beaten Back', title: 'Repair and Try Again',
+        text: 'Patch your hulls in Port, then take that patrol on a second time.',
+        ok: 'To Port', sound: 'defeat'
+      });
     }
 
     b.onEnd(kind === 'win', b.enemies);

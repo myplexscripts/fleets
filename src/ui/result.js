@@ -24,7 +24,7 @@ import { shipHTML } from '../art/ships.js';
 import { chip, have, chipRow, outOf, tile, tileRow, bagTiles } from './format.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
-import { toast } from '../fx/toast.js';
+import { deny } from '../fx/pop.js';
 import { tutEvent, refreshTut } from './tutorial.js';
 
 /* What the loose fittings off a scuttled prize fetch. */
@@ -172,7 +172,7 @@ function capAct(i, mode, type) {
   const sub = el.querySelector('.sub');
 
   if (mode === 'capture') {
-    if (S.ships.length >= S.docks) return toast('Every berth is full, Captain.', 'bad');
+    if (S.ships.length >= S.docks) return deny('Every berth is full');
     S.ships.push(newShip(type, rnd(0.25, 0.45)));
     sub.textContent = 'Yours, damaged. Repair her in Port.';
   } else if (mode === 'salvage') {

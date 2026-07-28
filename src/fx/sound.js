@@ -13,7 +13,7 @@ const SND_PATHS = {
   board: 'audio/board.mp3', repair: 'audio/repair.mp3', toast: 'audio/toast.mp3',
   ambience: 'audio/ambience.mp3', boss_horn: 'audio/boss_horn.mp3', upgrade: 'audio/upgrade.mp3',
   telegraph: 'audio/telegraph.mp3', relic: 'audio/relic.mp3', depart: 'audio/depart.mp3',
-  arrive: 'audio/arrive.mp3', theme: 'audio/theme.mp3'
+  arrive: 'audio/arrive.mp3', theme: 'audio/theme.mp3', deny: 'audio/deny.mp3'
 };
 
 let ctx = null;
@@ -77,6 +77,9 @@ const synth = {
   board:    () => { noise(0.2, 'highpass', 1500, 0.25); osc('square', 330, 220, 0.01, 0.15, 0.12); },
   repair:   () => seq([440, 440, 520], 'triangle', 90, 0.005, 0.08, 0.15),
   toast:    () => osc('triangle', 990, 1180, 0.01, 0.12, 0.1),
+  /* "No." Two flat low notes — unmistakably a refusal, and short enough to
+     take on every mistap without becoming a nag. */
+  deny:     () => { osc('square', 196, 165, 0.005, 0.09, 0.09); setTimeout(() => osc('square', 147, 124, 0.005, 0.13, 0.09), 90); },
   upgrade:  () => seq([440, 554, 659, 880], 'triangle', 80, 0.005, 0.16, 0.13),
   boss_horn:() => { osc('sawtooth', 110, 82, 0.08, 1.1, 0.22); setTimeout(() => osc('sawtooth', 82, 62, 0.08, 1.4, 0.2), 340); },
   telegraph:() => seq([880, 880, 880], 'square', 150, 0.005, 0.1, 0.12),

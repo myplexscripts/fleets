@@ -14,6 +14,16 @@ const handlers = new Map();
 export function action(name, fn) { handlers.set(name, fn); }
 export function actions(map) { for (const k in map) handlers.set(k, map[k]); }
 
+/* The thing the player just pressed.
+
+   Feedback belongs on the control that caused it — "not enough gold" floating
+   off the Buy button is seen, the same words along the top of the screen are
+   not. Handlers are three or four calls deep from the click by the time they
+   know the answer, so rather than thread the element through every one of them,
+   the dispatcher parks it here and fx/pop.js reads it back. */
+let src = null;
+export const actionSource = () => (src && src.isConnected ? src : null);
+
 export function initActions() {
   document.addEventListener('click', ev => {
     const el = ev.target.closest && ev.target.closest('[data-act]');
@@ -22,6 +32,7 @@ export function initActions() {
     const fn = handlers.get(el.dataset.act);
     if (!fn) { console.warn('[actions] no handler for', el.dataset.act); return; }
     ev.preventDefault();
-    fn(el.dataset, el, ev);
+    src = el;
+    try { fn(el.dataset, el, ev); } finally { src = null; }
   });
 }

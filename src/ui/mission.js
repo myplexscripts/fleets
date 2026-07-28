@@ -45,10 +45,10 @@ import {
 } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
-import { chip, have, chipRow, bagChips, shipChips } from './format.js';
+import { chip, have, chipRow, bagChips, shipTiles } from './format.js';
 import { rail, railCard, reqBar } from './components.js';
 import { openSheet, closeSheet, setSheetFoot } from './sheet.js';
-import { toast } from '../fx/toast.js';
+import { deny } from '../fx/pop.js';
 import { play } from '../fx/sound.js';
 import { wipe } from '../fx/wipe.js';
 import { tutEvent, tutActive, tutAllowsMission, refreshTut } from './tutorial.js';
@@ -78,7 +78,7 @@ function drawFoes(r) {
 
 export function openMission(id) {
   if (!tutAllowsMission(id)) {
-    toast('Follow the highlighted marker to continue.', 'bad');
+    deny('Follow the marker');
     return;
   }
   const r = routeById(id);
@@ -129,7 +129,7 @@ function shipPicks(voyage, need) {
       tag: crip ? 'CRIPPLED' : atSea ? 'AT SEA' : (i > -1 ? slots[i] : ''),
       tagCls: crip ? 'bad' : atSea ? 'blu' : (voyage ? 'blu' : ''),
       sub: tname(s),
-      chips: shipChips(s, chip('power', power(s), '', 'Power'), need)
+      chips: shipTiles(s, power(s), need)
     });
   }).join(''), 'shipPicks');
 }
@@ -193,7 +193,7 @@ function drawMission() {
 
   /* ---- foot: the one button that commits ---- */
   setSheetFoot(`<div class="grid2">
-      <button class="btn" data-act="close-sheet">Cancel</button>
+      <button class="btn quiet" data-act="close-sheet">Cancel</button>
       <button class="btn ${panel.cls}" id="${panel.id}" ${panel.ready ? '' : 'disabled'} data-act="${panel.act}">${esc(panel.label)}</button>
     </div>`);
   refreshTut();

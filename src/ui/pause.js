@@ -10,7 +10,7 @@ import { actions } from '../core/actions.js';
 import { settings, toggleSetting } from '../core/settings.js';
 import { iconHTML } from '../art/icons.js';
 import { ambience, play } from '../fx/sound.js';
-import { toast } from '../fx/toast.js';
+import { deny } from '../fx/pop.js';
 import { confirmDlg } from './dialog.js';
 import { restartTut } from './tutorial.js';
 import { returnToTitle, enterGame } from './title.js';
@@ -94,7 +94,7 @@ async function toggleFullscreen() {
       await (el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen());
     }
   } catch (e) {
-    toast('This browser would not go fullscreen.', 'bad');
+    deny('This browser refused');
   }
   setTimeout(draw, 120);
 }
@@ -108,7 +108,6 @@ async function doRestartTutorial() {
   if (!ok) return;
   closePause();
   restartTut();
-  toast('Tutorial restarted.', 'blu');
 }
 
 async function doNewGame() {
@@ -121,7 +120,6 @@ async function doNewGame() {
   closePause();
   newGame();
   enterGame();
-  toast('A new logbook, and the same ocean.', 'gold');
 }
 
 async function doReturnToTitle() {

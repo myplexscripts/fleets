@@ -22,8 +22,7 @@ import { canPay, pay } from '../../core/selectors.js';
 import { chip, chipRow, outOf, priceChips } from '../format.js';
 import { itemCard, itemAction, itemGrid, stepper, sect } from '../components.js';
 import { updateRes } from '../hud.js';
-import { toast } from '../../fx/toast.js';
-import { pop } from '../../fx/pop.js';
+import { pop, deny } from '../../fx/pop.js';
 import { award } from '../../fx/award.js';
 import { play } from '../../fx/sound.js';
 
@@ -164,7 +163,7 @@ function sellGood(key, n) {
 
 function buyMat(key, n) {
   const m = MATERIALS[key], count = Math.max(1, +n || 1), cost = m.buy * count;
-  if (S.gold < cost) return toast(`Not enough gold — that is ${cost}.`, 'bad');
+  if (S.gold < cost) return deny(`Needs ${cost} gold`);
   S.gold -= cost;
   S.mats[key] += count;
   qty['m' + key] = 1;
@@ -175,7 +174,7 @@ function buyMat(key, n) {
 function buyBell() {
   if (S.bell >= MAX_BELL) return;
   const c = bellCost(S.bell);
-  if (!canPay(c)) return toast('Not enough to pay for that bell.', 'bad');
+  if (!canPay(c)) return deny('Cannot pay for that');
   pay(c);
   S.bell++;
   award({
@@ -188,7 +187,7 @@ function buyBell() {
 
 function buyDock() {
   const c = dockCost();
-  if (!canPay(c)) return toast('Not enough to pay for another berth.', 'bad');
+  if (!canPay(c)) return deny('Cannot pay for that');
   pay(c);
   S.docks++;
   play('upgrade');

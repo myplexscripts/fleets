@@ -8,8 +8,9 @@ import { anyBossReady, readyCount, fmtDur } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 import { updateRes, showPurse } from './hud.js';
 import { wipe } from '../fx/wipe.js';
-import { toast } from '../fx/toast.js';
+import { deny, pop } from '../fx/pop.js';
 import { play } from '../fx/sound.js';
+import { buzz } from '../fx/haptics.js';
 import { refreshTut, tutLockedTab, tutEvent } from './tutorial.js';
 import { renderPort } from './screens/port.js';
 import { renderFlagship } from './screens/flagship.js';
@@ -41,7 +42,7 @@ export function gotoTab(t, immediate) {
   if (t === tab) return;
   const locked = tutLockedTab();
   if (locked && locked !== t) {
-    toast('Finish this tutorial step first, or skip it below.', 'bad');
+    deny('Finish this step first');
     return;
   }
   const swap = () => { tab = t; render(); tutEvent('tab:' + t); };
@@ -92,10 +93,15 @@ export function startTicker() {
       i.style.width = Math.max(0, Math.min(100, (1 - left / tot) * 100)) + '%';
     });
 
-    /* Render exactly once, on the transition to "a fleet has docked". */
+    /* Render exactly once, on the transition to "a fleet has docked".
+
+       The notice is the nav rail itself: the At Sea tab takes a green badge and
+       throws the word up off its own icon, so it is announced where the player
+       has to go rather than somewhere they have to have been looking. */
     if (rdy > lastReady) {
       play('arrive');
-      toast('A fleet has docked. Collect the reward in At Sea.', 'blu');
+      buzz('win');
+      if (tab !== 'voy') pop($('tabVoy'), 'Docked', 'ok', 'anchor');
       if (tab === 'voy' || tab === 'fleet') render();
     }
     lastReady = rdy;
