@@ -20,12 +20,22 @@ let shipSeq = 1, voySeq = 1;
 
 const zeroed = keys => keys.reduce((o, k) => { o[k] = 0; return o; }, {});
 
+/* A name nobody in the fleet is already using. Two ships called Petrel is a
+   real problem the moment you have to pick one off a list, and captures happen
+   often enough that a straight random pick collides regularly. */
+function freeName() {
+  const taken = new Set([S && S.flag ? S.flag.name : '', ...((S && S.ships) || []).map(s => s.name)]);
+  const free = NAMES.filter(n => !taken.has(n));
+  const pool = free.length ? free : NAMES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 export function newShip(type, hullPct) {
   const t = TYPES[type];
   return {
     id: 's' + (shipSeq++) + '_' + (Date.now() % 100000),
     type,
-    name: NAMES[Math.floor(Math.random() * NAMES.length)],
+    name: freeName(),
     hull: Math.max(1, Math.round(t.hull * (hullPct ?? 1))),
     max: t.hull, speed: t.speed, guns: t.guns, cargo: t.cargo
   };

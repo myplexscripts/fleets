@@ -163,10 +163,14 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
     }
 
     const reg = data.byRegion[rk];
+    /* Hunts and convoys both go quiet for a while after you take them, so the
+       floor is what is left standing with both of them cleared. */
+    const standing = reg.battles.filter(t => t !== 'hunt' && t !== 'convoy').length;
     console.log(`    chart      ${reg.battles.length} fights [${reg.battles.join(', ') || 'none'}], `
-      + `${reg.voyages} voyages`);
-    if (reg.battles.length < 3) bad.push(`${rk}: only ${reg.battles.length} fights on the chart — needs 3`);
+      + `${standing} of them permanent, ${reg.voyages} voyages`);
+    if (standing < 3) bad.push(`${rk}: only ${standing} permanent fights — needs 3 with the respawners cleared`);
     if (!reg.battles.includes('hunt')) bad.push(`${rk}: no hunting ground — nothing that never runs out`);
+    if (!reg.battles.includes('convoy')) bad.push(`${rk}: no convoy — nowhere to take trade goods by force`);
     console.log('');
   }
 

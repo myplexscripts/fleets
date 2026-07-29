@@ -6,7 +6,7 @@
    thing in the game that lowers danger. */
 
 import { S, syncFlag } from '../core/state.js';
-import { PATROL_MS, HUNT_COOLDOWN_MS } from '../core/config.js';
+import { PATROL_MS, HUNT_COOLDOWN_MS, CONVOY_COOLDOWN_MS } from '../core/config.js';
 import { now } from '../core/dom.js';
 import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
@@ -15,7 +15,7 @@ import { fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger }
 import { addNoto } from './wanted.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { clearDraw } from './enemies.js';
-import { goodsHaul, matsHaul } from './loot.js';
+import { goodsHaul, matsHaul, convoyHaul } from './loot.js';
 import { showResult } from '../ui/result.js';
 import { award } from '../fx/award.js';
 import { buzz } from '../fx/haptics.js';
@@ -51,11 +51,22 @@ export function battleVictory(route, enemies) {
   grant(route.rew);
   S.done[route.id] = (S.done[route.id] || 0) + 1;
   const noto = addNoto(route);
-  const spoils = { goods: goodsHaul(route.region, route.danger), mats: matsHaul(route.region, route.danger) };
+  /* A convoy is a fight you pick for its cargo, so the cargo is not a maybe. */
+  let holds = null;
+  const spoils = {
+    goods: route.type === 'convoy' ? null : goodsHaul(route.region, route.danger),
+    mats: matsHaul(route.region, route.danger)
+  };
 
   let msg = 'The water is yours. What was floating out here is not any more.';
 
-  if (route.type === 'hunt') {
+  if (route.type === 'convoy') {
+    /* Taken. The lane goes quiet until the next sailing. */
+    S.hunts[route.id] = now() + CONVOY_COOLDOWN_MS;
+    holds = convoyHaul(route.region, route.danger);
+    msg = 'Her escort is broken and her holds are open. This is what the trade '
+      + 'looks like when somebody else has done the carrying.';
+  } else if (route.type === 'hunt') {
     /* Cleared. The next one along will be somebody else entirely — the draw is
        forgotten above, and the ground itself goes quiet until they arrive. */
     S.hunts[route.id] = now() + HUNT_COOLDOWN_MS;
@@ -76,7 +87,7 @@ export function battleVictory(route, enemies) {
   }
 
   battleDrop();
-  showResult({ route, success: true, msg, spoils, captives: prizesFrom(enemies), noto });
+  showResult({ route, success: true, msg, spoils, holds, captives: prizesFrom(enemies), noto });
 }
 
 /* Clearing a cargo lane: the fight you may take on a lane that has gone bad,

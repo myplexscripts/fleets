@@ -17,6 +17,8 @@
      5. Switching tabs lands you at the top of the new screen.
      6. A better bell puts deeper wrecks on the chart, and a wreck you have
         emptied comes off it.
+     7. The chart zooms, and every port sits on land.
+     8. Every region offers a convoy, and no two ships in a fleet share a name.
 
    Run:  node tools/check-mechanics.js [url] */
 
@@ -325,6 +327,45 @@ catch (e) {
   console.log(`   ports on a coast: ${ashore.length - adrift.length}/${ashore.length}`);
   if (!ashore.length) bad.push('no port markers found to check against the coast');
   if (adrift.length) bad.push('ports drawn in open water: ' + adrift.map(x => x.id).join(', '));
+
+  /* ---- 8. convoys, and names that are actually names ---- */
+  console.log('8. every region carries a convoy, and no two hulls share a name');
+  const convoys = await p.evaluate(async () => {
+    const routes = await import('/src/data/routes.js');
+    const world = await import('/src/data/world.js');
+    const rs = routes.makeRoutes();
+    const out = {};
+    for (const rk in world.REGIONS) {
+      out[rk] = rs.filter(r => r.region === rk && r.type === 'convoy' && !r.requiresBoss).length;
+    }
+    return out;
+  });
+  console.log('   convoys: ' + JSON.stringify(convoys));
+  for (const rk in convoys) if (!convoys[rk]) bad.push(rk + ' has no convoy to take');
+
+  /* A convoy is worth taking because of what is in it. */
+  const holds = await p.evaluate(async () => {
+    const loot = await import('/src/systems/loot.js');
+    const st = await import('/src/core/state.js');
+    const before = Object.values(st.S.goods).reduce((a, n) => a + n, 0);
+    const got = loot.convoyHaul('caribbean', 1);
+    const after = Object.values(st.S.goods).reduce((a, n) => a + n, 0);
+    return { kinds: got.length, gained: after - before };
+  });
+  console.log(`   a Caribbean convoy carries ${holds.kinds} kinds, ${holds.gained} units`);
+  if (holds.kinds < 2) bad.push('a convoy carried fewer than two kinds of goods');
+  if (holds.gained < 8) bad.push('a convoy carried only ' + holds.gained + ' units — not worth the fight');
+
+  /* Twenty captures, no repeated names. */
+  const names = await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    st.S.ships = [];
+    for (let i = 0; i < 20; i++) st.S.ships.push(st.newShip('brig', 1));
+    const all = [st.S.flag.name, ...st.S.ships.map(s => s.name)];
+    return { all, uniq: new Set(all).size };
+  });
+  console.log(`   ${names.all.length} hulls, ${names.uniq} distinct names`);
+  if (names.uniq !== names.all.length) bad.push('two ships in one fleet share a name');
 
   await b.close();
   console.log('\n=== ' + bad.length + ' problem(s) ===');

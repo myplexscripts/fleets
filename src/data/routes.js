@@ -52,6 +52,9 @@ export function makeRoutes() {
     { id: 'ch1', region: 'caribbean', n: 'The Leeward Shipping Lanes', type: 'hunt',
       danger: 1, rew: { gold: 220 }, x: 196, y: 316 },
 
+    { id: 'cv1', region: 'caribbean', n: 'The Sugar Convoy', type: 'convoy',
+      danger: 1, rew: { gold: 180 }, x: 150, y: 388 },
+
     /* ---- Gulf Coast ---- */
     { id: 'g1', region: 'gulf', n: 'Tortuga → New Orleans', type: 'cargo',
       good: 'rum', qty: 18, power: 30, speed: 5, dest: 'New Orleans', riseMin: 20, dangerCap: 2, danger: 1, len: 3,
@@ -74,6 +77,9 @@ export function makeRoutes() {
     { id: 'gh1', region: 'gulf', n: 'The Florida Straits', type: 'hunt',
       danger: 2, rew: { gold: 520 }, x: 178, y: 292 },
 
+    { id: 'cv2', region: 'gulf', n: 'The Tobacco Fleet', type: 'convoy',
+      danger: 2, rew: { gold: 460 }, x: 96, y: 206 },
+
     /* ---- Atlantic ---- */
     { id: 'a1', region: 'atlantic', n: 'Charleston Wine Run', type: 'cargo',
       good: 'wine', qty: 26, power: 58, speed: 6, dest: 'Charleston', riseMin: 15, dangerCap: 2, danger: 2, len: 4,
@@ -93,6 +99,9 @@ export function makeRoutes() {
     { id: 'ah1', region: 'atlantic', n: 'The Open Atlantic', type: 'hunt',
       danger: 2, rew: { gold: 980 }, x: 372, y: 194 },
 
+    { id: 'cv3', region: 'atlantic', n: 'The Wine Fleet', type: 'convoy',
+      danger: 2, rew: { gold: 900 }, x: 246, y: 292 },
+
     /* ---- Grand Fleet Route ----
        This region used to hold one locked dive and one locked cargo run, so the
        endgame was twenty-five cargo deliveries with nothing to fight while the
@@ -108,6 +117,9 @@ export function makeRoutes() {
 
     { id: 'grh1', region: 'grand', n: 'The Grand Banks', type: 'hunt',
       danger: 2, rew: { gold: 1600 }, x: 62, y: 118 },
+
+    { id: 'cv4', region: 'grand', n: 'The Spice Indiamen', type: 'convoy',
+      danger: 2, rew: { gold: 1500 }, x: 138, y: 22 },
 
 
     { id: 'gr1', region: 'grand', n: 'The Grand Fleet Route', type: 'cargo',

@@ -333,11 +333,13 @@ export function bossAsRoute(b) {
 
 /* Every mission currently on the chart: fixed nodes plus one node per charted
    port — a charter if one is on offer there, otherwise its cargo contract. */
-/* A hunting ground you have just cleared is empty for a while. Somebody else
-   always comes — that is what a bounty on your head buys you — but not the
-   same afternoon, and not the same three ships. */
+/* Two kinds of marker come back rather than staying put: a hunting ground you
+   have just cleared, and a convoy you have just taken. Both are empty for a
+   while and then somebody else is out there — which is the whole difference
+   between a place on a chart and an event that happens at one. */
+const RESPAWNS = ['hunt', 'convoy'];
 export const huntCoolLeft = id => Math.max(0, (S.hunts[id] || 0) - now());
-export const huntUp = r => r.type !== 'hunt' || huntCoolLeft(r.id) <= 0;
+export const huntUp = r => !RESPAWNS.includes(r.type) || huntCoolLeft(r.id) <= 0;
 
 export function allRoutes() {
   const out = routes.filter(r =>

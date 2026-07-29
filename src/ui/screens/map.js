@@ -199,6 +199,11 @@ function nodeShape(r, col, k) {
          + `<rect x="${x - s * 1.7}" y="${y - s * 0.3}" width="${s * 3.4}" height="${s * 0.6}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1"/>`;
   if (r.type === 'escort')                          // square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  if (r.type === 'convoy')                          // three hulls in a line
+    return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
+         + [-0.62, 0, 0.62].map(o =>
+             `<rect x="${x - s * 0.7}" y="${y + o * s * 0.62 - s * 0.16}" width="${s * 1.4}"`
+             + ` height="${s * 0.32}" rx="${s * 0.16}" fill="#1a0d08"/>`).join('');
   if (r.type === 'hunt')                            // crossed blades: open water
     return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
          + `<path d="M${x - s * 0.62},${y - s * 0.62} L${x + s * 0.62},${y + s * 0.62}`
@@ -447,14 +452,14 @@ export function renderMap() {
    It lists only what is actually drawn right now, which is what keeps it both
    complete and short: the Caribbean alone needs five entries, an admiral adds
    hers the moment she sails, and a shape can never appear unnamed. */
-const KEY_ORDER = ['cargo', 'dive', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
+const KEY_ORDER = ['cargo', 'dive', 'convoy', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
 const KEY_WORD = {
-  cargo: 'Cargo', dive: 'Wreck', hunt: 'Hunt', patrol: 'Patrol', escort: 'Escort',
+  cargo: 'Cargo', dive: 'Wreck', convoy: 'Convoy', hunt: 'Hunt', patrol: 'Patrol', escort: 'Escort',
   raid: 'Raid', blockade: 'Blockade', charter: 'Charter',
   boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
-  cargo: '#63c06a', dive: '#7ab0e0', hunt: '#e0a03a', patrol: '#e0a03a', escort: '#e0a03a',
+  cargo: '#63c06a', dive: '#7ab0e0', convoy: '#c9a24e', hunt: '#e0a03a', patrol: '#e0a03a', escort: '#e0a03a',
   raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae',
   boss: '#f0b0a6', beaten: '#d9c98a'
 };

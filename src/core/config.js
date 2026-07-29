@@ -56,6 +56,11 @@ export const FREE_REPAIR_TO = 0.6;
    still true — every region keeps three other fights while this one is quiet. */
 export const HUNT_COOLDOWN_MS = 4 * 60 * 1000;
 
+/* And how long a shipping lane stays quiet after a convoy is taken. Longer
+   than a hunt: a convoy is a sailing, not a person, and they do not run one
+   the same afternoon you emptied the last. */
+export const CONVOY_COOLDOWN_MS = 7 * 60 * 1000;
+
 /* An enemy line-up is drawn once and stays drawn until it is fought or the
    water it came from changes. Reopening a mission used to redraw it, which was
    a reroll wearing a disguise. */
