@@ -17,7 +17,19 @@
    of them, which makes it not a choice but a mistake with a button on it.
 
    The screen will not close until every prize has been answered for — deciding
-   is the reward. */
+   is the reward.
+
+   It runs as a sequence rather than a page. Every prize used to be stacked down
+   one long scroll, which turned three captures into a wall of near-identical
+   cards to scroll through and answer in the wrong order — the decisions were
+   fine and the shape around them was a form to fill in. Now:
+
+     1. the haul, and what happened
+     2. each prize on its own, one card at a time, counted "2 of 3"
+     3. the account: the total, climbing, and the wanted bar moving
+
+   Same decisions, one at a time, and a payoff at the end that is worth getting
+   to. */
 
 import { $, qsa, esc, reflow } from '../core/dom.js';
 import { S, save, newShip } from '../core/state.js';
@@ -32,7 +44,7 @@ import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
 import { shipHTML } from '../art/ships.js';
 import { iconHTML } from '../art/icons.js';
-import { chip, have, chipRow, outOf, tile, tileRow, bagTiles, matName } from './format.js';
+import { tile, tileRow, bagTiles, matName } from './format.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
 import { play } from '../fx/sound.js';
@@ -99,7 +111,7 @@ function drawTally() {
 
   $('rHead').innerHTML = `<div class="rverdict good">The Account</div>
     <div class="rwhere">What the fight was worth</div>`;
-  $('rBody').innerHTML = `<div class="tally">${rows.join('')}</div>`;
+  $('rBody').innerHTML = `<div class="tally">${rows.join('')}</div>${wantedMeter()}`;
   $('rBody').scrollTop = 0;
   $('rFoot').innerHTML = `<button class="btn gold wide" data-act="close-result">Continue</button>`;
 
@@ -109,6 +121,53 @@ function drawTally() {
     const to = +el.dataset.to || 0;
     setTimeout(() => { countUp(el, to, 520); play('coin'); }, 220 + n * 130);
   });
+
+  /* And then the bar moves, last, after the money has finished counting — it is
+     the consequence of the haul rather than part of it. */
+  const fill = $('rWanted');
+  if (fill) {
+    setTimeout(() => {
+      fill.style.width = fill.dataset.to;
+      if (fill.dataset.ready) {
+        setTimeout(() => {
+          const w = fill.closest('.wmeter');
+          if (w) w.classList.add('ready');
+          play('boss_horn');
+        }, 900);
+      }
+    }, 260 + i * 130);
+  }
+}
+
+/* How badly you are wanted in this water, before and after.
+
+   The same shape as the fill on the region card, so the thing that just moved
+   here is recognisably the thing that will be moved when the chart comes back —
+   and it moves ON this screen, from where it was to where it is, rather than
+   simply being drawn at its new value. */
+function wantedMeter() {
+  const b = BOSSES[wantedRegion];
+  if (!b || !b.noto || S.bossBeaten[wantedRegion]) return '';
+  const need = b.noto;
+  const now_ = Math.min(wantedOf(wantedRegion), need);
+  const was = Math.min(wantedWas, need);
+  if (now_ === was) return '';
+
+  const pct = n => Math.round(n / need * 100) + '%';
+  const up = now_ > was;
+  const ready = now_ >= need;
+
+  return `<div class="wmeter" style="--i:0">
+    <div class="wmlbl">
+      <span>${esc(REGIONS[wantedRegion].n)} — wanted</span>
+      <b class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(now_ - was)}</b>
+    </div>
+    <div class="wmbar"><i id="rWanted" style="width:${pct(was)}"
+      data-to="${pct(now_)}"${ready ? ' data-ready="1"' : ''}></i></div>
+    <div class="wmfoot">${ready
+      ? `${esc(b.n)} has had enough of you. She is out there now.`
+      : `${need - now_} more and ${esc(b.n)} comes looking for you.`}</div>
+  </div>`;
 }
 
 /* A captain's strongbox, as a multiple of what her crew would have fetched.
@@ -117,8 +176,14 @@ function drawTally() {
 const CHEST_MULT = 2.2;
 const chestValue = t => Math.round(t.ransom * CHEST_MULT);
 
-/* Prizes still waiting on a decision. */
+/* The prizes still to be answered for, and where in that queue we are. The
+   screen is a sequence now, so it has to remember its own place. */
+let queue = [];
+let atPrize = 0;
 let pending = 0;
+/* The wanted level before this fight, so the account can show it move. */
+let wantedWas = 0;
+let wantedRegion = '';
 
 export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, spoils = null, holds = null, fromVoyage = false }) {
   const paid = { ...(route.rew || {}) };
@@ -132,6 +197,10 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
      account at the end is a total rather than a guess. */
   ledger = newLedger();
   tallyShown = false;
+  /* Read before anything is granted: `noto` has already been added to the save
+     by the time we are called, so "before" is where it stands minus the gain. */
+  wantedRegion = route.region;
+  wantedWas = Math.max(0, wantedOf(route.region) - (noto || 0));
   if (success) {
     logBag(paid);
     if (spoils && spoils.mats) logBag(spoils.mats);
@@ -150,51 +219,23 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   if (lines.length) {
     h += `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>`;
   }
-  h += notoRow(route, noto);
+  /* How wanted this made you is not mentioned here. It used to be a chip
+     reading "34/100" in the middle of the report, which is both the scale the
+     rest of the game stopped showing and a number nobody can do anything with
+     at that moment. It has a bar on the account at the end instead, where it
+     moves from where it was to where it is.
 
-  if (captives.length) {
-    h += `<div class="sect" style="--i:1">Prizes of War</div>
-      <div class="sub center prizehint" id="prizeHint">${captives.length === 1
-        ? 'Decide what becomes of her.' : 'Decide what becomes of each of them.'}</div>`;
-    /* Every prize card is laid out identically — her four numbers on a fixed
-       four-column grid, then one row per choice with the winnings on the same
-       grid again. Two cards side by side line up column for column, so the
-       cost of keeping one and the yield of scuttling the other can be read
-       against each other without counting. */
-    captives.forEach((e, i) => {
-      const t = TYPES[e.type], full = S.ships.length >= S.docks;
-      /* Her numbers here are stock numbers for her class, not the ones she was
-         fighting with. You took a hull; her guns and her people went to the
-         bottom with the ones who were using them. */
-      h += `<div class="card prizecard${e.chest ? ' chesty' : ''}" style="--i:${i + 2}" id="cap${i}">
-        <div class="prizehead">
-          <div class="prizeart">${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
-          <h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
-          ${e.chest ? '<span class="tag gold">STRONGBOX</span>' : ''}
-        </div>
-        ${tileRow([
-          tile('speed', t.speed, 'dim', 'Speed'),
-          tile('guns', t.guns, 'dim', 'Guns'),
-          tile('hull', t.hull, 'dim', 'Hull'),
-          tile('cargo', t.cargo, 'dim', 'Cargo space')
-        ], 'grid4')}
-        <div class="sub"></div>
-        <div class="prizeopts">
-          ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Docks free')], 'grid4'),
-            'Keep', i, 'capture', e.type, full, 'gold')}
-          ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
-            'Scuttle', i, 'salvage', e.type)}
-          ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom for her crew')], 'grid4'),
-            'Ransom', i, 'ransom', e.type)}
-          ${e.chest ? prizeOpt(tileRow([tile('chest', chestValue(t), 'gold', "The captain's own strongbox")], 'grid4'),
-            "Captain's Chest", i, 'chest', e.type, false, 'gold') : ''}
-        </div></div>`;
-    });
-  }
+     The prizes are not built here either — they come up one at a time on the
+     way out, each replacing the last. See nextPrize(). */
+  h += '<div id="prizeSlot"></div>';
+
   $('rBody').innerHTML = h;
   $('rBody').scrollTop = 0;
 
+  queue = captives.slice();
+  atPrize = 0;
   pending = captives.length;
+  if (pending) nextPrize();
   drawFoot();
   openResult();
 
@@ -227,15 +268,55 @@ function strongbox(paid, sp, holds) {
   return `<div class="strongbox"><div class="sboxlbl">Taken</div>${inner}</div>`;
 }
 
-/* Notoriety as a bar reading: what this added, and where the region stands. */
-function notoRow(route, noto) {
-  if (!noto) return '';
-  const need = BOSSES[route.region] ? BOSSES[route.region].noto : 0;
-  const cur = wantedOf(route.region);
-  return `<div class="spoils"><span class="spoilslbl">${esc(REGIONS[route.region].n)}</span>${chipRow([
-    chip('noto', '+' + noto, 'ok', 'Gained'),
-    need ? have('noto', cur, need, 'Notoriety toward the admiral') : ''
-  ], 'tight')}</div>`;
+
+/* ---- the prizes, one at a time ----
+
+   Each captured hull gets the whole slot to herself. Her four numbers sit on a
+   fixed four-column grid and every choice below repeats that grid, so what
+   keeping her costs and what scuttling her yields line up column for column and
+   can be read against each other without counting.
+
+   Her numbers are stock numbers for her class, not the ones she was fighting
+   with. You took a hull; her guns and her people went to the bottom with the
+   people who were using them. */
+function nextPrize() {
+  const slot = $('prizeSlot');
+  if (!slot) return;
+  const e = queue[atPrize];
+  if (!e) { slot.innerHTML = ''; return; }
+
+  const t = TYPES[e.type], full = S.ships.length >= S.docks;
+  const i = atPrize;
+  const many = queue.length > 1;
+
+  slot.innerHTML = `<div class="sect" style="--i:1">Prizes of War</div>
+    <div class="sub center prizehint" id="prizeHint">
+      ${many ? `<b class="prizecount">${i + 1} of ${queue.length}</b> — ` : ''}Decide what becomes of her.
+    </div>
+    <div class="card prizecard${e.chest ? ' chesty' : ''}" style="--i:2" id="cap${i}">
+      <div class="prizehead">
+        <div class="prizeart">${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
+        <h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
+        ${e.chest ? '<span class="tag gold">STRONGBOX</span>' : ''}
+      </div>
+      ${tileRow([
+        tile('speed', t.speed, 'dim', 'Speed'),
+        tile('guns', t.guns, 'dim', 'Guns'),
+        tile('hull', t.hull, 'dim', 'Hull'),
+        tile('cargo', t.cargo, 'dim', 'Cargo space')
+      ], 'grid4')}
+      <div class="sub"></div>
+      <div class="prizeopts">
+        ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Docks free')], 'grid4'),
+          'Keep', i, 'capture', e.type, full, 'gold')}
+        ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
+          'Scuttle', i, 'salvage', e.type)}
+        ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom for her crew')], 'grid4'),
+          'Ransom', i, 'ransom', e.type)}
+        ${e.chest ? prizeOpt(tileRow([tile('chest', chestValue(t), 'gold', "The captain's own strongbox")], 'grid4'),
+          "Captain's Chest", i, 'chest', e.type, false, 'gold') : ''}
+      </div></div>`;
+  refreshTut();
 }
 
 /* One prize choice: what you get on the left, the button that takes it right —
@@ -268,9 +349,10 @@ export function closeResult() {
   if (pending) return;                     // decisions first
 
   /* One more screen on the way out: the total. It only appears when there is
-     something to total — a lost battle closes straight away rather than
-     showing an empty ledger. */
-  if (!tallyShown && !ledgerEmpty()) {
+     something to say — a lost battle that earned nothing and moved nothing
+     closes straight away rather than showing an empty ledger. A fight that paid
+     nothing but stirred the water still has the wanted bar to show. */
+  if (!tallyShown && (!ledgerEmpty() || wantedMeter())) {
     tallyShown = true;
     play('victory');
     drawTally();
@@ -319,13 +401,28 @@ function capAct(i, mode, type) {
   el.classList.add('decided');
 
   pending = Math.max(0, pending - 1);
+  atPrize++;
   drawFoot();
-  const hint = $('prizeHint');
-  if (hint && !pending) hint.remove();
 
   updateRes();
   save();
   tutEvent('prize');
+
+  /* Let the decision land — the card says what became of her and settles — and
+     then bring the next one up. Swapping instantly would make three prizes feel
+     like one card flickering. */
+  const wait = queue[atPrize] ? 900 : 620;
+  setTimeout(() => {
+    if (!$('cap' + i)) return;              // screen closed under us
+    el.classList.add('gone');
+    setTimeout(() => {
+      if (queue[atPrize]) { nextPrize(); $('rBody').scrollTop = 0; }
+      else {
+        const slot = $('prizeSlot');
+        if (slot) slot.innerHTML = '';
+      }
+    }, 260);
+  }, wait);
 }
 
 actions({

@@ -603,3 +603,52 @@
   to{opacity:1;transform:none}
 }
 .calm .tallyrow{animation:none}
+
+/* ---- the wanted bar, on the account ----
+   Last thing on the screen and last thing to move: it is the consequence of the
+   haul, not part of it. Same fill and same colours as the region cards on the
+   chart, so what moved here is recognisably what will have moved there. */
+.wmeter{
+  margin-top:18px;padding:14px 16px 12px;border-radius:var(--r);
+  border:2px solid var(--line);background:linear-gradient(180deg,#12333c,#081c22);
+  box-shadow:var(--slab-sm);
+  animation:tallyIn .42s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:.32s;
+}
+.calm .wmeter{animation:none}
+.wmlbl{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-family:var(--ui);font-size:16px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--dim);
+}
+.wmlbl b{font-size:clamp(18px,1.6vw,24px);line-height:1}
+.wmlbl b.up{color:#f0a89a}
+.wmlbl b.down{color:var(--grn)}
+.wmbar{
+  height:16px;margin-top:9px;border-radius:var(--r-pill);overflow:hidden;
+  background:#020f12;box-shadow:var(--well);
+}
+.wmbar i{
+  display:block;height:100%;border-radius:var(--r-pill);
+  background:linear-gradient(180deg,#e8c96a,#b78f2c);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -2px 0 rgba(0,0,0,.25);
+  transition:width 1.1s cubic-bezier(.2,.9,.3,1);
+}
+.wmeter.ready .wmbar i{
+  background:linear-gradient(180deg,#e8705c,#a8331f);
+  animation:seapulse 1.2s ease-in-out infinite;
+}
+.calm .wmbar i{transition:none}
+.calm .wmeter.ready .wmbar i{animation:none}
+.wmfoot{
+  margin-top:9px;font-family:var(--ui);font-size:16px;
+  letter-spacing:.6px;color:var(--dim);text-align:center;
+}
+.wmeter.ready .wmfoot{color:#f0b0a6}
+
+/* ---- one prize at a time ----
+   A decided hull says what became of her, holds for a beat, then leaves so the
+   next one can have the screen. */
+.prizecount{color:var(--goldhi);letter-spacing:1.4px}
+.prizecard{transition:opacity .26s ease,transform .26s ease}
+.prizecard.gone{opacity:0;transform:translateX(-32px) scale(.96)}
+.calm .prizecard{transition:none}

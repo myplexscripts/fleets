@@ -97,8 +97,13 @@ export function startTicker() {
        the player's scroll position and restart card animations. */
     qsa('.clock[data-endsat]').forEach(el => {
       const left = (+el.dataset.endsat - now()) / 1000;
-      if (left <= 0) { el.textContent = 'READY'; el.classList.add('done'); }
-      else { el.textContent = fmtDur(left); el.classList.remove('done'); }
+      if (left > 0) { el.textContent = fmtDur(left); el.classList.remove('done'); return; }
+      /* Most countdowns are a thing arriving, and say so. Some are a thing
+         wearing off — a patrol that has run out has nothing to announce, it
+         just stops being true, so it takes its badge with it. */
+      const host = el.dataset.gone && el.closest(el.dataset.gone);
+      if (host) host.remove();
+      else { el.textContent = 'READY'; el.classList.add('done'); }
     });
     qsa('[data-voy] .vbar i').forEach(i => {
       const card = i.closest('[data-voy]');

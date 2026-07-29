@@ -246,11 +246,19 @@ export const wantedOf = rk => Math.max(0, Math.round(coolWanted(rk)));
 function coolWanted(rk) {
   const rec = S.wanted[rk];
   if (!rec) return 0;
+  /* A record from an older save, or a hand-edited one, can be a bare number
+     where this expects { v, ts }. NaN out of here does not throw — it becomes a
+     bar `width:NaN%`, which renders as empty, and a sentence reading "NaN more
+     and Commodore Vane comes looking for you". Wrong-but-silent is the worst
+     way for this to fail, so it is pinned to a number here. */
+  const v = Number(typeof rec === 'object' ? rec.v : rec);
+  if (!isFinite(v)) return 0;
   const b = BOSSES[rk];
   /* Latched: she has been summoned and is not going away. */
-  if (b && S.summoned[rk]) return Math.max(rec.v, b.noto);
-  const mins = (now() - (rec.ts || now())) / 60000;
-  return Math.max(0, rec.v - mins * WANTED_COOL_PER_MIN);
+  if (b && S.summoned[rk]) return Math.max(v, b.noto);
+  const ts = Number((rec && rec.ts) || now());
+  const mins = (now() - (isFinite(ts) ? ts : now())) / 60000;
+  return Math.max(0, v - mins * WANTED_COOL_PER_MIN);
 }
 
 export function addWanted(rk, n) {

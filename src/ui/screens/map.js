@@ -635,17 +635,31 @@ function buildRegionBar() {
     const b = BOSSES[rk], need = b ? b.noto : 1;
     const cur = Math.min(wantedOf(rk), need), done = S.bossBeaten[rk];
     const ready = cur >= need && !done;
+    const pct = done ? 0 : Math.round(cur / need * 100);
 
+    /* How wanted you are in this water is the card itself filling up, rather
+       than a gauge and a number sitting next to the name.
+
+       "37/100" is a reading to be taken; a card that is a third full is a thing
+       you glance at. The number never mattered anyway — nothing in the game is
+       priced off it and there is nothing to spend it on. All it ever had to say
+       was how close the admiral is, and a fill says that without being read. */
     const tail = done
       ? `<span class="seadone" title="${esc(b.n)} beaten">${iconHTML('flag', 40)}</span>`
-      : `<span class="seanoto ${ready ? 'ready' : ''}" title="${ready ? 'Admiral is out — go and fight her' : 'Wanted level in these waters'}">${iconHTML('noto', 40)}${cur}<i>/</i>${need}</span>`;
+      : (ready ? `<span class="seaout">${iconHTML('noto', 40)}OUT</span>` : '');
+
+    const title = done ? `${b.n} beaten`
+      : (ready ? 'The admiral is out — go and fight her'
+        : 'How badly you are wanted in these waters. Fill it and the admiral comes for you.');
 
     /* One line per sea. Anything with a glyph on it is 40px tall by the size
        floor, so a second row would double the strip for nothing. */
-    return `<div class="sea ${ready ? 'alert' : ''}" style="--i:${i}">
+    return `<div class="sea ${ready ? 'alert' : ''}${done ? ' beaten' : ''}"
+      style="--i:${i};--wanted:${pct}%" title="${esc(title)}">
       <b class="seaname">${esc(REGIONS[rk].n)}</b>
-      ${patrolActive(rk) ? `<span class="seapatrol" title="Patrol in force">${iconHTML('flag', 40)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : ''}
-      ${done ? '' : `<span class="notobar ${ready ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></span>`}
+      ${patrolActive(rk) ? `<span class="seapatrol" title="Patrol in force">${iconHTML('flag', 40)}`
+        + `<b class="clock" data-endsat="${S.patrol[rk]}" data-gone=".seapatrol">`
+        + `${fmtDur(patrolLeft(rk) / 1000)}</b></span>` : ''}
       ${tail}
     </div>`;
   }).join('');

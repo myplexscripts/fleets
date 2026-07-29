@@ -45,19 +45,22 @@ export function renderPort() {
   });
 
   /* Room for another ship is bought here rather than at a market counter,
-     because the thing it changes is right underneath it. */
+     because the thing it changes is right underneath it.
+
+     It used to be a full item card of its own — a glyph, a name, a subtitle and
+     a price row, all to say "+1". That is a lot of screen for a number that is
+     already on the line above it, and it pushed the fleet itself below the fold
+     on a phone. It is a button on the counter now: the count and the way to
+     raise it in the same place, which is where a player looking at "4/4" is
+     already looking. */
   const dc = dockCost();
   const full = S.ships.length >= S.docks;
-  h += sect('Your Ships', i++, chipRow([
-    outOf('crew', S.ships.length, S.docks, full ? 'warn' : '', 'Docks in use')], 'tight'));
-
-  h += itemCard({
-    icon: 'crew', name: 'Extra Dock', sub: 'Room for one more ship',
-    body: chipRow([chip('crew', '+1', 'ok', 'One more ship can be kept')], 'tight'),
-    price: priceChips(dc),
-    action: itemAction('Buy', 'buy-dock', {}, { disabled: !canPay(dc) }),
-    cls: 'dockcard'
-  });
+  h += sect('Your Ships', i++,
+    outOf('crew', S.ships.length, S.docks, full ? 'warn' : '', 'Docks in use')
+    + `<button class="btn sm gold dockbuy${full ? ' urge' : ''}" data-act="buy-dock"
+        ${canPay(dc) ? '' : 'disabled'}
+        title="Another dock — ${dc.gold} gold">${iconHTML('crew', 40)}
+        <span class="dockprice">${dc.gold}</span></button>`, 'sectctl');
 
   if (!S.ships.length) {
     h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships in port. Take one off an enemy.</div></div>`;

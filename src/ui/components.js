@@ -101,9 +101,14 @@ export function reqBar(chips, note) {
   return `<div class="reqbar">${chipRow(chips, 'big')}${note ? `<div class="reqnote">${note}</div>` : ''}</div>`;
 }
 
-/* A section label. The one heading style. */
-export const sect = (label, i, trail) =>
-  `<div class="sect" style="--i:${i || 0}">${esc(label)}${trail ? `<span class="secttrail">${trail}</span>` : ''}</div>`;
+/* A section label. The one heading style.
+
+   `cls` exists for the one case where a heading carries a control rather than a
+   reading — a label, a counter and a button is enough in a pill that sizes to
+   its contents to push the label itself onto two lines. */
+export const sect = (label, i, trail, cls) =>
+  `<div class="sect ${cls || ''}" style="--i:${i || 0}"><span class="sectlbl">${esc(label)}</span>`
+  + `${trail ? `<span class="secttrail">${trail}</span>` : ''}</div>`;
 
 /* A grid of item cards. Items size themselves; the grid only spaces them. */
 export const itemGrid = (items, cls) => `<div class="itemgrid ${cls || ''}">${items}</div>`;

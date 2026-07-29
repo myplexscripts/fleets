@@ -23,23 +23,35 @@ export const BATTLE_SHIPS = 3;
 
    Reload time is BASE / (1 + speed * PER_SPEED), floored so that a fully
    worked-up flagship cannot fire so fast that nothing else in the fight
-   matters. At these numbers a Man o' War (speed 2) takes about 3.3 seconds
-   between broadsides and a schooner (speed 8) about 1.7. */
-export const RELOAD_BASE_MS = 5200;
+   matters. At these numbers a Man o' War (speed 2) takes about 6.5 seconds
+   between broadsides and a schooner (speed 8) about 3.2.
+
+   These were half this to begin with, and half this was unreadable. Six hulls
+   on screen at a shot every 1.7 seconds is four or five things happening every
+   second — damage numbers, log lines, hull bars, meters — and no gap between
+   them wide enough to look at any of it, let alone decide something. The fight
+   was legible in aggregate and illegible in detail, which is the worst place
+   for an auto-battle to sit: it looked like it was playing itself.
+
+   At these numbers a broadside is an event. There is time to watch a meter
+   climb, see whose it is, and get a hand to Brace before it lands. */
+export const RELOAD_BASE_MS = 9800;
 export const RELOAD_PER_SPEED = 0.26;
-export const RELOAD_FLOOR_MS = 900;
+export const RELOAD_FLOOR_MS = 1800;
 
 /* The run-in. Sails on the horizon are not sails in range, so the first
    broadside of a battle takes longer to come than the ones after it — the first
    reload is stretched by this much.
 
-   It reads as ships closing, but it exists for a harder reason. A small fight
-   at these rates is over in four or five seconds, which is not enough time to
-   read the order bar, let alone decide to brace, board or run. Two ships against
-   two must not be able to destroy the player before the player has had a chance
-   to leave. The run-in buys those seconds once, at the start, without slowing
-   the rest of the fight down. */
-export const APPROACH_MULT = 2.4;
+   It reads as ships closing, but it exists for a harder reason: two ships
+   against two must not be able to destroy the player before the player has had
+   a chance to leave. The run-in buys those seconds once, at the start, without
+   slowing the rest of the fight down.
+
+   It was 2.4 when a reload was half what it is now. The seconds it had to buy
+   are in the reload itself these days, so it only has to be long enough to read
+   as a closing rather than as a stall. */
+export const APPROACH_MULT = 1.5;
 
 /* Bracing: what it costs you and what it buys. Damage taken is multiplied by
    BRACE_MULT for BRACE_MS, and your own reloads crawl while you are doing it —
