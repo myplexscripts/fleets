@@ -12,8 +12,9 @@ import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
 import { fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger } from '../core/selectors.js';
-import { addNoto } from './notoriety.js';
+import { addNoto } from './wanted.js';
 import { awardPiece, rollDrop } from './collectibles.js';
+import { clearDraw } from './enemies.js';
 import { goodsHaul, matsHaul } from './loot.js';
 import { showResult } from '../ui/result.js';
 import { award } from '../fx/award.js';
@@ -38,6 +39,7 @@ function battleDrop() {
 }
 
 export function battleVictory(route, enemies) {
+  clearDraw(route.id);
   grant(route.rew);
   S.done[route.id] = (S.done[route.id] || 0) + 1;
   const noto = addNoto(route);
@@ -45,7 +47,10 @@ export function battleVictory(route, enemies) {
 
   let msg = 'The water is yours. What was floating out here is not any more.';
 
-  if (route.type === 'patrol') {
+  if (route.type === 'hunt') {
+    msg = 'The water is yours for as long as it takes somebody else to come out here, '
+      + 'which in these lanes is not long.';
+  } else if (route.type === 'patrol') {
     /* Every lane in the region drops a step, and the water stays quiet for a
        while on top of that. This is the only way danger ever comes down. */
     S.patrol[route.region] = now() + PATROL_MS;
@@ -70,6 +75,7 @@ export function laneVictory(route, enemies) {
   /* Quoted on the sheet before the fight, so read the pay before clearing moves
      the lane out from under it. */
   const pay = lanePay(route);
+  clearDraw(route.id);
   const { before, after } = clearLane(route);
   grant(pay);
   S.done['lane_' + route.id] = (S.done['lane_' + route.id] || 0) + 1;
@@ -91,6 +97,7 @@ export function laneLoss(route) {
 }
 
 export function charterVictory(route, enemies) {
+  clearDraw(route.id);
   const c = route.charterDef;
   S.charters[c.id] = 1;
   grant(route.rew);

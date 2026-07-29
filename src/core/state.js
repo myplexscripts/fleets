@@ -6,11 +6,12 @@
 
 import { SAVE_KEY, TUT_KEY, PATROL_MS, GEM_TO_GOLD } from './config.js';
 import { TYPES, NAMES } from '../data/ships.js';
-import { FLAGBASE, BOONS } from '../data/flagship.js';
+import { FLAGBASE, FLAGTIERS, BOONS } from '../data/flagship.js';
 import { makeRoutes } from '../data/routes.js';
 import { GOOD_KEYS } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { PIECE_SET } from '../data/collectibles.js';
+import { BOSSES } from '../data/bosses.js';
 
 export let S = null;
 export let routes = [];
@@ -42,10 +43,10 @@ export function newFlag() {
 /* Recompute flagship stats from its tiers + boons. Call after any change. */
 export function syncFlag() {
   const f = S.flag, oldMax = f.max;
-  f.max   = FLAGBASE.hull  + f.tiers.plate * 12;
-  f.guns  = FLAGBASE.guns  + f.tiers.guns  * 2;
-  f.speed = FLAGBASE.speed + f.tiers.rig   * 2;
-  f.cargo = FLAGBASE.cargo + f.tiers.hold  * 10;
+  f.max   = FLAGBASE.hull  + f.tiers.plate * FLAGTIERS.plate.per;
+  f.guns  = FLAGBASE.guns  + f.tiers.guns  * FLAGTIERS.guns.per;
+  f.speed = FLAGBASE.speed + f.tiers.rig   * FLAGTIERS.rig.per;
+  f.cargo = FLAGBASE.cargo + f.tiers.hold  * FLAGTIERS.hold.per;
   (S.flagBoons || []).forEach(b => { if (BOONS[b]) BOONS[b].apply(f); });
   /* Buying hull plating should give you the new hull, not just the headroom. */
   if (f.max > oldMax) f.hull = Math.min(f.max, f.hull + (f.max - oldMax));
@@ -63,7 +64,8 @@ export function newGame() {
     ships: [newShip('schooner'), newShip('schooner'), newShip('brig')],
     flag: newFlag(),
     unlocked: ['caribbean'],
-    done: {}, patrol: {}, lanes: {}, noto: {}, bossBeaten: {}, voyages: [],
+    done: {}, patrol: {}, lanes: {}, wanted: {}, summoned: {}, draws: {},
+    bossBeaten: {}, voyages: [], careenAt: 0,
     ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
     won: false,
     tut: localStorage.getItem(TUT_KEY) ? 'done' : 0,
@@ -113,8 +115,31 @@ function migrate() {
   if (!S.flag) S.flag = newFlag();
   if (!S.flag.tiers) S.flag.tiers = { plate: 0, guns: 0, rig: 0, hold: 0 };
   if (!S.flag.fittings) S.flag.fittings = [];
-  S.noto = S.noto || {};
   S.bossBeaten = S.bossBeaten || {};
+  S.summoned = S.summoned || {};
+  S.draws = S.draws || {};
+  if (typeof S.careenAt !== 'number') S.careenAt = 0;
+
+  /* Notoriety became a wanted level. The number is the same number, but it now
+     cools over real time, so it has to carry the moment it was last earned —
+     an old save's flat count is stamped as of now rather than being punished
+     for having sat in a drawer. An admiral already summoned under the old rules
+     latches, because losing a boss you had earned would be indefensible. */
+  S.wanted = S.wanted || {};
+  /* Folded in unconditionally rather than only when `wanted` is missing, so a
+     save that has been through both shapes — or written by an older build after
+     a newer one — still ends up with its heat rather than silently losing it. */
+  if (S.noto) {
+    for (const rk in S.noto) {
+      const v = +S.noto[rk] || 0;
+      if (v <= 0) continue;
+      const held = S.wanted[rk];
+      if (!held || held.v < v) S.wanted[rk] = { v, ts: Date.now() };
+      const b = BOSSES[rk];
+      if (b && v >= b.noto && !S.bossBeaten[rk]) S.summoned[rk] = 1;
+    }
+    delete S.noto;
+  }
   S.voyages = S.voyages || [];
   S.ports = S.ports || ['staug'];
   S.charters = S.charters || {};

@@ -38,7 +38,7 @@ import { PORTS } from '../data/ports.js';
 import { GOODS } from '../data/goods.js';
 import { BELL_NAMES, DEPTH_NAMES } from '../data/salvage.js';
 import {
-  routeById, allShips, findShip, busyIds, tname, power, fleetPower, holdCap,
+  routeById, allShips, findShip, busyIds, isBusy, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
   bellDepth, laneRiseIn, laneFight, lanePay, battleOdds
@@ -54,7 +54,7 @@ import { wipe } from '../fx/wipe.js';
 import { tutEvent, tutActive, tutAllowsMission, refreshTut } from './tutorial.js';
 import { launchVoyage } from '../systems/voyages.js';
 import { startBattle } from '../battle/loop.js';
-import { bossEnemies, charterEnemies, genEnemies, tutEnemies } from '../systems/enemies.js';
+import { bossEnemies, charterEnemies, genEnemies, tutEnemies, drawBand } from '../systems/enemies.js';
 import {
   battleVictory, charterVictory, bossVictory, battleLoss, laneVictory, laneLoss
 } from '../systems/outcomes.js';
@@ -136,18 +136,26 @@ function shipPicks(voyage, need) {
 
 /* Who is waiting, and the odds against the line you have picked. This is who you
    fight — there is no other line-up on offer. */
+/* Who is out there, and — when they are more or less than this water is rated
+   for — what kind of trouble it is. The band is named up front because walking
+   away is a legitimate answer and you cannot choose it from behind a number. */
 function foesCard(fleet) {
   if (!foes || !foes.length) return '';
   const odds = battleOdds(fleet, foes);
   const cls = !fleet.length ? '' : odds >= 90 ? 'good' : odds >= 60 ? 'fair' : 'poor';
+  const drawn = curRoute ? drawBand(curRoute) : null;
+  const tag = drawn && drawn.label
+    ? `<span class="tag ${drawn.band === 'straggler' ? 't0' : 'bad'}">${esc(drawn.label)}</span>` : '';
+
   const list = foes.map(e =>
     `<div class="foe"><b>${esc(e.name)}</b>${chipRow([
-      chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim')
+      chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim'),
+      e.chest ? chip('chest', 'BOX', 'gold', "She is carrying a captain's strongbox") : ''
     ], 'tight')}</div>`).join('');
 
   return `<div class="card oddscard" style="--i:1">
       <div class="row"><h3>${iconHTML('target', 40)} Sails Sighted</h3>
-        <span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span></div>
+        ${tag}<span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span></div>
       <div class="foelist">${list}</div>
     </div>`;
 }
@@ -274,7 +282,9 @@ function requirements(r, isBoss) {
     isBoss && r.bossDef.unlocks
       ? chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory') : ''
   ], isBoss
-    ? esc(r.bossDef.desc) + ' <span class="bad">Your flagship sails or nobody does.</span>'
+    ? esc(r.bossDef.desc) + (isBusy('FLAG')
+      ? ' <span class="bad">Your flagship is at sea. Bring her home before you face an admiral.</span>'
+      : ' <span class="bad">Your flagship sails or nobody does.</span>')
     : esc(MTYPE[r.type].tip));
 }
 

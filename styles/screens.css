@@ -153,7 +153,8 @@
   box-shadow:var(--well);
   font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.5px;color:#5b787b;
 }
-.piece .ic{opacity:.35}
+/* A flex child will happily squeeze an icon under the 40px floor. It may not. */
+.piece .ic{opacity:.35;flex-shrink:0}
 .piece.got{border-color:var(--brass);background:linear-gradient(180deg,#4a3d1c,#2a2209);box-shadow:var(--slab-sm);color:var(--goldhi)}
 .piece.got .ic{opacity:1}
 

@@ -18,7 +18,7 @@ import {
   findShip, fleetPower, holdCap, voyDuration, voyageOpen, voyReady,
   tradeChance, notoGain, hasFit, fmtDur, grant, diveChests, chestValue
 } from '../core/selectors.js';
-import { addNoto } from './notoriety.js';
+import { addNoto } from './wanted.js';
 import { rollDrop } from './collectibles.js';
 import { returnCargo } from './loot.js';
 import { say, deny } from '../fx/pop.js';

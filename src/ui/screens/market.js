@@ -1,9 +1,17 @@
 /* MARKET — two counters, and you stand at one of them.
 
-   SELL turns surplus cargo into coin. BUY is the dull stuff a shipwright deals
-   in: materials, a deeper diving bell, another berth. Trade goods and ships are
-   not for sale at either — goods come off the routes you run and the ships you
-   beat, and a ship joins your fleet only by being taken from someone else.
+   SELL turns surplus cargo into coin. SHIPWRIGHT is the yard: a deeper diving
+   bell, another berth.
+
+   Nothing sells you materials. Timber, iron and canvas come off hulls you have
+   broken up and hulls you have beaten, and that is the point — it is what makes
+   "scuttle her for supplies or ransom her crew for coin" a real question every
+   single time instead of an exchange rate. While a counter sold materials at a
+   fixed price, ransom was simply the better number and the choice was theatre.
+
+   Trade goods and ships are not for sale either: goods come off the routes you
+   run and the ships you beat, and a ship joins your fleet only by being taken
+   from somebody else.
 
    Every card is an item card: identity, what you hold, what it is, then a
    footer with the price on the left and the button on the right. Quantities are
@@ -16,7 +24,6 @@ import { render } from '../../core/bus.js';
 import { actions } from '../../core/actions.js';
 import { PORTS } from '../../data/ports.js';
 import { GOODS, GOOD_KEYS } from '../../data/goods.js';
-import { MATERIALS, MAT_KEYS } from '../../data/materials.js';
 import { MAX_BELL, BELL_NAMES, bellCost, bellMaxDepth, DEPTH_NAMES } from '../../data/salvage.js';
 import { canPay, pay } from '../../core/selectors.js';
 import { chip, chipRow, outOf, priceChips } from '../format.js';
@@ -50,19 +57,6 @@ function goodCard(k) {
   });
 }
 
-function matCard(k) {
-  const m = MATERIALS[k];
-  const n = amount('m' + k);
-  const cost = { gold: m.buy * n };
-  return itemCard({
-    id: 'itm_m_' + k, icon: k, name: m.n, sub: m.unit,
-    held: chipRow([chip(k, S.mats[k], '', m.n + ' in store')], 'tight'),
-    body: stepper('mat-qty', k, n),
-    price: priceChips(cost),
-    action: itemAction('Buy', 'buy-mat', { mat: k, n }, { disabled: !canPay(cost) })
-  });
-}
-
 /* Swap one card for its freshly built self, without the entrance animation and
    without touching a pixel of anything else on the page. */
 function refreshCard(id, html) {
@@ -80,7 +74,7 @@ export function renderMarket() {
 
   let h = `<div class="mtabs sticky">
       <button class="mtab ${tab === 'sell' ? 'on' : ''}" data-act="mkt-tab" data-tab="sell">Sell</button>
-      <button class="mtab ${tab === 'buy' ? 'on' : ''}" data-act="mkt-tab" data-tab="buy">Buy</button>
+      <button class="mtab ${tab === 'buy' ? 'on' : ''}" data-act="mkt-tab" data-tab="buy">Shipwright</button>
     </div>`;
 
   if (tab === 'sell') {
@@ -89,10 +83,6 @@ export function renderMarket() {
       ? itemGrid(held.map(goodCard).join(''))
       : `<div class="card" style="--i:${i++}"><div class="sub center">Nothing in the hold to sell. Run a contract, or take some off an enemy.</div></div>`;
   } else {
-    h += sect('Materials', i++);
-    h += itemGrid(MAT_KEYS.map(matCard).join(''));
-    i++;
-
     const maxed = S.bell >= MAX_BELL;
     const bc = bellCost(S.bell);
     h += sect('Salvage Gear', i++);
@@ -161,16 +151,6 @@ function sellGood(key, n) {
     '+' + paid, 'gold', 'gold', () => goodCard(key));
 }
 
-function buyMat(key, n) {
-  const m = MATERIALS[key], count = Math.max(1, +n || 1), cost = m.buy * count;
-  if (S.gold < cost) return deny(`Needs ${cost} gold`);
-  S.gold -= cost;
-  S.mats[key] += count;
-  qty['m' + key] = 1;
-  settle('itm_m_' + key, `#itm_m_${key} [data-act="buy-mat"]`,
-    '+' + count, 'ok', key, () => matCard(key));
-}
-
 function buyBell() {
   if (S.bell >= MAX_BELL) return;
   const c = bellCost(S.bell);
@@ -207,9 +187,7 @@ function setTab(t) {
 actions({
   'mkt-tab': d => setTab(d.tab),
   'good-qty': d => bump('g' + d.key, +d.d, S.goods[d.key], () => goodCard(d.key)),
-  'mat-qty': d => bump('m' + d.key, +d.d, null, () => matCard(d.key)),
   'sell-good': d => sellGood(d.good, d.n),
-  'buy-mat': d => buyMat(d.mat, +d.n),
   'buy-bell': buyBell,
   'buy-dock': buyDock
 });

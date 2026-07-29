@@ -6,8 +6,10 @@ import { render } from '../../core/bus.js';
 import { actions, actionSource } from '../../core/actions.js';
 import { SCRAP_YIELD } from '../../data/materials.js';
 import {
-  cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant
+  cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant,
+  careenReady, careenLeft, careenNeeded
 } from '../../core/selectors.js';
+import { CAREEN_COOLDOWN_MS, CAREEN_TO } from '../../core/config.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, shipTiles, chip, chipRow, outOf, bagChips, priceChips, bag } from '../format.js';
@@ -21,11 +23,26 @@ export function renderPort() {
   const f = S.flag, fc = cond(f), fBusy = isBusy('FLAG');
   let i = 0;
 
+  /* Careening: run her up the beach and work on the hull yourself. Free, slow,
+     flagship only, and never as good as paying a shipwright — which is exactly
+     what an emergency exit should be. Without it a captain with a holed fleet,
+     an empty purse and nothing in the hold had a dead save, because no counter
+     in the game buys materials back. */
+  const canCareen = !fBusy && careenNeeded();
+  /* On cooldown the button carries a live clock — the world ticker patches any
+     .clock[data-endsat] in place, so it counts down without this screen having
+     to rebuild itself once a second under the player's finger. */
+  const careenBtn = careenReady()
+    ? itemAction('Careen', 'careen', {}, { cls: 'grn', disabled: !canCareen })
+    : `<button class="btn sm grn itemact" disabled>`
+      + `<span class="clock" data-endsat="${S.careenAt}">${fmtDur(careenLeft() / 1000)}</span></button>`;
+
   let h = itemCard({
     icon: 'flag', name: f.name, sub: 'Flagship',
     held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
     body: shipTiles(f, power(f)) + hullBar(f),
-    action: itemAction('Upgrade', 'goto', { tab: 'flag' }),
+    price: f.hull >= f.max ? '' : priceChips({ gold: repairCost(f) }),
+    action: careenBtn + itemAction('Upgrade', 'goto', { tab: 'flag' }),
     cls: 'owned' + (fBusy ? ' atsea' : '')
   });
 
@@ -99,7 +116,26 @@ async function doScuttle(id) {
   render();
 }
 
+/* Beach her, scrape her, and put her back in the water half sound. It costs
+   real time rather than coin, so it can rescue a bankrupt captain without ever
+   being the thing a solvent one would choose. */
+function doCareen() {
+  const f = S.flag;
+  if (isBusy('FLAG')) return deny('She is at sea');
+  if (!careenReady()) return deny('Not yet — she is still on the beach');
+  if (f.hull >= f.max) return deny('She is sound');
+
+  const to = Math.max(f.hull, Math.round(f.max * CAREEN_TO));
+  const mend = to - f.hull;
+  f.hull = to;
+  S.careenAt = now() + CAREEN_COOLDOWN_MS;
+  play('repair');
+  say('+' + mend, 'ok', 'hull');
+  render();
+}
+
 actions({
   repair: d => doRepair(d.id),
-  scuttle: d => doScuttle(d.id)
+  scuttle: d => doScuttle(d.id),
+  careen: doCareen
 });

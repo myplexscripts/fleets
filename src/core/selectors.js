@@ -4,10 +4,11 @@
 import { S, routes } from './state.js';
 import {
   VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN, CARGO_PER_CHEST,
-  DANGER_RISE_MIN_DEFAULT, LANE_CLEAR_STEP
+  DANGER_RISE_MIN_DEFAULT, LANE_CLEAR_STEP, WANTED_COOL_PER_MIN, CAREEN_COOLDOWN_MS
 } from './config.js';
 import { TYPES } from '../data/ships.js';
 import { REGIONS, NOTO_BONUS, VOYAGE_TYPES, MAX_DANGER } from '../data/world.js';
+import { REGION_RATING, DANGER_MULT, HEAT_MULT } from '../data/water.js';
 import { PORTS } from '../data/ports.js';
 import { CHARTERS } from '../data/charters.js';
 import { BOSSES } from '../data/bosses.js';
@@ -131,9 +132,17 @@ export function effDanger(r) {
    to clear — anything above that, the player may fight or simply sail. */
 export const laneFight = r => hasLane(r) && effDanger(r) > 0;
 
-/* What clearing a lane pays. Worse water pays better, so the lane you least want
-   to run is the one worth taking on. Quoted before you commit. */
-export const lanePay = r => ({ gold: 120 + 90 * laneDanger(r) });
+/* What clearing a lane pays in coin. Deliberately modest — the reason to take
+   a lane fight is what you strip off the ships you beat and the prizes you take
+   from them, which is worth many times this. A flat clearance fee that competed
+   with a cargo run would just be a second, worse cargo run. */
+export const lanePay = r => ({ gold: Math.round(routeRating(r) * (2 + laneDanger(r))) });
+
+/* ---- the careen ----
+   Free, slow, flagship only, and never better than paying a shipwright. */
+export const careenLeft = () => Math.max(0, (S.careenAt || 0) - now());
+export const careenReady = () => careenLeft() <= 0;
+export const careenNeeded = () => !!S.flag && S.flag.hull < S.flag.max;
 
 /* ---- mission shape ---- */
 export const canVoyage = r => VOYAGE_TYPES.includes(r.type);
@@ -181,14 +190,19 @@ export const runNeeds = r => ({
   speed: r.speed || 0
 });
 
-/* Chance a cargo run arrives intact. Danger hurts, power carries her through.
-   Under the rated power it falls away fast; over it, there is little more to
-   gain — which is what makes "strong enough" a real threshold. */
+/* Chance a cargo run arrives intact.
+
+   Measured against the water she has to cross, not against a separate danger
+   tax bolted onto the odds. Danger and heat are already inside the rating, so
+   there is one number deciding how bad a passage is and it is the same number
+   that decides who would be waiting if you went looking for a fight. Under what
+   the water is rated for the odds fall away fast; over it there is little more
+   to gain, which is what makes "strong enough" a real threshold rather than a
+   stat to keep pouring into. */
 export function tradeChance(r, fp) {
-  const d = effDanger(r);
-  const need = r.power || 1;
-  const ratio = Math.min(1.4, fp / need);
-  return Math.max(20, Math.min(98, Math.round(100 * (0.55 + 0.34 * ratio - 0.14 * d))));
+  const need = Math.max(1, (r.power || 0) || routeRating(r));
+  const ratio = Math.min(1.45, fp / need);
+  return Math.max(20, Math.min(98, Math.round(100 * (0.44 + 0.40 * ratio))));
 }
 
 /* Estimated odds of taking a fight, from the two line-ups' total power. It is a
@@ -215,10 +229,65 @@ export function notoGain(r) {
   return Math.max(3, n);
 }
 
+/* ---- wanted level ----
+
+   What used to be notoriety. The rename is not cosmetic: a progress bar only
+   counts up, but a wanted level is something the world reacts to. Heat in a
+   region does two things — it summons that region's admiral once it crosses her
+   threshold, and until then it makes the water there worse, because the more
+   badly you are wanted the heavier the ships that come looking.
+
+   It cools on its own. Heat you earned three days ago is not heat. The one
+   exception is a summoned admiral: once she is on the chart she stays there
+   forever, so nobody can lose a boss by taking too long over it. */
+export const wantedOf = rk => Math.max(0, Math.round(coolWanted(rk)));
+
+function coolWanted(rk) {
+  const rec = S.wanted[rk];
+  if (!rec) return 0;
+  const b = BOSSES[rk];
+  /* Latched: she has been summoned and is not going away. */
+  if (b && S.summoned[rk]) return Math.max(rec.v, b.noto);
+  const mins = (now() - (rec.ts || now())) / 60000;
+  return Math.max(0, rec.v - mins * WANTED_COOL_PER_MIN);
+}
+
+export function addWanted(rk, n) {
+  const cur = coolWanted(rk);
+  S.wanted[rk] = { v: Math.max(0, cur + n), ts: now() };
+  return S.wanted[rk].v;
+}
+
+/* Heat as a 0..2 step, which is what the water rating actually consumes — the
+   raw number is for the bar on the chart, the step is for the ocean. */
+export function heatStep(rk) {
+  const b = BOSSES[rk];
+  const need = b ? b.noto : 100;
+  const f = Math.min(1, wantedOf(rk) / Math.max(1, need));
+  return f >= 0.66 ? 2 : (f >= 0.33 ? 1 : 0);
+}
+
+/* ---- how hard this water is ----
+
+   One number per patch of ocean, from where it is, how bad the lane has got,
+   and how badly you are wanted there. Never from the player's fleet: a rating
+   that chased you would make home water exactly as dangerous on hour nine as
+   on hour one. */
+export function waterRating(region, danger) {
+  const base = REGION_RATING[region] || REGION_RATING.caribbean;
+  const d = Math.max(0, Math.min(MAX_DANGER, danger || 0));
+  return Math.round(base * (1 + DANGER_MULT * d + HEAT_MULT * heatStep(region)));
+}
+
+/* The rating of the water a given route sits in, danger projected as of now. */
+export const routeRating = r => waterRating(r.region, isBattle(r) ? (r.danger || 0) : effDanger(r));
+
 /* ---- bosses ---- */
 export function bossReady(rk) {
   const b = BOSSES[rk];
-  return !!b && !S.bossBeaten[rk] && (S.noto[rk] || 0) >= b.noto;
+  if (!b || S.bossBeaten[rk]) return false;
+  if (S.summoned[rk]) return true;
+  return wantedOf(rk) >= b.noto;
 }
 export function anyBossReady() {
   return Object.keys(REGIONS).some(rk => S.unlocked.includes(rk) && bossReady(rk));

@@ -49,6 +49,12 @@ export function gotoTab(t, immediate) {
   if (immediate) swap(); else wipe(swap);
 }
 
+/* The last tab we actually painted. render() also runs on the world ticker, so
+   scroll may only be reset when the screen underneath the player has genuinely
+   changed — resetting on every repaint would yank the page out from under
+   somebody halfway down their fleet once a second. */
+let paintedTab = null;
+
 export function render() {
   if (!S) return;
   updateRes();
@@ -64,9 +70,19 @@ export function render() {
   $('main').className = tab === 'routes' ? 'nopad' : '';
   cur.render();
 
+  /* A new screen starts at the top of itself. Carrying the old screen's scroll
+     across lands you halfway down a page you have never seen. */
+  if (paintedTab !== tab) {
+    $('main').scrollTop = 0;
+    paintedTab = tab;
+  }
+
   save();
   refreshTut();
 }
+
+/* A fresh game or a reload starts clean. */
+export function resetScroll() { paintedTab = null; }
 
 /* ---- ticker ---------------------------------------------------------- */
 

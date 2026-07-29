@@ -10,7 +10,7 @@ import { CHARTERS } from '../../data/charters.js';
 import { BOSSES } from '../../data/bosses.js';
 import {
   allRoutes, effDanger, voyageOpen, bossReady, charterAvailable,
-  patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable
+  patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable, wantedOf
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { actions } from '../../core/actions.js';
@@ -78,6 +78,11 @@ function nodeShape(r, col, k) {
          + `<rect x="${x - s * 1.7}" y="${y - s * 0.3}" width="${s * 3.4}" height="${s * 0.6}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1"/>`;
   if (r.type === 'escort')                          // square
     return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
+  if (r.type === 'hunt')                            // crossed blades: open water
+    return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
+         + `<path d="M${x - s * 0.62},${y - s * 0.62} L${x + s * 0.62},${y + s * 0.62}`
+         + ` M${x + s * 0.62},${y - s * 0.62} L${x - s * 0.62},${y + s * 0.62}"`
+         + ` stroke="#1a0d08" stroke-width="${1.9 * k}" stroke-linecap="round" fill="none"/>`;
   /* cargo run: filled disc with a bright centre */
   return `<circle cx="${x}" cy="${y}" r="${s}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/><circle cx="${x}" cy="${y}" r="${2 * k}" fill="#eaf4f4"/>`;
 }
@@ -308,14 +313,14 @@ export function renderMap() {
    It lists only what is actually drawn right now, which is what keeps it both
    complete and short: the Caribbean alone needs five entries, an admiral adds
    hers the moment she sails, and a shape can never appear unnamed. */
-const KEY_ORDER = ['cargo', 'dive', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
+const KEY_ORDER = ['cargo', 'dive', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
 const KEY_WORD = {
-  cargo: 'Cargo', dive: 'Wreck', patrol: 'Patrol', escort: 'Escort',
+  cargo: 'Cargo', dive: 'Wreck', hunt: 'Hunt', patrol: 'Patrol', escort: 'Escort',
   raid: 'Raid', blockade: 'Blockade', charter: 'Charter',
   boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
-  cargo: '#63c06a', dive: '#7ab0e0', patrol: '#e0a03a', escort: '#e0a03a',
+  cargo: '#63c06a', dive: '#7ab0e0', hunt: '#e0a03a', patrol: '#e0a03a', escort: '#e0a03a',
   raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae',
   boss: '#f0b0a6', beaten: '#d9c98a'
 };
@@ -357,7 +362,7 @@ function buildLegend(rs) {
     const mine = rs.filter(r => r.region === rk);
     const maxd = mine.length ? Math.max(...mine.map(effDanger)) : 0;
     const b = BOSSES[rk], need = b ? b.noto : 1;
-    const cur = Math.min(S.noto[rk] || 0, need), done = S.bossBeaten[rk];
+    const cur = Math.min(wantedOf(rk), need), done = S.bossBeaten[rk];
     const chn = CHARTERS.filter(c => PORTS[c.loc].region === rk && charterAvailable(c)).length;
     const openN = mine.filter(r => canVoyage(r) && voyageOpen(r)).length;
 

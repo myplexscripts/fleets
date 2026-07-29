@@ -29,6 +29,30 @@ export const LANE_CLEAR_STEP = 1;     // danger steps a won lane battle removes
 /* A patrol clears a whole region at once, and wears off. */
 export const PATROL_MS = 10 * 60 * 1000;
 
+/* Wanted level.
+
+   Heat cools on its own, because heat you earned three days ago is not heat.
+   Slow enough that a session's work is not undone between sittings, fast enough
+   that the number means "lately" rather than "ever". A summoned admiral latches
+   and never cools, so a boss can never be lost by taking too long over her. */
+export const WANTED_COOL_PER_MIN = 0.35;
+
+/* The free careen.
+
+   A fleet at the bottom of its luck — every hull holed, an empty purse, nothing
+   in the hold to sell — used to be a dead save, because the market never bought
+   materials back and repairs cost coin nobody had. Careening is the way out:
+   run her up the beach and work on the hull yourself. It costs time instead of
+   money, it only ever touches the flagship, and paying a shipwright is still
+   strictly better — so it is an emergency, never a strategy. */
+export const CAREEN_COOLDOWN_MS = 12 * 60 * 1000;
+export const CAREEN_TO = 0.6;   // how sound she comes off the beach
+
+/* An enemy line-up is drawn once and stays drawn until it is fought or the
+   water it came from changes. Reopening a mission used to redraw it, which was
+   a reroll wearing a disguise. */
+export const DRAW_TTL_MS = 30 * 60 * 1000;
+
 /* Cargo contracts offered by charted ports */
 export const CONTRACT_PAY_BASE = 1.75;   // multiple of the goods' market buy price
 export const CONTRACT_PAY_PER_TIER = 0.06;

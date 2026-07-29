@@ -15,7 +15,9 @@ import { pick, rnd } from '../core/rng.js';
 export function goodsHaul(region, danger) {
   const tier = REGIONS[region] ? REGIONS[region].tier : 1;
   const good = pick(goodsForTier(tier * 2 + (danger || 0)));
-  const n = Math.max(1, Math.round(rnd(2, 4 + tier + (danger || 0))));
+  /* Scaled with the water, because the deep-sea contracts ask for sixty crates
+     and nothing else in the game hands out trade goods. */
+  const n = Math.max(2, Math.round(rnd(2 + tier, 4 + tier * 2.6 + (danger || 0) * 1.5)));
   S.goods[good] += n;
   return { good, n, unit: GOODS[good].unit, name: GOODS[good].n };
 }

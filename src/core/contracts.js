@@ -25,7 +25,10 @@ function legLength(from, to) {
 function draw(pid) {
   const p = PORTS[pid];
   const good = pick(goodsForTier(p.t));
-  const qty = 5 + 2 * p.t + Math.floor(Math.random() * 4);
+  /* Deep-water ports deal in quantities no captured hull can take. A Man o'
+     War carries 50; the richest runs ask for more than that, which is the one
+     job in the game only a worked-up flagship can do. */
+  const qty = 5 + 2 * p.t + (p.t >= 7 ? (p.t - 6) * 9 : 0) + Math.floor(Math.random() * 4);
 
   /* Deliver somewhere else in charted waters; failing that, back to base. */
   const candidates = Object.keys(PORTS).filter(k =>

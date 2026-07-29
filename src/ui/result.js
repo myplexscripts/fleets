@@ -5,17 +5,26 @@
    words. The account of what happened is one line underneath, because you were
    there.
 
-   A prize is a decision, not a payout. Nothing about a beaten ship is granted
-   automatically: keep her and she takes a berth, scuttle her for materials,
-   ransom the crew for coin, or let her drift. The screen will not close until
-   every prize taken has been answered for — deciding is the reward. */
+   A prize is a decision, not a payout, and every option pays exactly one kind
+   of thing, so the decision is never a sum:
+
+     Keep      the hull, and nothing else. She takes a berth and needs repairing.
+     Scuttle   supplies, and no coin.
+     Ransom    coin, and no supplies.
+     Chest     coin, more of it, and only off ships that were worth beating.
+
+   There is no walking away. Declining all four was strictly worse than any one
+   of them, which makes it not a choice but a mistake with a button on it.
+
+   The screen will not close until every prize has been answered for — deciding
+   is the reward. */
 
 import { $, esc, reflow } from '../core/dom.js';
 import { S, save, newShip } from '../core/state.js';
 import { actions } from '../core/actions.js';
 import { render } from '../core/bus.js';
 import { rnd } from '../core/rng.js';
-import { grant } from '../core/selectors.js';
+import { grant, wantedOf } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
 import { SCRAP_YIELD, MAT_KEYS } from '../data/materials.js';
 import { REGIONS } from '../data/world.js';
@@ -24,11 +33,15 @@ import { shipHTML } from '../art/ships.js';
 import { chip, have, chipRow, outOf, tile, tileRow, bagTiles } from './format.js';
 import { updateRes } from './hud.js';
 import { coinFly } from '../fx/coins.js';
+import { play } from '../fx/sound.js';
 import { deny } from '../fx/pop.js';
 import { tutEvent, refreshTut } from './tutorial.js';
 
-/* What the loose fittings off a scuttled prize fetch. */
-const SCRAP_GOLD = 200;
+/* A captain's strongbox, as a multiple of what her crew would have fetched.
+   Only ships that outclassed their water carry one, so it is the payoff for
+   taking the fight you were allowed to walk away from. */
+const CHEST_MULT = 2.2;
+const chestValue = t => Math.round(t.ransom * CHEST_MULT);
 
 /* Prizes still waiting on a decision. */
 let pending = 0;
@@ -65,10 +78,14 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
        against each other without counting. */
     captives.forEach((e, i) => {
       const t = TYPES[e.type], full = S.ships.length >= S.docks;
-      h += `<div class="card prizecard" style="--i:${i + 2}" id="cap${i}">
+      /* Her numbers here are stock numbers for her class, not the ones she was
+         fighting with. You took a hull; her guns and her people went to the
+         bottom with the ones who were using them. */
+      h += `<div class="card prizecard${e.chest ? ' chesty' : ''}" style="--i:${i + 2}" id="cap${i}">
         <div class="prizehead">
           <div class="prizeart">${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
           <h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
+          ${e.chest ? '<span class="tag gold">STRONGBOX</span>' : ''}
         </div>
         ${tileRow([
           tile('speed', t.speed, 'dim', 'Speed'),
@@ -80,11 +97,12 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
         <div class="prizeopts">
           ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Berths free')], 'grid4'),
             'Keep', i, 'capture', e.type, full, 'gold')}
-          ${prizeOpt(tileRow([bagTiles({ ...SCRAP_YIELD[e.type], gold: SCRAP_GOLD }, 'gold')], 'grid4'),
+          ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
             'Scuttle', i, 'salvage', e.type)}
-          ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom')], 'grid4'),
+          ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom for her crew')], 'grid4'),
             'Ransom', i, 'ransom', e.type)}
-          ${prizeOpt('', 'Let Go', i, 'ignore', e.type)}
+          ${e.chest ? prizeOpt(tileRow([tile('chest', chestValue(t), 'gold', "The captain's own strongbox")], 'grid4'),
+            "Captain's Chest", i, 'chest', e.type, false, 'gold') : ''}
         </div></div>`;
     });
   }
@@ -125,7 +143,7 @@ function strongbox(paid, sp) {
 function notoRow(route, noto) {
   if (!noto) return '';
   const need = BOSSES[route.region] ? BOSSES[route.region].noto : 0;
-  const cur = S.noto[route.region] || 0;
+  const cur = wantedOf(route.region);
   return `<div class="spoils"><span class="spoilslbl">${esc(REGIONS[route.region].n)}</span>${chipRow([
     chip('noto', '+' + noto, 'ok', 'Gained'),
     need ? have('noto', cur, need, 'Notoriety toward the admiral') : ''
@@ -177,14 +195,18 @@ function capAct(i, mode, type) {
     sub.textContent = 'Yours, damaged. Repair her in Port.';
   } else if (mode === 'salvage') {
     grant(SCRAP_YIELD[type]);
-    S.gold += SCRAP_GOLD;
-    sub.textContent = 'Scuttled for materials.';
+    play('repair');
+    sub.textContent = 'Broken up for timber, iron and canvas.';
   } else if (mode === 'ransom') {
     S.gold += t.ransom;
     coinFly(6);
-    sub.textContent = 'Crew ransomed.';
-  } else {
-    sub.textContent = 'Left to drift.';
+    play('coin');
+    sub.textContent = 'Her crew ransomed. The hull goes to the bottom.';
+  } else if (mode === 'chest') {
+    S.gold += chestValue(t);
+    coinFly(10);
+    play('coin');
+    sub.textContent = 'Her strongbox came up off the cabin sole.';
   }
 
   const opts = el.querySelector('.prizeopts');

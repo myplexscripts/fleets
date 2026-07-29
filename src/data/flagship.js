@@ -1,16 +1,33 @@
 /* The flagship: base stats, upgrade tracks, fittings, and charter boons. */
 
-export const FLAGBASE = { speed: 5, guns: 6, hull: 45, cargo: 25 };
+/* She starts as the best ship you own and ends as the best ship in the game.
 
-/* `eff` is the whole description: what one more level does, as a stat and a
-   glyph. No prose — the row is meant to be read, not studied. */
+   That is the whole reason she exists. Every other hull in your fleet is a
+   fixed stat block you took off somebody — a captured Man o' War is power 44
+   forever, because what you took was a hull and her guns and her people went
+   down with the ones using them. The flagship is the only thing you build, and
+   fully worked up she is around 2.4x that, which is what makes twenty thousand
+   gold and four hundred ingots a sane thing to spend. */
+export const FLAGBASE = { speed: 6, guns: 8, hull: 60, cargo: 25 };
+
+/* `per` is what one more level actually does — syncFlag reads it and the label
+   is derived from it, so the number on the card and the number in the maths can
+   never drift apart. They used to be written out twice.
+
+   `stat` is the glyph the row is drawn with, not a field name. */
 export const FLAGTIERS = {
-  plate: { n: 'Hull Plating', icon: 'plate', eff: '+12', stat: 'hull' },
-  guns:  { n: 'Gun Decks',    icon: 'guns',  eff: '+2',  stat: 'guns' },
-  rig:   { n: 'Rigging',      icon: 'rig',   eff: '+2',  stat: 'speed' },
-  /* Keyed `hold` because saves store it that way; it is called cargo on screen. */
-  hold:  { n: 'Cargo Hold',   icon: 'cargo', eff: '+10', stat: 'cargo' }
+  plate: { n: 'Hull Plating', icon: 'plate', per: 18, stat: 'hull'  },
+  guns:  { n: 'Gun Decks',    icon: 'guns',  per: 3,  stat: 'guns'  },
+  rig:   { n: 'Rigging',      icon: 'rig',   per: 3,  stat: 'speed' },
+  /* Keyed `hold` because saves store it that way; it is called cargo on screen.
+     Worth having now that the richest contracts ask for more than any captured
+     hull can carry — before, she topped out at 75 against a largest consignment
+     of 40, so the entire track was five thousand gold spent on nothing. */
+  hold:  { n: 'Cargo Hold',   icon: 'cargo', per: 12, stat: 'cargo' }
 };
+
+export const TIER_KEYS = Object.keys(FLAGTIERS);
+Object.values(FLAGTIERS).forEach(t => { t.eff = '+' + t.per; });
 
 /* Each track eats a different material, so a captain who only ever fights ends
    up short of cloth and one who only ever trades ends up short of metal. */
