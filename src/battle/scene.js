@@ -9,7 +9,7 @@ import { SHIP_CANVAS, SHIP_DIM } from '../art/ships.js';
 import { rnd } from '../core/rng.js';
 import { settings } from '../core/settings.js';
 import { play } from '../fx/sound.js';
-import { BT } from './state.js';
+import { BT, reloadOf } from './state.js';
 
 /* Resolve the base class at load time instead of writing `extends Phaser.Scene`
    directly: a class heritage clause is evaluated when the module loads, so a
@@ -74,14 +74,28 @@ export class BattleScene extends SceneBase {
     return m < 430 ? 0.62 : (m > 760 ? 1.05 : 0.82);
   }
 
-  /* Lay a column of n ships out around the vertical centre. Spacing is capped
-     so a two-ship line stays a line instead of drifting to opposite ends of a
-     tall phone screen, and a five-ship line still fits a short one. */
-  lanes(n, H) {
-    if (n <= 1) return [H / 2];
-    const gap = Math.min((H * 0.68) / (n - 1), 210);
-    const top = H / 2 - (gap * (n - 1)) / 2;
-    return Array.from({ length: n }, (_, i) => top + gap * i);
+  /* Lay a column of n ships out down a band of the screen. Spacing is capped so
+     a two-ship line stays a line instead of drifting to opposite ends of a tall
+     phone screen, and a five-ship line still fits a short one.
+
+     The band is not the whole canvas. Every hull carries a nameplate, a hull bar
+     and a reload meter below her, and the running log floats over the bottom of
+     the water — so the rearmost ship in a three-ship line has to be lifted clear
+     of both or her meter ends up underneath the text. */
+  lanes(n, H, top, bot) {
+    const band = Math.max(80, H - top - bot);
+    const mid = top + band / 2;
+    if (n <= 1) return [mid];
+    const gap = Math.min(band / (n - 1), 210);
+    return Array.from({ length: n }, (_, i) => mid - (gap * (n - 1)) / 2 + gap * i);
+  }
+
+  /* How far below a hull's centre her furniture reaches: the deepest sprite in
+     this fight, plus the plate, the hull bar and the reload meter under it. */
+  footRoom(s) {
+    const hs = Object.keys(SHIP_DIM).map(k => SHIP_DIM[k].h);
+    const tall = hs.length ? Math.max(...hs) : 150;
+    return tall * s * 0.75 + 36;
   }
 
   buildFleets() {
@@ -92,8 +106,12 @@ export class BattleScene extends SceneBase {
     const inset = Math.min(W * 0.30, 70 + 130 * s);
     const px = inset, ex = W - inset;
 
-    const py = this.lanes(b.fleet.length, H);
-    const ey = this.lanes(b.enemies.length, H);
+    /* The log is two lines of italic over a fade, pinned to the bottom of the
+       water. Both lines have to sit above it. */
+    const LOG_BAND = 84;
+    const foot = this.footRoom(s);
+    const py = this.lanes(b.fleet.length, H, 18, foot + LOG_BAND);
+    const ey = this.lanes(b.enemies.length, H, 18, foot + LOG_BAND);
 
     b.fleet.forEach((sh, i) =>
       this.addShip(sh, sh.id === 'FLAG' ? 'flag' : 'player', px, py[i], true, s));
@@ -128,16 +146,20 @@ export class BattleScene extends SceneBase {
     const nm = this.add.text(0, dim.h * scale * 0.75 + 9, data.name.toUpperCase(),
       { fontFamily: 'Oswald', fontSize: '14px', color: data.isBoss ? '#f0b0a6' : '#cfe3e4' }).setOrigin(0.5, 0.5);
     const hp = this.add.graphics();
-    c.add([img, plate, nm, hp]);
+    /* Her reload, under her hull bar. This is the clock the whole fight runs
+       on, so it belongs on the ship rather than in a panel somewhere. */
+    const rl = this.add.graphics();
+    c.add([img, plate, nm, hp, rl]);
 
     const o = {
-      c, img, hp, data, pal, facingRight, scale, dim, pw,
+      c, img, hp, rl, data, pal, facingRight, scale, dim, pw,
       bobT: this.tweens.add({
         targets: c, y: y + rnd(3, 6), duration: rnd(1600, 2400),
         yoyo: true, repeat: -1, ease: 'Sine.inOut'
       })
     };
     this.drawHp(o);
+    this.drawReload(o);
 
     if (pal === 'enemy' || pal === 'boss') {
       img.setInteractive({ useHandCursor: true });
@@ -163,6 +185,29 @@ export class BattleScene extends SceneBase {
     const p = Math.max(0, o.data.hull / o.data.max);
     g.fillStyle(0x03181c).fillRect(-w / 2, y, w, 4);
     g.fillStyle(p < 0.26 ? 0xd94a3a : (p < 0.6 ? 0xd9c34a : 0x63c06a)).fillRect(-w / 2, y, w * p, 4);
+  }
+
+  /* How close she is to firing again. Gold for yours, red for theirs, and it
+     goes bright at the top of the sweep so a broadside is telegraphed by half a
+     second of colour rather than arriving out of nowhere. */
+  drawReload(o) {
+    const g = o.rl;
+    if (!g) return;
+    g.clear();
+    const dead = o.pal === 'player' || o.pal === 'flag' ? o.data.hull <= 0 : o.data.disabled;
+    if (dead || o.pal === 'merchant') return;
+
+    const y = o.dim.h * o.scale * 0.75 + 29, w = o.pw - 16;
+    const p = Math.max(0, Math.min(1, reloadOf(o.data)));
+    const mine = o.pal === 'player' || o.pal === 'flag';
+    const col = p > 0.86 ? (mine ? 0xefe3ae : 0xff9080) : (mine ? 0x8a793e : 0x8a463e);
+    g.fillStyle(0x03181c, 0.9).fillRect(-w / 2, y, w, 3);
+    g.fillStyle(col).fillRect(-w / 2, y, w * p, 3);
+  }
+
+  /* Called from the battle clock, every frame. */
+  drawReloads() {
+    this.ships.forEach(o => this.drawReload(o));
   }
 
   setMarker(i) {

@@ -59,11 +59,11 @@ export const TUTSTEPS = [
     wait: 'launch' },
 
   { modal: 1, when: 'battle', title: 'Broadsides',
-    text: 'Tap an enemy to target it, then one order per round: Focus, Spread, Fire Barrels, Brace, or Board below 40% hull. Number keys do the same.',
+    text: 'Every ship reloads on her own clock — the bar under each hull — and fires the moment she is loaded. Faster ships fire more often, heavier ones hit harder. Tap a ship to aim your line at her.',
     btn: 'To Arms' },
 
-  { sel: '#bcmds', when: 'battle', title: 'Send Them Under',
-    text: 'Keep firing on your target until it goes down.',
+  { sel: '#bcmds', when: 'battle', title: 'Your Four Choices',
+    text: 'Brace to take far less for a few seconds, at the cost of your own rate of fire. Board once she is below 40% to take her whole. Barrels hit hardest of anything you own. Retreat if it turns.',
     wait: 'battle:end' },
 
   { sel: '#cap0', when: 'prize', title: 'Prizes of War',

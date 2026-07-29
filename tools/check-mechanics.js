@@ -19,6 +19,8 @@
         emptied comes off it.
      7. The chart zooms, and every port sits on land.
      8. Every region offers a convoy, and no two ships in a fleet share a name.
+     9. One diving bell means one wreck at a time — refused in the systems layer,
+        and said on the button before it is pressed.
 
    Run:  node tools/check-mechanics.js [url] */
 
@@ -366,6 +368,89 @@ catch (e) {
   });
   console.log(`   ${names.all.length} hulls, ${names.uniq} distinct names`);
   if (names.uniq !== names.all.length) bad.push('two ships in one fleet share a name');
+
+  /* ---- 9. one bell, one wreck ----
+
+     The player owns exactly one diving bell, so exactly one wreck can be worked
+     at a time. That has to be refused in the systems layer — a UI that only
+     greys a button is a rule anybody can walk around — AND said on the button,
+     because being allowed to choose a ship and then told no is the same
+     information delivered as a telling-off. */
+  console.log('9. one diving bell, one dive');
+  const bell = await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    const voy = await import('/src/systems/voyages.js');
+    const sel = await import('/src/core/selectors.js');
+    const dives = await import('/src/core/dives.js');
+
+    /* Steps 6 and 8 above emptied a wreck and rebuilt the fleet, so this starts
+       from a clean chart of its own rather than whatever they left behind. */
+    const world = await import('/src/data/world.js');
+    st.S.unlocked = Object.keys(world.REGIONS);
+    st.S.bell = 3;
+    st.S.voyages = [];
+    st.S.dives = [];
+    st.S.diveUsed = [];
+    st.S.ships = [st.newShip('brig'), st.newShip('brig')];
+    dives.rechartDives();
+
+    /* Wrecks are a live set built on top of the static route table, so they only
+       exist in allRoutes() — the `routes` export never carries them. */
+    const wrecks = sel.allRoutes().filter(r => r.type === 'dive' && sel.diveReachable(r));
+    if (wrecks.length < 2) return { wrecks: wrecks.length };
+
+    const ship = st.S.ships[0] || st.S.flag;
+    const first = voy.launchVoyage(wrecks[0], [ship]);
+    const outNow = sel.diveOut();
+    /* A second bell going down on a second wreck, with a second ship, so the
+       only thing that can refuse it is the bell rule itself. */
+    const other = st.S.ships[1] || st.S.flag;
+    const second = voy.launchVoyage(wrecks[1], [other]);
+    return { wrecks: wrecks.length, first, outNow, second, running: st.S.voyages.length };
+  });
+  if (bell.wrecks < 2) {
+    bad.push('fewer than two reachable wrecks — cannot test the one-bell rule');
+  } else {
+    console.log(`   first dive launched: ${bell.first}, bell reads as out: ${bell.outNow}, `
+      + `second refused: ${!bell.second} (${bell.running} voyage running)`);
+    if (!bell.first) bad.push('the first dive would not launch at all');
+    if (!bell.outNow) bad.push('a dive is running but the bell does not read as out');
+    if (bell.second) bad.push('a second wreck was worked while the bell was already down');
+    if (bell.running !== 1) bad.push(`${bell.running} voyages running after one dive and one refusal`);
+  }
+
+  /* And the sheet has to say so before the button is pressed. */
+  const said = await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    const sel = await import('/src/core/selectors.js');
+    const wreck = sel.allRoutes().find(r => r.type === 'dive' && sel.diveReachable(r)
+      && !st.S.voyages.some(v => v.routeId === r.id));
+    if (!wreck) return null;
+    /* Step 7 already left us on the chart, so clicking the tab is a no-op and
+       the map would still be showing the wrecks from before this step rewrote
+       them. Repaint it directly. */
+    const shell = await import('/src/ui/shell.js');
+    shell.gotoTab('routes', true);
+    shell.render();
+    await new Promise(r => setTimeout(r, 700));
+    const node = document.querySelector(`.mapnode[data-id="${wreck.id}"]`);
+    if (!node) return null;
+    node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 700));
+    const pick = document.querySelector('[data-act="pick-ship"]');
+    if (pick) { pick.click(); await new Promise(r => setTimeout(r, 500)); }
+    const btn = document.getElementById('sailBtn');
+    return {
+      disabled: !btn || btn.disabled,
+      warn: (document.querySelector('#sheetBody .warnline') || {}).textContent || ''
+    };
+  });
+  if (!said) bad.push('could not open a second wreck to check what the sheet says');
+  else {
+    console.log('   second wreck: button disabled ' + said.disabled + ', says "' + said.warn.trim() + '"');
+    if (!said.disabled) bad.push('the second wreck still offers a live Send Divers button');
+    if (!/bell/i.test(said.warn)) bad.push('the sheet does not explain that the bell is already down');
+  }
 
   await b.close();
   console.log('\n=== ' + bad.length + ' problem(s) ===');

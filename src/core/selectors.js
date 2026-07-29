@@ -391,15 +391,25 @@ export function busyIds() {
 export const isBusy = id => S.voyages.some(v => v.ships.includes(id));
 export const voyageOf = id => S.voyages.find(v => v.ships.includes(id));
 export const voyReady = v => now() >= v.endsAt;
+
+/* You own one diving bell. It is aboard whichever ship is working a wreck, so
+   a second dive would need a second bell — and there is only ever one. */
+export const diveOut = () => S.voyages.some(v => v.type === 'dive');
 export const readyCount = () => S.voyages.filter(voyReady).length;
 export const voyageSlotsFree = () => S.voyages.length < VOY_MAX_ACTIVE;
 
-/* Time away. A ship at the rated speed makes the passage in the standard time;
-   slower drags it out, faster brings her home early. */
+/* Time away.
+
+   A hull's speed is the thing that decides it, and it decides it hard: the
+   fastest ship you own comes home in around a third of the time the slowest
+   one takes on the same run. That is the whole trade against her hold — a Man
+   o' War carries five times what a schooner does and takes far longer over it,
+   so "which ship for this job" has a real answer that changes with the job
+   rather than always being "the biggest one that fits". */
 export function voyDuration(r, fleet) {
   const avg = fleet.reduce((a, s) => a + s.speed, 0) / Math.max(1, fleet.length);
-  const need = r.speed || avg || 1;
-  const factor = Math.max(0.55, Math.min(1.8, 1 + (need - avg) * 0.12));
+  const need = r.speed || 4;
+  const factor = Math.max(0.4, Math.min(2.2, 1 + (need - avg) * 0.2));
   return Math.max(45, Math.round(r.len * VOY_SEC_PER_DAY * factor));
 }
 export function rushCost(v) {

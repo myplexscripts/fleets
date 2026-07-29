@@ -38,11 +38,15 @@ import { PORTS } from '../data/ports.js';
 import { GOODS } from '../data/goods.js';
 import { BELL_NAMES, DEPTH_NAMES } from '../data/salvage.js';
 import {
-  routeById, allShips, findShip, busyIds, isBusy, tname, power, fleetPower, holdCap,
+  routeById, allShips, findShip, busyIds, isBusy, diveOut, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
   bellDepth, laneRiseIn, laneFight, lanePay, battleOdds
 } from '../core/selectors.js';
+/* Rate of fire is a battle number, but it is a reason to pick one hull over
+   another, so the picker needs it. battle/state.js only reads config, so there
+   is no cycle back into the fight from here. */
+import { reloadMs } from '../battle/state.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
 import { chip, have, chipRow, bagChips, shipTiles } from './format.js';
@@ -128,7 +132,17 @@ function shipPicks(voyage, need) {
       name: s.name,
       tag: crip ? 'CRIPPLED' : atSea ? 'AT SEA' : (i > -1 ? slots[i] : ''),
       tagCls: crip ? 'bad' : atSea ? 'blu' : (voyage ? 'blu' : ''),
-      sub: tname(s),
+      /* What a hull's speed BUYS depends on the job, and the picker has to say
+         which one is being bought here — the same number is two different
+         arguments. On a run it is how long she would be gone, which is the other
+         half of the trade against her hold: a schooner is back in a third of the
+         time and carries a fifth as much. In a fight it is how often she fires,
+         because the guns run on their own clock now, so a fast hull with light
+         guns is a real answer and not just a worse frigate. */
+      sub: dis ? tname(s)
+        : voyage
+          ? tname(s) + ' · ' + fmtDur(voyDuration(curRoute, [s]))
+          : tname(s) + ' · fires every ' + (reloadMs(s) / 1000).toFixed(1) + 's',
       chips: shipTiles(s, power(s), need)
     });
   }).join(''), 'shipPicks');
@@ -265,7 +279,8 @@ function requirements(r, isBoss) {
       chip('target', '100%', 'ok', 'A wreck dive is never a fight'),
       chip('noto', '+' + notoGain(r), 'gold', 'Notoriety'),
       bagChips(r.rew)
-    ], esc(MTYPE.dive.tip));
+    ], esc(MTYPE.dive.tip)
+      + (diveOut() ? ' <span class="bad">Your bell is already down on another wreck.</span>' : ''));
   }
 
   const fp = fleetPower(fleet);
@@ -325,8 +340,13 @@ function voyageBody(r) {
     else if (!holdOK && fleet.length) warn = 'That hull is too small.';
     else if (already) warn = 'Already running this contract.';
   } else {
-    ready = diveReachable(r) && !!fleet.length;
+    /* One bell, one wreck. The button has to say so before it is pressed —
+       being refused after choosing a ship is the same information delivered
+       as a telling-off. */
+    const bellFree = !diveOut();
+    ready = diveReachable(r) && bellFree && !!fleet.length;
     if (!diveReachable(r)) warn = `Upgrade the bell in the Market — yours reaches ${bellDepth()}.`;
+    else if (!bellFree) warn = 'Your diving bell is already down on another wreck.';
   }
   if (!slotOK) warn = `All ${VOY_MAX_ACTIVE} fleets are at sea.`;
 

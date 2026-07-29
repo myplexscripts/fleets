@@ -14,6 +14,49 @@ export const CARGO_PER_CHEST = 5;     // cargo space one salvaged chest takes up
 /* Ships in a battle line: front, centre, rear. */
 export const BATTLE_SHIPS = 3;
 
+/* ---- gunnery ----
+
+   A battle runs on a clock rather than in turns. Every ship reloads at her own
+   rate, fires the moment she is loaded, and the player's job is not to order
+   each broadside — it is to spot the moments worth spending a brace, a boarding
+   party or a barrel on.
+
+   Reload time is BASE / (1 + speed * PER_SPEED), floored so that a fully
+   worked-up flagship cannot fire so fast that nothing else in the fight
+   matters. At these numbers a Man o' War (speed 2) takes about 3.3 seconds
+   between broadsides and a schooner (speed 8) about 1.7. */
+export const RELOAD_BASE_MS = 5200;
+export const RELOAD_PER_SPEED = 0.26;
+export const RELOAD_FLOOR_MS = 900;
+
+/* The run-in. Sails on the horizon are not sails in range, so the first
+   broadside of a battle takes longer to come than the ones after it — the first
+   reload is stretched by this much.
+
+   It reads as ships closing, but it exists for a harder reason. A small fight
+   at these rates is over in four or five seconds, which is not enough time to
+   read the order bar, let alone decide to brace, board or run. Two ships against
+   two must not be able to destroy the player before the player has had a chance
+   to leave. The run-in buys those seconds once, at the start, without slowing
+   the rest of the fight down. */
+export const APPROACH_MULT = 2.4;
+
+/* Bracing: what it costs you and what it buys. Damage taken is multiplied by
+   BRACE_MULT for BRACE_MS, and your own reloads crawl while you are doing it —
+   everybody is below decks holding on rather than serving the guns. */
+export const BRACE_MS = 5000;
+export const BRACE_COOLDOWN_MS = 11000;
+export const BRACE_MULT = 0.35;
+export const BRACE_RELOAD_MULT = 0.35;
+
+/* Boarding needs her beaten down first, and the party needs time to re-form. */
+export const BOARD_COOLDOWN_MS = 9000;
+
+/* An admiral with the broadside gimmick charges one every so often, and shows
+   it coming for long enough that bracing is a decision rather than a reflex. */
+export const VOLLEY_EVERY_MS = 16000;
+export const VOLLEY_WARN_MS = 3000;
+
 /* Lane danger.
 
    A lane's danger climbs on its own in real time. Two things push it back down:

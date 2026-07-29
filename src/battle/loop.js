@@ -1,9 +1,37 @@
-/* The turn loop: one player order, then the enemy answers, then round ends. */
+/* The engagement, on a clock.
+
+   Battles used to be turns: one order from you, then every enemy answered, then
+   the round ticked over. That put the player in charge of every single
+   broadside, which sounds like control and plays like paperwork — the same two
+   buttons, over and over, with the interesting decisions buried among them.
+
+   Now the guns look after themselves. Every ship on the water carries a reload
+   meter that fills at her own rate, and when it fills she fires. Speed decides
+   how often, guns decide how hard, hull decides how long she lasts. Nobody
+   orders a broadside because a broadside is not a decision — it is what a ship
+   with loaded guns does.
+
+   What is left for the player is the part that was always interesting:
+
+     TARGET   tap a ship and your line prefers her. Free, any time.
+     BRACE    a few seconds of taking far less, paid for in your own rate of
+              fire. The answer to a telegraphed volley.
+     BOARD    take her intact once she is beaten down. On a cooldown.
+     BARRELS  a consumable that hits like nothing else you own.
+     RETREAT  because a fight you cannot win must be leavable.
+
+   The clock stops for the end banner, and whenever the tab is not being looked
+   at — coming back to a battle that resolved itself in the background would be
+   the worst possible version of this. */
 
 import { $, sleep } from '../core/dom.js';
 import { S, save } from '../core/state.js';
 import { rnd, pick, fx } from '../core/rng.js';
 import { power, hasFit } from '../core/selectors.js';
+import {
+  BRACE_MS, BRACE_COOLDOWN_MS, BRACE_MULT, BRACE_RELOAD_MULT,
+  BOARD_COOLDOWN_MS, VOLLEY_EVERY_MS, VOLLEY_WARN_MS
+} from '../core/config.js';
 import { HIT_P, HIT_E, SINK, CRIP } from '../data/flavour.js';
 import { action } from '../core/actions.js';
 import { updateRes } from '../ui/hud.js';
@@ -12,22 +40,24 @@ import { wipe } from '../fx/wipe.js';
 import { play, ambience } from '../fx/sound.js';
 import { buzz } from '../fx/haptics.js';
 import { award } from '../fx/award.js';
-import { BT, gim, aliveE, aliveP } from './state.js';
+import { BT, gim, aliveE, aliveP, reloadMs, primeTimers, boardable, closed } from './state.js';
 import { BattleScene, phaserReady } from './scene.js';
-import { blog, drawHud, lockOrders, showBanner, bannerOpen } from './hud.js';
+import { blog, drawHud, showBanner, bannerOpen } from './hud.js';
 
-let PG = null;   // the Phaser game, created once and reused
+let PG = null;     // the Phaser game, created once per battle and destroyed after
+let raf = 0;       // the clock
+let last = 0;
 
 /* Boots a fresh Phaser game for each battle.
 
-   It would be cheaper to keep one game alive across battles, but the battle
-   screen is display:none between them, so the RESIZE scale mode collapses the
-   canvas to 0x0 and the renderer cannot rebuild its framebuffer at that size —
-   the next battle then draws nothing. Creating the game while the host is
-   visible, and destroying it on the way out, keeps that impossible.
+   It would be cheaper to keep one alive across battles, but the battle screen
+   is display:none between them, so the RESIZE scale mode collapses the canvas
+   to 0x0 and the renderer cannot rebuild its framebuffer at that size — the
+   next battle then draws nothing. Creating the game while the host is visible,
+   and destroying it on the way out, keeps that impossible.
 
    If Phaser is unavailable the callback still runs with PG null; every visual
-   call in this file is guarded, so the fight resolves through the log. */
+   call here is guarded, so the fight resolves through the log and the meters. */
 function ensurePhaser(cb) {
   if (!phaserReady()) {
     const host = $('phaserHost');
@@ -55,17 +85,27 @@ function teardownPhaser() {
 
 export function startBattle(fleet, enemies, escort, onEnd, boss) {
   BT.b = {
-    fleet, enemies, onEnd, round: 1, target: 0, log: [],
-    merchant: escort ? { type: 'merchant', name: 'Merchant Rose', hull: 40, max: 40 } : null,
+    fleet, enemies, onEnd, target: 0, log: [],
+    merchant: escort ? { type: 'merchant', name: 'Merchant Rose', hull: 40, max: 40, speed: 3, guns: 0 } : null,
     boss: boss || null,
     reinforce: (boss && boss.reinforce) || 0,
     reinfPool: (boss && boss.reinforcements) ? boss.reinforcements.slice() : [],
-    telegraph: false
+    /* the clock */
+    t: 0,
+    timers: new Map(),
+    brace: 0, braceCd: 0, boardCd: 0,
+    volleyAt: 0,
+    telegraph: false,
+    over: false, resolving: 0
   };
-  /* Clears BT.busy and the order bar's locked state together — a battle that
-     ended on a win or an escape returns without unlocking, so without this the
-     next battle would start with its orders greyed out and unclickable. */
-  lockOrders(false);
+  BT.busy = false;
+
+  const b = BT.b;
+  /* Set after BT.b exists — gim() reads it, and inside the literal above it
+     would still have been answering about the last battle's admiral. */
+  b.volleyAt = gim('broadside') ? VOLLEY_EVERY_MS : 0;
+  primeTimers(fleet, true).forEach((v, k) => b.timers.set(k, v));
+  primeTimers(enemies, true).forEach((v, k) => b.timers.set(k, v));
 
   if (hasFit('magazine')) S.barrels = Math.min(9, S.barrels + 1);
 
@@ -76,18 +116,19 @@ export function startBattle(fleet, enemies, escort, onEnd, boss) {
   if (boss) { play('boss_horn'); buzz('warn'); }
 
   blog(openingLine(boss, escort), boss ? 'bad' : '');
-
   drawHud();
+
   ensurePhaser(() => {
     if (PG) {
       if (PG.scene.getScene('battle')) PG.scene.remove('battle');
       PG.scene.add('battle', BattleScene, true);
     }
     refreshTut();
+    startClock();
   });
 }
 
-/* Round-1 opener. Boss titles already start with "The". */
+/* Opener. Boss titles already start with "The". */
 function openingLine(boss, escort) {
   if (boss) return `${boss.n} puts her helm over and comes about to meet you. ${boss.title}, in the flesh at last.`;
   if (escort) return "They came out of the haze on the convoy's blind quarter. Get between them and the merchant.";
@@ -96,20 +137,163 @@ function openingLine(boss, escort) {
 
 export const battleOpen = () => $('battleScr').classList.contains('on');
 
+/* ---- the clock ---------------------------------------------------------- */
+
+function startClock() {
+  stopClock();
+  last = performance.now();
+  raf = requestAnimationFrame(tick);
+}
+function stopClock() {
+  if (raf) cancelAnimationFrame(raf);
+  raf = 0;
+}
+
+/* A battle nobody is watching does not happen. */
+const paused = () => document.hidden || bannerOpen() || !battleOpen();
+
+function tick(now) {
+  raf = requestAnimationFrame(tick);
+  const b = BT.b;
+  if (!b || b.over) return;
+
+  const dt = Math.min(120, now - last);       // a backgrounded tab must not lurch
+  last = now;
+  if (paused()) return;
+
+  b.t += dt;
+  if (b.brace > 0) b.brace -= dt;
+  if (b.braceCd > 0) b.braceCd -= dt;
+  if (b.boardCd > 0) b.boardCd -= dt;
+
+  advance(b.fleet, dt, true);
+  advance(b.enemies, dt, false);
+  bossVolley(dt);
+
+  drawHud();
+  if (BT.scene) BT.scene.drawReloads();
+  checkOver();
+}
+
+/* Fill everyone's meter, and let go anyone who is loaded. */
+function advance(list, dt, mine) {
+  const b = BT.b;
+  /* Bracing means the crews are holding on rather than serving the guns. */
+  const rate = (mine && b.brace > 0) ? BRACE_RELOAD_MULT : 1;
+
+  list.forEach(s => {
+    if (mine ? s.hull <= 0 : s.disabled) return;
+    const t = b.timers.get(s);
+    if (!t) return;
+    t.at += (dt / t.of) * rate;
+    if (t.at >= 1) {
+      t.at = 0;
+      closed(t, s);          // she has closed the range; normal reload from here
+      fire(s, mine);
+    }
+  });
+}
+
+/* ---- gunnery ------------------------------------------------------------ */
+
+function damageFrom(s, mult) {
+  return Math.max(1, Math.round(s.guns * rnd(0.8, 1.2) * (mult || 1)));
+}
+
+/* One ship, one broadside. Everything visual is fire-and-forget: the clock does
+   not wait for an animation, or a slow frame would slow the whole battle. */
+function fire(s, mine) {
+  const b = BT.b, sc = BT.scene;
+  if (b.over) return;
+
+  if (mine) {
+    const t = preferredTarget();
+    if (!t) return;
+    const slot = b.fleet.indexOf(s);
+    const dmg = damageFrom(s, slot === 1 ? 1.25 : 1);   // centre of the line hits harder
+    land(s, t, dmg, false, false);
+
+    /* Chase Guns give the flagship a second, weaker shot behind the first. */
+    if (s.id === 'FLAG' && hasFit('chase')) {
+      setTimeout(() => {
+        if (b.over) return;
+        const t2 = preferredTarget();
+        if (t2) land(s, t2, damageFrom(s, 0.6), false, false);
+      }, 260);
+    }
+    return;
+  }
+
+  /* Escort work: some of them go for the merchant instead of you. */
+  if (b.merchant && b.merchant.hull > 0 && Math.random() < 0.3) {
+    land(s, b.merchant, damageFrom(s, 0.8), true, true);
+    return;
+  }
+  const ps = aliveP();
+  if (!ps.length) return;
+  /* Mostly they pick your strongest, sometimes at random. */
+  const t = Math.random() < 0.65 ? ps.reduce((a, x) => (power(x) > power(a) ? x : a)) : pick(ps);
+  const rear = b.fleet.indexOf(t) === 2 ? 0.75 : 1;
+  land(s, t, damageFrom(s, rear * (b.brace > 0 ? BRACE_MULT : 1)), true, false);
+}
+
+/* Put a shot into somebody, with all the noise that goes with it. */
+function land(from, to, dmg, incoming, atMerchant) {
+  const b = BT.b, sc = BT.scene;
+  if (!to || b.over) return;
+  if (!atMerchant && (incoming ? to.hull <= 0 : to.disabled)) return;
+
+  to.hull = Math.max(0, to.hull - dmg);
+  blog(fx(pick(incoming ? HIT_E : HIT_P), from.name, to.name, dmg), incoming ? 'bad' : '');
+  buzz('hit');
+
+  if (sc) {
+    Promise.resolve(sc.fireShot(from, to, false)).then(hit => {
+      if (!hit) return;
+      sc.impact(hit.x, hit.y, dmg, false);
+      sc.hitFlash(hit.o);
+      sc.drawHp(hit.o);
+      if ((atMerchant || incoming) ? to.hull <= 0 : to.hull <= 0) sc.sink(hit.o);
+    }).catch(() => {});
+  }
+
+  if (to.hull > 0) return;
+
+  if (atMerchant) {
+    blog(`The ${to.name} is going down by the bow and there is nothing to be done about it.`, 'bad');
+  } else if (incoming) {
+    blog(fx(pick(CRIP), to.name), 'bad');
+  } else if (!to.disabled) {
+    to.disabled = true;
+    blog(fx(pick(SINK), to.name), 'good');
+    buzz('big');
+    retarget();
+    maybeReinforce(to);
+  }
+}
+
+/* Who your line is shooting at: the tapped ship if she is still up, otherwise
+   whoever is left. */
+function preferredTarget() {
+  const b = BT.b;
+  const t = b.enemies[b.target];
+  if (t && !t.disabled) return t;
+  const next = aliveE()[0];
+  if (next) {
+    b.target = b.enemies.indexOf(next);
+    if (BT.scene) BT.scene.setMarker(b.target);
+  }
+  return next || null;
+}
+
 function retarget() {
   const b = BT.b;
-  if (!b.enemies[b.target] || b.enemies[b.target].disabled) {
-    const ni = b.enemies.findIndex(e => !e.disabled);
-    if (ni > -1) {
-      b.target = ni;
-      if (BT.scene) BT.scene.setMarker(ni);
-    }
-  }
+  if (!b.enemies[b.target] || b.enemies[b.target].disabled) preferredTarget();
 }
 
 /* Keyboard target selection. */
 export function cycleTarget(dir) {
-  if (!BT.b || BT.busy) return;
+  if (!BT.b || bannerOpen()) return;
   const live = BT.b.enemies.map((e, i) => ({ e, i })).filter(x => !x.e.disabled);
   if (live.length < 2) return;
   const at = live.findIndex(x => x.i === BT.b.target);
@@ -119,222 +303,205 @@ export function cycleTarget(dir) {
   play('ui_tap');
 }
 
-async function maybeReinforce(dead) {
-  if (!gim('wolfpack') || BT.b.reinforce <= 0) return;
-  const tpl = BT.b.reinfPool.shift();
+function maybeReinforce(dead) {
+  const b = BT.b;
+  if (!gim('wolfpack') || b.reinforce <= 0) return;
+  const tpl = b.reinfPool.shift();
   if (!tpl) return;
-  BT.b.reinforce--;
+  b.reinforce--;
 
   const nd = { ...tpl, max: tpl.hull, disabled: false, pal: 'boss' };
-  BT.b.enemies.push(nd);
+  b.enemies.push(nd);
+  /* She cuts out of the fog already in the fight — no run-in for a ship that
+     was waiting for you. */
+  b.timers.set(nd, { at: 0.1, of: reloadMs(nd), closing: false });
   blog(`Another sail cuts out of the fog where there was nothing — the ${nd.name} takes her place in the line.`, 'bad');
-  if (BT.scene) await BT.scene.spawnReinforcement(nd, dead);
-  else await sleep(300);
+  if (BT.scene) BT.scene.spawnReinforcement(nd, dead);
   retarget();
 }
 
-export async function cmd(c) {
-  if (BT.busy || !BT.b || bannerOpen()) return;
-  const b = BT.b, sc = BT.scene;
-  lockOrders(true);
+/* ---- the admiral's big one ---------------------------------------------- */
 
-  try {
-    if (c === 'retreat') {
-      const crew = aliveP();
-      const sp = crew.reduce((a, s) => a + s.speed, 0) / Math.max(1, crew.length);
-      if (Math.random() < Math.min(0.9, 0.45 + sp * 0.04)) {
-        blog('You put the helm hard over and slip away under every stitch she carries.', 'good');
-        if (sc) sc.retreatAnim();
-        play('sail');
-        await sleep(750);
-        return showBanner('escaped');
-      }
-      blog('The wind betrays you at exactly the wrong moment and they close the gap.', 'bad');
-      await enemyPhase(false);
-      return endRound();
-    }
+function bossVolley(dt) {
+  const b = BT.b;
+  if (!b.volleyAt) return;
+  const bs = b.enemies.find(e => e.isBoss && !e.disabled);
+  if (!bs) { b.volleyAt = 0; b.telegraph = false; return; }
 
-    if (c === 'barrels') {
-      if (S.barrels < 1) { lockOrders(false); return; }
-      S.barrels--;
-      updateRes();
-    }
+  b.volleyAt -= dt;
 
-    const brace = c === 'brace', barrel = c === 'barrels';
-    if (brace && sc) sc.shieldPulse();
-
-    if (c === 'board') {
-      const t = b.enemies[b.target], thr = hasFit('grapple') ? 0.55 : 0.40;
-      if (gim('ironclad')) {
-        blog('The grapples clatter off iron plating and fall away into the water. There is no boarding that ship.', 'bad');
-      } else if (!t || t.disabled || t.hull > t.max * thr) {
-        blog(`Too much hull left to board — get her below ${Math.round(thr * 100)}% first.`, 'bad');
-      } else {
-        const boarder = aliveP()[0];
-        await (sc ? sc.boardDash(boarder, t) : sleep(300));
-        if (Math.random() < (t.hull < t.max * 0.15 ? 0.75 : 0.55)) {
-          t.disabled = true;
-          t.hull = Math.max(1, t.hull);
-          blog(`${boarder.name}'s people go over the rail screaming and the ${t.name} strikes inside two minutes.`, 'good');
-          if (sc) {
-            const o = sc.find(t);
-            sc.floatText(o.c.x, o.c.y - 44, 'TAKEN', '#63c06a', 24);
-            sc.sink(o);
-          }
-          buzz('big');
-          retarget();
-          await maybeReinforce(t);
-        } else {
-          const dm = Math.round(t.guns * rnd(0.8, 1.2));
-          boarder.hull = Math.max(0, boarder.hull - dm);
-          blog(`They were waiting at the rail with pikes. ${boarder.name} comes away with ${dm} and fewer hands.`, 'bad');
-          if (sc) {
-            const o = sc.find(boarder);
-            sc.impact(o.c.x, o.c.y, dm, false);
-            sc.hitFlash(o);
-            sc.drawHp(o);
-            if (boarder.hull <= 0) sc.sink(o);
-          }
-        }
-      }
-    } else {
-      /* Gunnery. Chase Guns give the flagship a second, weaker shot. */
-      for (const s of aliveP()) {
-        const shots = (s.id === 'FLAG' && hasFit('chase')) ? 2 : 1;
-        for (let k = 0; k < shots; k++) {
-          if (!aliveE().length) break;
-          const slotI = b.fleet.indexOf(s);
-          let t = c === 'focus' ? b.enemies[b.target] : pick(aliveE());
-          if (!t || t.disabled) t = aliveE()[0];
-          if (!t) break;
-
-          const dmg = Math.round(
-            s.guns * rnd(0.8, 1.2) *
-            (slotI === 1 ? 1.25 : 1) *     // centre of the line hits harder
-            (barrel ? 1.6 : 1) *
-            (brace ? 0.5 : 1) *
-            (k ? 0.6 : 1)
-          );
-          const hit = await (sc ? sc.fireShot(s, t, barrel) : sleep(200));
-          t.hull -= dmg;
-          blog(fx(pick(HIT_P), s.name, t.name, dmg) + (k ? ' The chase guns speak after her.' : ''), '');
-          if (sc && hit) { sc.impact(hit.x, hit.y, dmg, barrel); sc.hitFlash(hit.o); sc.drawHp(hit.o); }
-          buzz('hit');
-
-          if (t.hull <= 0 && !t.disabled) {
-            t.disabled = true;
-            t.hull = 0;
-            blog(fx(pick(SINK), t.name), 'good');
-            if (sc) sc.sink(sc.find(t));
-            buzz('big');
-            retarget();
-            await maybeReinforce(t);
-          }
-          await sleep(170);
-        }
-      }
-    }
-
-    if (!aliveE().length) { await sleep(500); return showBanner('win'); }
-    await sleep(280);
-    await enemyPhase(brace);
-    endRound();
-  } catch (e) {
-    console.error('[battle]', e);
-    endRound();
+  if (!b.telegraph && b.volleyAt <= VOLLEY_WARN_MS) {
+    b.telegraph = true;
+    blog(`The gunports come up along ${b.boss.n}'s lower deck, one after another. `
+      + 'Whatever comes next will not be survivable twice. BRACE.', 'bad');
+    if (BT.scene) BT.scene.telegraphFx();
+    play('telegraph');
   }
+
+  if (b.volleyAt > 0) return;
+
+  b.telegraph = false;
+  b.volleyAt = VOLLEY_EVERY_MS;
+  const ps = aliveP();
+  if (!ps.length) return;
+
+  const t = ps.reduce((a, s) => (power(s) > power(a) ? s : a));
+  const braced = b.brace > 0;
+  const dm = Math.round(bs.guns * 2.6 * (braced ? 0.42 : 1));
+  t.hull = Math.max(0, t.hull - dm);
+  if (BT.scene) BT.scene.flash(0xffb060);
+  blog(`${bs.name} empties her lower deck in one long rolling crash — ${t.name} takes ${dm}.`
+    + (braced ? ' Braced, thank God.' : ' Nothing was ready for it.'), 'bad');
+  buzz('big');
+
+  if (BT.scene) {
+    Promise.resolve(BT.scene.fireShot(bs, t, false, true)).then(hit => {
+      if (!hit) return;
+      BT.scene.impact(hit.x, hit.y, dm, true);
+      BT.scene.hitFlash(hit.o);
+      BT.scene.drawHp(hit.o);
+      if (t.hull <= 0) BT.scene.sink(hit.o);
+    }).catch(() => {});
+  }
+  if (t.hull <= 0) blog(fx(pick(CRIP), t.name), 'bad');
 }
 
-async function enemyPhase(brace) {
-  const b = BT.b, sc = BT.scene;
+/* ---- what the player actually does -------------------------------------- */
 
-  /* The telegraphed boss volley lands first, before anything else fires. */
-  if (b.telegraph) {
-    const bs = b.enemies.find(e => e.isBoss && !e.disabled);
-    b.telegraph = false;
-    if (bs) {
-      const ps = aliveP();
-      if (ps.length) {
-        const t = ps.reduce((a, s) => (power(s) > power(a) ? s : a));
-        const dm = Math.round(bs.guns * 2.6 * (brace ? 0.42 : 1));
-        const hit = await (sc ? sc.fireShot(bs, t, false, true) : sleep(300));
-        t.hull = Math.max(0, t.hull - dm);
-        if (sc) sc.flash(0xffb060);
-        blog(`${bs.name} empties her lower deck in one long rolling crash — ${t.name} takes ${dm}.${brace ? ' Braced, thank God.' : ' Nothing was ready for it.'}`, 'bad');
-        if (sc && hit) {
-          sc.impact(hit.x, hit.y, dm, true);
+export function cmd(c) {
+  const b = BT.b;
+  if (!b || b.over || bannerOpen()) return;
+  const sc = BT.scene;
+
+  if (c === 'brace') {
+    if (b.braceCd > 0) return;
+    b.brace = BRACE_MS;
+    b.braceCd = BRACE_MS + BRACE_COOLDOWN_MS;
+    if (sc) sc.shieldPulse();
+    play('board');
+    blog('Every hand grabs something solid and the gunports come down.', 'good');
+    drawHud();
+    return;
+  }
+
+  if (c === 'barrels') {
+    if (S.barrels < 1) return;
+    S.barrels--;
+    updateRes();
+    const t = preferredTarget();
+    const from = aliveP()[0];
+    if (t && from) {
+      const dmg = damageFrom(from, 2.4);
+      t.hull = Math.max(0, t.hull - dmg);
+      blog(`A barrel goes over in a lazy arc and bursts across the ${t.name}'s deck — ${dmg}.`, 'good');
+      buzz('big');
+      if (sc) {
+        Promise.resolve(sc.fireShot(from, t, true)).then(hit => {
+          if (!hit) return;
+          sc.impact(hit.x, hit.y, dmg, true);
           sc.hitFlash(hit.o);
           sc.drawHp(hit.o);
-          if (t.hull <= 0) { sc.sink(hit.o); blog(fx(pick(CRIP), t.name), 'bad'); }
-        }
-        buzz('big');
-        await sleep(260);
+          if (t.hull <= 0) sc.sink(hit.o);
+        }).catch(() => {});
+      }
+      if (t.hull <= 0 && !t.disabled) {
+        t.disabled = true;
+        blog(fx(pick(SINK), t.name), 'good');
+        retarget();
+        maybeReinforce(t);
       }
     }
+    drawHud();
+    return;
   }
 
-  for (const e of aliveE()) {
-    /* Escort missions: some enemies go for the merchant instead of you. */
-    if (b.merchant && b.merchant.hull > 0 && Math.random() < 0.3) {
-      const dm = Math.round(e.guns * rnd(0.6, 1.0));
-      const hit = await (sc ? sc.fireShot(e, b.merchant, false) : sleep(200));
-      b.merchant.hull = Math.max(0, b.merchant.hull - dm);
-      blog(`${e.name} ignores you entirely and puts her guns on the ${b.merchant.name} — ${dm}.`, 'bad');
-      if (sc && hit) {
-        sc.impact(hit.x, hit.y, dm, false);
-        sc.hitFlash(hit.o);
-        sc.drawHp(hit.o);
-        if (b.merchant.hull <= 0) {
-          sc.sink(hit.o);
-          blog(`The ${b.merchant.name} is going down by the bow and there is nothing to be done about it.`, 'bad');
-        }
-      }
-      await sleep(170);
-      continue;
-    }
-
-    const ps = aliveP();
-    if (!ps.length) break;
-    /* Mostly they pick your strongest ship, sometimes at random. */
-    const t = Math.random() < 0.65 ? ps.reduce((a, s) => (power(s) > power(a) ? s : a)) : pick(ps);
-    const dm = Math.round(e.guns * rnd(0.8, 1.2) * (b.fleet.indexOf(t) === 2 ? 0.75 : 1) * (brace ? 0.5 : 1));
-    const hit = await (sc ? sc.fireShot(e, t, false) : sleep(200));
-    t.hull = Math.max(0, t.hull - dm);
-    blog(fx(pick(HIT_E), e.name, t.name, dm), 'bad');
-    if (sc && hit) {
-      sc.impact(hit.x, hit.y, dm, false);
-      sc.hitFlash(hit.o);
-      sc.drawHp(hit.o);
-      if (t.hull <= 0) { sc.sink(hit.o); blog(fx(pick(CRIP), t.name), 'bad'); }
-    }
-    await sleep(170);
-  }
+  if (c === 'board') return doBoard();
+  if (c === 'retreat') return doRetreat();
 }
 
-function endRound() {
-  const b = BT.b;
-  b.round++;
-
-  if (b.merchant && b.merchant.hull <= 0) {
-    blog('The merchant is gone beneath the waves and your contract with her.', 'bad');
-    return showBanner('loss');
-  }
-  if (!aliveP().length) {
-    blog('Your line is shattered and what is left is not answering signals.', 'bad');
-    return showBanner('loss');
-  }
-
-  if (gim('broadside') && b.round % 3 === 0 && b.enemies.some(e => e.isBoss && !e.disabled)) {
-    b.telegraph = true;
-    blog(`The gunports come up along ${b.boss.n}'s lower deck, one after another. Whatever comes next will not be survivable twice. BRACE.`, 'bad');
-    if (BT.scene) BT.scene.telegraphFx();
+function doBoard() {
+  const b = BT.b, sc = BT.scene;
+  const t = boardable(hasFit('grapple'));
+  if (!t) {
+    if (gim('ironclad')) {
+      blog('The grapples clatter off iron plating and fall away into the water. There is no boarding that ship.', 'bad');
+    } else if (b.boardCd > 0) {
+      blog('The boarding party is still sorting itself out.', 'bad');
+    } else {
+      const thr = hasFit('grapple') ? 55 : 40;
+      blog(`Too much hull left to board — get her below ${thr}% first.`, 'bad');
+    }
+    return;
   }
 
-  lockOrders(false);
+  b.boardCd = BOARD_COOLDOWN_MS;
+  const boarder = aliveP()[0];
+  if (sc) sc.boardDash(boarder, t);
+  play('board');
+
+  if (Math.random() < (t.hull < t.max * 0.15 ? 0.75 : 0.55)) {
+    t.disabled = true;
+    t.hull = Math.max(1, t.hull);
+    blog(`${boarder.name}'s people go over the rail screaming and the ${t.name} strikes inside two minutes.`, 'good');
+    if (sc) {
+      const o = sc.find(t);
+      if (o) { sc.floatText(o.c.x, o.c.y - 44, 'TAKEN', '#63c06a', 24); sc.sink(o); }
+    }
+    buzz('big');
+    retarget();
+    maybeReinforce(t);
+  } else {
+    const dm = Math.round(t.guns * rnd(0.8, 1.2));
+    boarder.hull = Math.max(0, boarder.hull - dm);
+    blog(`They were waiting at the rail with pikes. ${boarder.name} comes away with ${dm} and fewer hands.`, 'bad');
+    if (sc) {
+      const o = sc.find(boarder);
+      if (o) { sc.impact(o.c.x, o.c.y, dm, false); sc.hitFlash(o); sc.drawHp(o); if (boarder.hull <= 0) sc.sink(o); }
+    }
+  }
   drawHud();
 }
 
+async function doRetreat() {
+  const b = BT.b, sc = BT.scene;
+  const crew = aliveP();
+  const sp = crew.reduce((a, s) => a + s.speed, 0) / Math.max(1, crew.length);
+  if (Math.random() < Math.min(0.9, 0.45 + sp * 0.04)) {
+    b.over = true;
+    blog('You put the helm hard over and slip away under every stitch she carries.', 'good');
+    if (sc) sc.retreatAnim();
+    play('sail');
+    await sleep(700);
+    return showBanner('escaped');
+  }
+  blog('The wind betrays you at exactly the wrong moment and they close the gap.', 'bad');
+}
+
+/* ---- the end ------------------------------------------------------------ */
+
+function checkOver() {
+  const b = BT.b;
+  if (b.over) return;
+
+  if (b.merchant && b.merchant.hull <= 0) {
+    b.over = true;
+    blog('The merchant is gone beneath the waves and your contract with her.', 'bad');
+    return showBanner('loss');
+  }
+  if (!aliveE().length) {
+    b.over = true;
+    setTimeout(() => showBanner('win'), 420);
+    return;
+  }
+  if (!aliveP().length) {
+    b.over = true;
+    blog('Your line is shattered and what is left is not answering signals.', 'bad');
+    return showBanner('loss');
+  }
+}
+
 export function endBattle(kind) {
+  stopClock();
   $('banner').classList.remove('on');
   ambience(false);
   const b = BT.b;

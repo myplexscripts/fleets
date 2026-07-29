@@ -16,7 +16,7 @@ import { DIVE_FIND_CHANCE } from '../data/salvage.js';
 import { clearContract } from '../core/contracts.js';
 import { clearDive } from '../core/dives.js';
 import {
-  findShip, fleetPower, holdCap, voyDuration, voyageOpen, voyReady,
+  findShip, fleetPower, holdCap, voyDuration, voyageOpen, voyReady, diveOut,
   tradeChance, notoGain, hasFit, fmtDur, grant, diveChests, chestValue
 } from '../core/selectors.js';
 import { addNoto } from './wanted.js';
@@ -38,6 +38,12 @@ export function launchVoyage(route, fleet) {
   }
   if (S.voyages.length >= VOY_MAX_ACTIVE) {
     deny('No fleets to spare');
+    return false;
+  }
+  /* The bell goes down with the ship that is working the wreck, and you own
+     exactly one of them. */
+  if (route.type === 'dive' && diveOut()) {
+    deny('The bell is already down');
     return false;
   }
   if (route.type === 'cargo') {

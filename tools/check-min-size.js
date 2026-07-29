@@ -133,7 +133,35 @@ const done = () => {
     await measure('cargo sheet picked');
     await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
     await p.click('#node_c3'); await p.waitForTimeout(900); await measure('battle sheet');
-    await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
+
+    /* And the fight itself. The order bar is four buttons across a phone, each
+       carrying a 40px glyph and a label, which is the tightest row in the game —
+       exactly the place a widened padding silently squeezes an icon to 39.9. */
+    await p.locator('#shipPicks .railcard:not(.dis)').first().click();
+    await p.waitForTimeout(500);
+    await p.click('#sailBtn');
+    await p.waitForSelector('#battleScr.on', { timeout: 9000 });
+    await p.waitForTimeout(1600);
+    /* A silent failure to reach the fight would make everything below pass by
+       measuring the map instead, which is worse than no check at all. */
+    const orders = await p.locator('#bcmds button').count();
+    if (orders !== 4) errors.push(vp.width + 'px battle: expected 4 orders, found ' + orders);
+    await measure('battle');
+    /* Leave the way the player would, so the pause check below is not measuring
+       a screen with a fight still running underneath it. */
+    await p.click('[data-order="retreat"]').catch(() => {});
+    for (let i = 0; i < 40 && !(await p.locator('#banner.on').count()); i++) {
+      await p.click('[data-order="retreat"]').catch(() => {});
+      await p.waitForTimeout(500);
+    }
+    await measure('battle banner');
+    await p.click('[data-act="battle-continue"]').catch(() => {});
+    await p.waitForTimeout(1800);
+    for (let i = 0; i < 5 && await p.locator('#resultScr.on').count(); i++) {
+      await p.click('[data-act="close-result"]').catch(() => {});
+      await p.waitForTimeout(600);
+    }
+    await p.waitForTimeout(600);
 
     await p.click('[data-act="pause-open"]').catch(() => {});
     await p.waitForTimeout(700); await measure('pause');
