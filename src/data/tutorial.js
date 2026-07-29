@@ -67,7 +67,7 @@ export const TUTSTEPS = [
     wait: 'battle:end' },
 
   { sel: '#cap0', when: 'prize', title: 'Prizes of War',
-    text: 'Each choice shows what it gives you. Keep needs a free berth — and capturing is the only way to add a ship, so berths are worth having.',
+    text: 'Each choice shows what it gives you. Keep needs a free dock — and capturing is the only way to add a ship, so docks are worth having.',
     wait: ['prize', 'sheet:close'] },
 
   { sel: '#tabFlag', lockTab: 'flag', title: 'Your Flagship',
@@ -75,7 +75,7 @@ export const TUTSTEPS = [
     wait: 'tab:flag' },
 
   { sel: '#main .hero', lockTab: 'flag', title: 'She Is Yours Alone',
-    text: 'Uses no berth, cannot be scuttled, and is the only ship you can upgrade. Each upgrade track eats a different material.',
+    text: 'Uses no dock, cannot be scuttled, and is the only ship you can upgrade. Each upgrade track eats a different material.',
     btn: 'Next' },
 
   { modal: 1, title: 'Wrecks, Charters and Admirals',

@@ -7,9 +7,10 @@ import { actions, actionSource } from '../../core/actions.js';
 import { SCRAP_YIELD } from '../../data/materials.js';
 import {
   cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant,
-  careenReady, careenLeft, careenNeeded
+  freeRepairOffered, canPay, pay
 } from '../../core/selectors.js';
-import { CAREEN_COOLDOWN_MS, CAREEN_TO } from '../../core/config.js';
+import { dockCost } from '../../core/economy.js';
+import { FREE_REPAIR_TO } from '../../core/config.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, shipTiles, chip, chipRow, outOf, bagChips, priceChips, bag } from '../format.js';
@@ -23,31 +24,37 @@ export function renderPort() {
   const f = S.flag, fc = cond(f), fBusy = isBusy('FLAG');
   let i = 0;
 
-  /* Careening: run her up the beach and work on the hull yourself. Free, slow,
-     flagship only, and never as good as paying a shipwright — which is exactly
-     what an emergency exit should be. Without it a captain with a holed fleet,
-     an empty purse and nothing in the hold had a dead save, because no counter
-     in the game buys materials back. */
-  const canCareen = !fBusy && careenNeeded();
-  /* On cooldown the button carries a live clock — the world ticker patches any
-     .clock[data-endsat] in place, so it counts down without this screen having
-     to rebuild itself once a second under the player's finger. */
-  const careenBtn = careenReady()
-    ? itemAction('Careen', 'careen', {}, { cls: 'grn', disabled: !canCareen })
-    : `<button class="btn sm grn itemact" disabled>`
-      + `<span class="clock" data-endsat="${S.careenAt}">${fmtDur(careenLeft() / 1000)}</span></button>`;
+  /* The free repair only exists when the paid one is out of reach. A captain
+     with a holed fleet, an empty purse and nothing in the hold would otherwise
+     have a dead save, since nothing in the game buys materials back. It appears
+     when it is needed and is invisible the rest of the time. */
+  const freeFix = !fBusy && freeRepairOffered()
+    ? itemAction('Free Repair', 'free-repair', {}, { cls: 'grn' })
+    : '';
 
   let h = itemCard({
     icon: 'flag', name: f.name, sub: 'Flagship',
     held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
     body: shipTiles(f, power(f)) + hullBar(f),
     price: f.hull >= f.max ? '' : priceChips({ gold: repairCost(f) }),
-    action: careenBtn + itemAction('Upgrade', 'goto', { tab: 'flag' }),
+    action: freeFix + itemAction('Upgrade', 'goto', { tab: 'flag' }),
     cls: 'owned' + (fBusy ? ' atsea' : '')
   });
 
+  /* Room for another ship is bought here rather than at a market counter,
+     because the thing it changes is right underneath it. */
+  const dc = dockCost();
+  const full = S.ships.length >= S.docks;
   h += sect('Your Ships', i++, chipRow([
-    outOf('crew', S.ships.length, S.docks, S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')], 'tight'));
+    outOf('crew', S.ships.length, S.docks, full ? 'warn' : '', 'Docks in use')], 'tight'));
+
+  h += itemCard({
+    icon: 'crew', name: 'Extra Dock', sub: 'Room for one more ship',
+    body: chipRow([chip('crew', '+1', 'ok', 'One more ship can be kept')], 'tight'),
+    price: priceChips(dc),
+    action: itemAction('Buy', 'buy-dock', {}, { disabled: !canPay(dc) }),
+    cls: 'dockcard'
+  });
 
   if (!S.ships.length) {
     h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships in port. Take one off an enemy.</div></div>`;
@@ -107,7 +114,7 @@ async function doScuttle(id) {
     title: 'Scuttle the ' + s.name + '?',
     text: `She is struck from the register. This cannot be undone.`,
     chips: chipRow([bagChips(yld)], 'big'),
-    ok: 'Scuttle', cancel: 'Keep Her', danger: true
+    ok: 'Scuttle', cancel: 'Cancel', danger: true
   });
   if (!ok) return;
   grant(yld);
@@ -116,26 +123,36 @@ async function doScuttle(id) {
   render();
 }
 
-/* Beach her, scrape her, and put her back in the water half sound. It costs
-   real time rather than coin, so it can rescue a bankrupt captain without ever
-   being the thing a solvent one would choose. */
-function doCareen() {
+/* Patch her up with what is already aboard. Partial, free, and only ever
+   reachable when paying for a proper repair is not. */
+function doFreeRepair() {
   const f = S.flag;
   if (isBusy('FLAG')) return deny('She is at sea');
-  if (!careenReady()) return deny('Not yet — she is still on the beach');
-  if (f.hull >= f.max) return deny('She is sound');
+  if (!freeRepairOffered()) return deny('She is sound');
 
-  const to = Math.max(f.hull, Math.round(f.max * CAREEN_TO));
+  const to = Math.max(f.hull, Math.round(f.max * FREE_REPAIR_TO));
   const mend = to - f.hull;
   f.hull = to;
-  S.careenAt = now() + CAREEN_COOLDOWN_MS;
   play('repair');
   say('+' + mend, 'ok', 'hull');
   render();
 }
 
+/* Another dock. Each one costs more than the last, so a big fleet is a real
+   decision rather than something that just accumulates. */
+function buyDock() {
+  const c = dockCost();
+  if (!canPay(c)) return deny('Cannot pay for that');
+  pay(c);
+  S.docks++;
+  play('upgrade');
+  say('+1', 'ok', 'crew');
+  render();
+}
+
 actions({
+  'buy-dock': buyDock,
   repair: d => doRepair(d.id),
   scuttle: d => doScuttle(d.id),
-  careen: doCareen
+  'free-repair': doFreeRepair
 });

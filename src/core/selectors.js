@@ -4,7 +4,7 @@
 import { S, routes } from './state.js';
 import {
   VOY_SEC_PER_DAY, VOY_MAX_ACTIVE, RUSH_GOLD_PER_MIN, CARGO_PER_CHEST,
-  DANGER_RISE_MIN_DEFAULT, LANE_CLEAR_STEP, WANTED_COOL_PER_MIN, CAREEN_COOLDOWN_MS
+  DANGER_RISE_MIN_DEFAULT, LANE_CLEAR_STEP, WANTED_COOL_PER_MIN
 } from './config.js';
 import { TYPES } from '../data/ships.js';
 import { REGIONS, NOTO_BONUS, VOYAGE_TYPES, MAX_DANGER } from '../data/world.js';
@@ -17,6 +17,7 @@ import { MAT_KEYS } from '../data/materials.js';
 import { SETS, SET_KEYS } from '../data/collectibles.js';
 import { bellMaxDepth, CHEST_VALUE } from '../data/salvage.js';
 import { contractRoute } from './contracts.js';
+import { ensureDives, diveRoute, diveById } from './dives.js';
 import { now } from './dom.js';
 
 /* ---- ships ---- */
@@ -138,11 +139,11 @@ export const laneFight = r => hasLane(r) && effDanger(r) > 0;
    with a cargo run would just be a second, worse cargo run. */
 export const lanePay = r => ({ gold: Math.round(routeRating(r) * (2 + laneDanger(r))) });
 
-/* ---- the careen ----
-   Free, slow, flagship only, and never better than paying a shipwright. */
-export const careenLeft = () => Math.max(0, (S.careenAt || 0) - now());
-export const careenReady = () => careenLeft() <= 0;
-export const careenNeeded = () => !!S.flag && S.flag.hull < S.flag.max;
+/* ---- the free repair ----
+   Offered only when the flagship is damaged and the purse cannot cover fixing
+   her. Never a timer, never better than paying, and gone the moment you can. */
+export const freeRepairOffered = () =>
+  !!S.flag && S.flag.hull < S.flag.max && S.gold < repairCost(S.flag);
 
 /* ---- mission shape ---- */
 export const canVoyage = r => VOYAGE_TYPES.includes(r.type);
@@ -332,9 +333,24 @@ export function bossAsRoute(b) {
 
 /* Every mission currently on the chart: fixed nodes plus one node per charted
    port — a charter if one is on offer there, otherwise its cargo contract. */
+/* A hunting ground you have just cleared is empty for a while. Somebody else
+   always comes — that is what a bounty on your head buys you — but not the
+   same afternoon, and not the same three ships. */
+export const huntCoolLeft = id => Math.max(0, (S.hunts[id] || 0) - now());
+export const huntUp = r => r.type !== 'hunt' || huntCoolLeft(r.id) <= 0;
+
 export function allRoutes() {
   const out = routes.filter(r =>
-    S.unlocked.includes(r.region) && (!r.requiresBoss || S.bossBeaten[r.requiresBoss]));
+    S.unlocked.includes(r.region)
+    && (!r.requiresBoss || S.bossBeaten[r.requiresBoss])
+    && huntUp(r));
+
+  /* Wrecks are a live set: the bell decides which depths exist and finishing
+     one takes it off the chart. See core/dives.js. */
+  ensureDives();
+  (S.dives || []).forEach(d => {
+    if (S.unlocked.includes(d.region)) out.push(diveRoute(d));
+  });
   S.ports.forEach(pid => {
     const p = PORTS[pid];
     if (!p || !S.unlocked.includes(p.region)) return;
@@ -347,6 +363,10 @@ export function allRoutes() {
 export function routeById(id) {
   const r = routes.find(x => x.id === id);
   if (r) return r;
+  if (id.startsWith('dv_')) {
+    const d = diveById(id);
+    return d ? diveRoute(d) : null;
+  }
   const bk = Object.keys(BOSSES).find(k => BOSSES[k].id === id);
   if (bk) return bossAsRoute(BOSSES[bk]);
   if (id.startsWith('k_')) {

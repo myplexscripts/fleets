@@ -11,8 +11,14 @@ import { GOODS, goodsForTier } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { pick, rnd } from '../core/rng.js';
 
-/* Goods taken off a beaten enemy. Richer water carries richer cargo. */
+/* Goods taken off a beaten enemy. Richer water carries richer cargo — but not
+   every ship is carrying any. A hold that filled itself on every single win
+   stopped being a find and became a wage, and it meant a captain who only ever
+   fought never had to think about stock at all. */
+export const GOODS_CHANCE = 0.55;
+
 export function goodsHaul(region, danger) {
+  if (Math.random() > GOODS_CHANCE) return null;
   const tier = REGIONS[region] ? REGIONS[region].tier : 1;
   const good = pick(goodsForTier(tier * 2 + (danger || 0)));
   /* Scaled with the water, because the deep-sea contracts ask for sixty crates

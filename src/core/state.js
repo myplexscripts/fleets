@@ -65,7 +65,8 @@ export function newGame() {
     flag: newFlag(),
     unlocked: ['caribbean'],
     done: {}, patrol: {}, lanes: {}, wanted: {}, summoned: {}, draws: {},
-    bossBeaten: {}, voyages: [], careenAt: 0,
+    dives: [], hunts: {},
+    bossBeaten: {}, voyages: [],
     ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
     won: false,
     tut: localStorage.getItem(TUT_KEY) ? 'done' : 0,
@@ -118,7 +119,12 @@ function migrate() {
   S.bossBeaten = S.bossBeaten || {};
   S.summoned = S.summoned || {};
   S.draws = S.draws || {};
-  if (typeof S.careenAt !== 'number') S.careenAt = 0;
+  S.hunts = S.hunts || {};
+  /* Wrecks used to be five fixed nodes in the route table. They are a live set
+     now, topped up from the bell you own — an empty list is simply one that has
+     not been charted yet, which ensureDives() fixes on the next look. */
+  S.dives = Array.isArray(S.dives) ? S.dives : [];
+  delete S.careenAt;   // the careen cooldown is gone; free repair is conditional now
 
   /* Notoriety became a wanted level. The number is the same number, but it now
      cools over real time, so it has to carry the moment it was last earned —

@@ -56,7 +56,11 @@ const errors = [];
   console.log('   plates: ' + JSON.stringify(plates.map(t => t.trim())));
   if (plates.length !== 2) errors.push('expected 2 plates, got ' + plates.length);
   if (/\d/.test(plates[1] || '')) errors.push('the stores plate carries a number: ' + plates[1]);
-  if (!/^\d+\s*Gold$/i.test((plates[0]||'').replace(/\s+/g,' ').trim())) errors.push('gold plate reads: ' + plates[0]);
+  /* The coin glyph says "gold"; the word next to it was only costing the number
+     its room once the title bar went and three things had to share one row. */
+  if (!/^\d+$/.test((plates[0] || '').replace(/\s+/g, ' ').trim())) {
+    errors.push('gold plate is not just a number: ' + JSON.stringify(plates[0]));
+  }
   if (!(await p.locator('#wStores[data-act="stores"]').count())) errors.push('stores plate does not open the stores');
 
   console.log('2. the key names the struck flag, and folds away');

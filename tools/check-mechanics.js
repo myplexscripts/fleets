@@ -7,13 +7,16 @@
      1. A drawn line-up is drawn ONCE. Closing a mission and opening it again
         must not produce different ships — with a band in play that would be a
         slot machine, and rerolling was removed on purpose.
-     2. There is always a fight. Every unlocked region carries a hunting ground
-        that never runs out and never gates.
+     2. There is always a fight. Clearing a hunting ground empties it for a
+        while, so the guarantee is three tappable fights per region at all
+        times — never "the hunt is always there".
      3. There is always a way back from zero. A holed flagship, an empty purse
         and an empty hold must still leave a ship that can sail.
      4. Every prize choice pays exactly one kind of thing, and there is no
         walking away from one.
      5. Switching tabs lands you at the top of the new screen.
+     6. A better bell puts deeper wrecks on the chart, and a wreck you have
+        emptied comes off it.
 
    Run:  node tools/check-mechanics.js [url] */
 
@@ -89,29 +92,66 @@ catch (e) {
   await p.click('[data-act="close-sheet"]');
   await p.waitForTimeout(400);
 
-  /* ---- 2. there is always a fight ---- */
-  console.log('2. every unlocked region has a hunting ground');
+  /* ---- 2. there is always a fight, even with the hunt cleared ---- */
+  console.log('2. three fights per region even while a hunting ground is empty');
   const hunts = await p.evaluate(async () => {
     const routes = await import('/src/data/routes.js');
     const world = await import('/src/data/world.js');
     const rs = routes.makeRoutes();
     const out = {};
     for (const rk in world.REGIONS) {
-      const mine = rs.filter(r => r.region === rk);
+      const mine = rs.filter(r => r.region === rk && !r.requiresBoss);
+      const fights = mine.filter(r => world.BATTLE_TYPES.includes(r.type));
       out[rk] = {
-        hunt: mine.some(r => r.type === 'hunt' && !r.requiresBoss),
-        fights: mine.filter(r => world.BATTLE_TYPES.includes(r.type) && !r.requiresBoss).length
+        hunt: fights.some(r => r.type === 'hunt'),
+        total: fights.length,
+        /* what is left standing while the hunting ground is quiet */
+        without: fights.filter(r => r.type !== 'hunt').length
       };
     }
     return out;
   });
   for (const rk in hunts) {
-    console.log(`   ${rk}: ${hunts[rk].fights} ungated fights, hunting ground: ${hunts[rk].hunt}`);
-    if (!hunts[rk].hunt) bad.push(`${rk} has no ungated hunting ground`);
-    if (hunts[rk].fights < 3) bad.push(`${rk} has only ${hunts[rk].fights} ungated fights`);
+    console.log(`   ${rk}: ${hunts[rk].total} fights, ${hunts[rk].without} of them with the hunt cleared`);
+    if (!hunts[rk].hunt) bad.push(`${rk} has no hunting ground at all`);
+    if (hunts[rk].without < 3) {
+      bad.push(`${rk} drops to ${hunts[rk].without} fights once the hunt is cleared — needs 3`);
+    }
   }
-  const huntNode = await p.locator('#node_ch1').count();
-  if (!huntNode) bad.push('the Caribbean hunting ground is not on the chart');
+
+  /* clearing one takes it off the chart, and it comes back */
+  const huntBefore = await p.locator('#node_ch1').count();
+  await p.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('saltpowder'));
+    s.hunts = { ch1: Date.now() + 5 * 60 * 1000 };
+    localStorage.setItem('saltpowder', JSON.stringify(s));
+  });
+  await p.reload({ waitUntil: 'networkidle' });
+  await p.waitForSelector('#titleScr.on');
+  await p.click('[data-act="title-continue"]');
+  await p.waitForSelector('#app.on');
+  await p.click('#tabRoutes');
+  await p.waitForTimeout(1300);
+  const huntCooling = await p.locator('#node_ch1').count();
+  const stillFightable = await p.locator('[id^="node_"]').count();
+  console.log(`   hunting ground on the chart: ${!!huntBefore} → cleared → ${!!huntCooling}`
+    + ` (${stillFightable} markers still there)`);
+  if (!huntBefore) bad.push('the Caribbean hunting ground was never on the chart');
+  if (huntCooling) bad.push('a cleared hunting ground is still on the chart');
+
+  await p.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('saltpowder'));
+    s.hunts = {};
+    localStorage.setItem('saltpowder', JSON.stringify(s));
+  });
+  await p.reload({ waitUntil: 'networkidle' });
+  await p.waitForSelector('#titleScr.on');
+  await p.click('[data-act="title-continue"]');
+  await p.waitForSelector('#app.on');
+  await p.click('#tabRoutes');
+  await p.waitForTimeout(1300);
+  if (!(await p.locator('#node_ch1').count())) bad.push('the hunting ground never came back');
+  else console.log('   and the next one turns up when the cooldown is out');
 
   /* ---- 3. a way back from zero ---- */
   console.log('3. broke, holed and empty is still not a dead save');
@@ -132,19 +172,27 @@ catch (e) {
   await p.waitForSelector('#app.on');
   await p.waitForTimeout(900);
 
-  const careen = p.locator('[data-act="careen"]:not([disabled])');
-  if (!(await careen.count())) bad.push('nothing to careen with — the save is dead');
+  const careen = p.locator('[data-act="free-repair"]:not([disabled])');
+  if (!(await careen.count())) bad.push('no free repair offered — the save is dead');
   else {
     await careen.click();
     await p.waitForTimeout(700);
     const hull = await p.evaluate(() => {
       const s = JSON.parse(localStorage.getItem('saltpowder'));
-      return { hull: s.flag.hull, max: s.flag.max, cooldown: s.careenAt > Date.now() };
+      return { hull: s.flag.hull, max: s.flag.max };
     });
-    console.log(`   careened: flagship ${hull.hull}/${hull.max}, back on cooldown: ${hull.cooldown}`);
-    if (hull.hull <= 0) bad.push('careening left the flagship unable to sail');
-    if (hull.hull >= hull.max) bad.push('careening repaired her completely — it must be worse than paying');
-    if (!hull.cooldown) bad.push('careening did not go on cooldown — it is free repairs forever');
+    console.log(`   free repair: flagship ${hull.hull}/${hull.max}`);
+    if (hull.hull <= 0) bad.push('the free repair left the flagship unable to sail');
+    if (hull.hull >= hull.max) bad.push('the free repair fixed her completely — it must be worse than paying');
+    /* and the offer is gone the moment the player can pay for a real one */
+    const offered = await p.evaluate(async () => {
+      const s = await import('/src/core/state.js');
+      const sel = await import('/src/core/selectors.js');
+      s.S.gold = 999999;
+      return sel.freeRepairOffered();
+    });
+    console.log('   still offered once the purse can cover it: ' + offered);
+    if (offered) bad.push('the free repair is offered to a player who can afford a real one');
 
     /* and with that hull she can actually take the hunt */
     await p.click('#tabRoutes');
@@ -185,6 +233,44 @@ catch (e) {
   console.log(`   scrolled to ${before}, switched tab, now at ${after}`);
   if (before <= 0) console.log('   (could not scroll far enough to prove it — screen was short)');
   else if (after !== 0) bad.push(`tab switch kept the old scroll position (${after})`);
+
+  /* ---- 6. wrecks follow the bell, and are consumed ---- */
+  console.log('6. a better bell charts deeper wrecks; an emptied one comes off');
+  await fresh({ gold: 90000 });
+  const before6 = await p.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('saltpowder'));
+    return (s.dives || []).map(d => d.n + '@' + d.depth);
+  });
+  await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    const dv = await import('/src/core/dives.js');
+    st.S.bell = 3;
+    dv.rechartDives();
+    st.save();
+  });
+  const after6 = await p.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('saltpowder'));
+    return (s.dives || []).map(d => d.n + '@' + d.depth);
+  });
+  console.log('   bell 0: ' + JSON.stringify(before6));
+  console.log('   bell 3: ' + JSON.stringify(after6));
+  const deepest = Math.max(0, ...after6.map(x => +x.split('@')[1]));
+  if (!before6.length) bad.push('no wrecks charted at all');
+  if (deepest < 4) bad.push(`a bell reaching depth 4 charted nothing deeper than ${deepest}`);
+
+  const gone = await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    const dv = await import('/src/core/dives.js');
+    const target = st.S.dives[0];
+    dv.clearDive(target.id);
+    st.save();
+    return { emptied: target.n, left: st.S.dives.map(d => d.n), count: st.S.dives.length };
+  });
+  console.log(`   emptied "${gone.emptied}" — ${gone.count} wrecks still charted`);
+  if (gone.left.includes(gone.emptied)) {
+    bad.push('the wreck that was just emptied was immediately re-charted');
+  }
+  if (!gone.count) bad.push('emptying a wreck left nowhere to dive');
 
   await b.close();
   console.log('\n=== ' + bad.length + ' problem(s) ===');

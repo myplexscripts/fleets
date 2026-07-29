@@ -14,6 +14,7 @@ import { rnd } from '../core/rng.js';
 import { GOODS } from '../data/goods.js';
 import { DIVE_FIND_CHANCE } from '../data/salvage.js';
 import { clearContract } from '../core/contracts.js';
+import { clearDive } from '../core/dives.js';
 import {
   findShip, fleetPower, holdCap, voyDuration, voyageOpen, voyReady,
   tradeChance, notoGain, hasFit, fmtDur, grant, diveChests, chestValue
@@ -132,6 +133,9 @@ function finishDive(v, fleet) {
   S.gold += takings;
   grant(v.rew);
   S.done[v.routeId] = (S.done[v.routeId] || 0) + 1;
+  /* The wreck has been emptied. She comes off the chart, and the coast turns up
+     another one somewhere else. */
+  if (v.routeId && v.routeId.startsWith('dv_')) clearDive(v.routeId.slice(3));
   play('coin');
 
   const msg = `${chests} chest${chests === 1 ? '' : 's'} came up off the wreck and went straight to the buyers on the quay for ${takings} gold.`;
@@ -142,7 +146,7 @@ function finishDive(v, fleet) {
   if (found) {
     setTimeout(() => award({
       icon: 'relic', kind: 'Came Up With the Last Chest', title: found.name,
-      text: `${found.setName} — ${found.have} of ${found.of}.`, ok: 'To the Cabin'
+      text: `${found.setName} — ${found.have} of ${found.of}.`, ok: 'Continue'
     }), 700);
   }
 

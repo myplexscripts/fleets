@@ -143,13 +143,13 @@ async function renameFlag() {
   const n = await promptDlg({
     title: 'Name Your Flagship',
     text: 'A ship answers to her name. Choose well.',
-    value: S.flag.name, ok: 'Christen Her', max: 20
+    value: S.flag.name, ok: 'Rename', max: 20
   });
   if (n == null) return;
   const trimmed = n.trim().slice(0, 20);
   if (!trimmed) return;
   S.flag.name = trimmed;
-  pop(from, 'Christened', 'gold', 'flag');
+  pop(from, 'Renamed', 'gold', 'flag');
   render();
 }
 

@@ -34,7 +34,7 @@ function show(kind, opts) {
   if (open) close(kind === 'prompt' ? null : false);
   const h = host();
   const isPrompt = kind === 'prompt';
-  const okLabel = opts.ok || (kind === 'alert' ? 'Aye' : 'Confirm');
+  const okLabel = opts.ok || (kind === 'alert' ? 'OK' : 'Confirm');
   h.innerHTML = `
     <div class="dlg ${opts.danger ? 'danger' : ''}" role="dialog" aria-modal="true">
       <div class="dlg-head">${esc(opts.title || '')}</div>
@@ -45,7 +45,7 @@ function show(kind, opts) {
             value="${esc(opts.value || '')}" spellcheck="false" autocomplete="off">` : ''}
       </div>
       <div class="dlg-foot">
-        ${kind === 'alert' ? '' : `<button class="btn sm quiet" data-dlg="cancel">${esc(opts.cancel || 'Belay')}</button>`}
+        ${kind === 'alert' ? '' : `<button class="btn sm quiet" data-dlg="cancel">${esc(opts.cancel || 'Cancel')}</button>`}
         <button class="btn sm ${opts.danger ? 'red' : 'gold'}" data-dlg="ok">${esc(okLabel)}</button>
       </div>
     </div>`;

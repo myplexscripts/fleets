@@ -1,7 +1,8 @@
 /* MARKET — two counters, and you stand at one of them.
 
    SELL turns surplus cargo into coin. SHIPWRIGHT is the yard: a deeper diving
-   bell, another berth.
+   bell today, more of the same kind of thing later. Docks belong on the Port
+   screen, next to the fleet they make room for.
 
    Nothing sells you materials. Timber, iron and canvas come off hulls you have
    broken up and hulls you have beaten, and that is the point — it is what makes
@@ -26,14 +27,13 @@ import { PORTS } from '../../data/ports.js';
 import { GOODS, GOOD_KEYS } from '../../data/goods.js';
 import { MAX_BELL, BELL_NAMES, bellCost, bellMaxDepth, DEPTH_NAMES } from '../../data/salvage.js';
 import { canPay, pay } from '../../core/selectors.js';
+import { rechartDives } from '../../core/dives.js';
 import { chip, chipRow, outOf, priceChips } from '../format.js';
 import { itemCard, itemAction, itemGrid, stepper, sect } from '../components.js';
 import { updateRes } from '../hud.js';
 import { pop, deny } from '../../fx/pop.js';
 import { award } from '../../fx/award.js';
 import { play } from '../../fx/sound.js';
-
-const dockCost = () => ({ gold: 350 + (S.docks - 2) * 250 + (S.docks >= 6 ? 400 : 0) });
 
 /* Which counter you are standing at. Screen state, not save state. */
 let tab = 'sell';
@@ -98,23 +98,12 @@ export function renderMarket() {
       cls: 'owned'
     });
 
-    const dc = dockCost();
     h += sect('Harbour', i++);
-    h += itemGrid([
-      itemCard({
-        icon: 'crew', name: 'Extra Berth', sub: 'Room for one more ship',
-        held: chipRow([outOf('crew', S.ships.length, S.docks,
-          S.ships.length >= S.docks ? 'warn' : '', 'Berths in use')], 'tight'),
-        body: chipRow([chip('crew', '+1', 'ok', 'Berths gained')], 'tight'),
-        price: priceChips(dc),
-        action: itemAction('Buy', 'buy-dock', {}, { disabled: !canPay(dc) })
-      }),
-      itemCard({
-        icon: 'port', name: 'Charted Ports', sub: 'Each keeps a contract open',
-        held: chipRow([outOf('port', S.ports.length, Object.keys(PORTS).length, '', 'Ports charted')], 'tight'),
-        body: `<div class="sub">${S.ports.map(p => PORTS[p].n).join(' · ')}</div>`
-      })
-    ].join(''));
+    h += itemCard({
+      icon: 'port', name: 'Charted Ports', sub: 'Each keeps a contract open',
+      held: chipRow([outOf('port', S.ports.length, Object.keys(PORTS).length, '', 'Ports charted')], 'tight'),
+      body: `<div class="sub">${S.ports.map(p => PORTS[p].n).join(' · ')}</div>`
+    });
   }
 
   $('main').innerHTML = h;
@@ -157,23 +146,14 @@ function buyBell() {
   if (!canPay(c)) return deny('Cannot pay for that');
   pay(c);
   S.bell++;
+  /* The point of a deeper bell is deeper wrecks, so buying one puts them on the
+     chart there and then rather than quietly widening a range nobody can see. */
+  rechartDives();
   award({
     icon: 'bell', kind: 'Salvage Gear', title: BELL_NAMES[S.bell],
-    text: `Works down to depth ${bellMaxDepth(S.bell)} now.`,
-    sound: 'upgrade', ok: 'Rig It'
+    text: `Works down to depth ${bellMaxDepth(S.bell)}. New wrecks are on the chart.`,
+    sound: 'upgrade', ok: 'Continue'
   });
-  render();
-}
-
-function buyDock() {
-  const c = dockCost();
-  if (!canPay(c)) return deny('Cannot pay for that');
-  pay(c);
-  S.docks++;
-  play('upgrade');
-  pop(document.querySelector('[data-act="buy-dock"]'), '+1', 'ok', 'crew');
-  updateRes();
-  save();
   render();
 }
 
@@ -188,6 +168,5 @@ actions({
   'mkt-tab': d => setTab(d.tab),
   'good-qty': d => bump('g' + d.key, +d.d, S.goods[d.key], () => goodCard(d.key)),
   'sell-good': d => sellGood(d.good, d.n),
-  'buy-bell': buyBell,
-  'buy-dock': buyDock
+  'buy-bell': buyBell
 });

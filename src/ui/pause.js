@@ -33,7 +33,7 @@ function draw() {
   const inFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
   $('pauseScr').innerHTML = `
     <div class="pausebox">
-      <div class="pausehead">${iconHTML('wheel', 40)}<span>Ship's Orders</span></div>
+      <div class="pausehead">${iconHTML('wheel', 40)}<span>Settings</span></div>
       <div class="pausebody">
         <div class="optlist">
           ${TOGGLES.map(t => `
@@ -54,7 +54,7 @@ function draw() {
         </div>
       </div>
       <div class="pausefoot">
-        <button class="btn gold wide" data-act="pause-close">Back to the Helm</button>
+        <button class="btn gold wide" data-act="pause-close">Resume</button>
       </div>
     </div>`;
 }
@@ -103,7 +103,7 @@ async function doRestartTutorial() {
   const ok = await confirmDlg({
     title: 'Run the Tutorial Again?',
     text: 'The onboarding steps start over from the beginning. Your fleet and progress are untouched.',
-    ok: 'Replay', cancel: 'No Need'
+    ok: 'Replay', cancel: 'Cancel'
   });
   if (!ok) return;
   closePause();
@@ -114,7 +114,7 @@ async function doNewGame() {
   const ok = await confirmDlg({
     title: 'Abandon This Fleet?',
     text: 'Every ship, port, collectible and admiral you have beaten is struck from the record, and you begin again with 500 gold.',
-    ok: 'Start Over', cancel: 'Belay That', danger: true
+    ok: 'Start Over', cancel: 'Cancel', danger: true
   });
   if (!ok) return;
   closePause();

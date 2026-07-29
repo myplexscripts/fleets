@@ -2,7 +2,7 @@
 
    Every card, price, quantity and picker in the game is built from what is in
    this file. That is the point of it: a player learns one layout and it holds
-   everywhere, so the buy button on a berth sits where the buy button on a bolt
+   everywhere, so the buy button on a dock sits where the buy button on a bolt
    of cloth sat, and the ship they pick for a dive reads like the ship they
    picked for a run.
 

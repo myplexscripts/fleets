@@ -53,7 +53,7 @@ export function renderSea() {
       price: rdy ? '' : priceChips({ gold: rushCost(v) }),
       action: rdy
         ? itemAction('Collect', 'collect-voy', { id: v.id }, { cls: 'grn' })
-        : itemAction('Call Back', 'recall-voy', { id: v.id }, { cls: 'red' })
+        : itemAction('Recall', 'recall-voy', { id: v.id }, { cls: 'red' })
           + itemAction('Speed Up', 'rush-voy', { id: v.id }, { cls: 'blu' }),
       cls: rdy ? 'ready owned' : 'atsea'
     }));
@@ -100,7 +100,7 @@ async function recallVoyage(id) {
   const ok = await confirmDlg({
     title: 'Signal Them Home?',
     text: 'The cargo is lost and there is no payment.',
-    ok: 'Recall', cancel: 'Let Them Sail', danger: true
+    ok: 'Recall', cancel: 'Cancel', danger: true
   });
   if (!ok) return;
   S.voyages = S.voyages.filter(x => x.id !== id);

@@ -334,7 +334,7 @@ function voyageBody(r) {
     body: `${pickHint(VOY_SHIPS)}
       ${shipPicks(true, need)}
       ${warn ? `<div class="sub center warnline">${esc(warn)}</div>` : ''}`,
-    label: isCargo ? 'Load & Sail' : 'Send Divers',
+    label: isCargo ? 'Send Ship' : 'Send Divers',
     act: 'send-ships', id: 'sailBtn', cls: 'blu',
     ready: ready && slotOK && !already
   };
@@ -347,7 +347,7 @@ function laneBody(r) {
     body: `${pickHint(BATTLE_SHIPS)}
       ${shipPicks(false)}
       ${foesCard(fleet)}`,
-    label: 'Clear the Lane', act: 'lane-attack', id: 'sailBtn', cls: 'gold',
+    label: 'Clear Lane', act: 'lane-attack', id: 'sailBtn', cls: 'gold',
     ready: !!fleet.length
   };
 }

@@ -349,7 +349,7 @@ export function endBattle(kind) {
       award({
         icon: 'hull', kind: 'Beaten Back', title: 'Repair and Try Again',
         text: 'Patch your hulls in Port, then take that patrol on a second time.',
-        ok: 'To Port', sound: 'defeat'
+        ok: 'Continue', sound: 'defeat'
       });
     }
 

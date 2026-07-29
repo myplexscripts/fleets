@@ -96,6 +96,11 @@
 .notobar.full i{background:linear-gradient(90deg,#a02c22,#e06a5a)}
 
 .maphint{
+  /* A caption, not a control. It floats over a chart that pans underneath it,
+     so without this a marker that scrolls beneath the key becomes untappable —
+     the layout reserves room for it at rest, but nothing can reserve room at
+     every scroll position. The show/hide toggle is its own button. */
+  pointer-events:none;
   position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
   font-size:clamp(16px,1.05vw,18px);color:var(--ink);
   background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#071b21 100%);

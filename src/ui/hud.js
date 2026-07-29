@@ -22,7 +22,7 @@ let shownGold = null;
 export function buildResStrip() {
   $('resStrip').innerHTML =
     `<div class="resitem" id="wGold" title="Gold">
-       ${iconHTML('gold', 0, 'resic')}<b id="rGold">0</b><span>Gold</span>
+       ${iconHTML('gold', 0, 'resic')}<b id="rGold">0</b>
      </div>
      <div class="resitem tappable" id="wStores" title="Ship's Stores" data-act="stores">
        ${iconHTML('cargo', 0, 'resic')}<span>Stores</span>

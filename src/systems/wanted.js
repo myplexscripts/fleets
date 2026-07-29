@@ -33,7 +33,7 @@ export function addNoto(route, forced) {
     setTimeout(() => award({
       icon: 'danger', kind: 'Admiral Provoked', title: b.n,
       text: 'She is on the chart, and she is not leaving. Go and fight her.',
-      ok: 'To the Chart', sound: 'boss_horn'
+      ok: 'Continue', sound: 'boss_horn'
     }), 900);
   }
   return Math.round(after - before);

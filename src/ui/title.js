@@ -14,6 +14,7 @@ import { wipe } from '../fx/wipe.js';
 import { play, ambience } from '../fx/sound.js';
 import { confirmDlg } from './dialog.js';
 import { render, resetTicker } from './shell.js';
+import { ensureDives } from '../core/dives.js';
 import { refreshTut } from './tutorial.js';
 
 export const onTitle = () => $('titleScr').classList.contains('on');
@@ -50,7 +51,7 @@ export function showTitle() {
       ${progress}
       <div class="tmenu">
         ${saved ? '<button class="menubtn primary" data-act="title-continue">Continue Voyage</button>' : ''}
-        <button class="menubtn ${saved ? '' : 'primary'}" data-act="title-new">${saved ? 'New Game' : 'Set Sail'}</button>
+        <button class="menubtn ${saved ? '' : 'primary'}" data-act="title-new">New Game</button>
         <button class="menubtn small" data-act="pause-open">Options</button>
       </div>
       <div class="tfoot">Build the most feared fleet in the Caribbean</div>
@@ -64,6 +65,10 @@ export function showTitle() {
 
 /* Leave the title and hand control to the game shell. */
 export function enterGame() {
+  /* Chart the wrecks up front. allRoutes() would do it the first time the map
+     is drawn, but a save whose contents depend on which screen you happened to
+     open is a save that will surprise somebody later. */
+  ensureDives();
   wipe(() => {
     $('titleScr').classList.remove('on');
     $('app').classList.add('on');
@@ -84,7 +89,7 @@ async function titleNew() {
     const ok = await confirmDlg({
       title: 'Scuttle the Old Save?',
       text: 'Starting a new game throws away the fleet you already have. There is only one logbook.',
-      ok: 'Start Over', cancel: 'Belay That', danger: true
+      ok: 'Start Over', cancel: 'Cancel', danger: true
     });
     if (!ok) return;
   }

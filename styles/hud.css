@@ -2,23 +2,16 @@
    hud — top bar, resource plates, bottom nav rail
    ============================================================ */
 
+/* One row, as short as its tallest child. The game's name is on the title
+   screen and in the browser tab; repeating it above every screen cost a whole
+   line of a phone and told nobody anything. */
 header{
+  display:flex;align-items:center;gap:10px;
   padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;
   background:linear-gradient(180deg,rgba(3,10,12,.95),rgba(6,20,24,.85));
   border-bottom:2px solid var(--line);
   box-shadow:0 3px 14px rgba(0,0,0,.6);
 }
-.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.hspacer{width:clamp(44px,3vw,52px);flex-shrink:0}
-
-.brand{
-  font-family:var(--display);font-weight:700;
-  font-size:clamp(16px,1.4vw,24px);letter-spacing:clamp(2px,.35vw,5px);
-  text-transform:uppercase;color:var(--goldhi);text-align:center;flex:1;
-  text-shadow:0 1px 0 #000,0 0 18px rgba(217,201,138,.16);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.brand span{color:var(--brass);margin:0 .15em}
 
 /* ship's wheel — the pause button */
 .iconbtn{
@@ -40,21 +33,22 @@ header{
    Pills, with the glyph sunk into a round well at the left end. A counter you
    glance at a hundred times a session should look like part of the machine,
    not like a table cell. */
-.res{display:flex;gap:9px;margin-top:10px}
+.res{display:flex;gap:9px;flex:1;min-width:0}
 /* The purse belongs to Port and Market. Everywhere else the header is a title
    bar and nothing more — a row of running totals over a chart is a spreadsheet
    header, not a game. */
 .res.hide{display:none}
 /* Two plates, not five: gold reads wide, the way in reads narrow. */
 .res .resitem{flex:0 0 auto;padding:5px 20px 5px 5px;flex-direction:row;gap:11px;align-items:center}
-.res #wGold{flex:1}
+/* Sized to its number, not stretched — three things share this row now. */
+.res #wGold{flex:0 1 auto}
 .res .resitem b{font-size:clamp(22px,1.9vw,34px);line-height:1}
 .res .resitem span{
   font-size:clamp(16px,1.2vw,19px);letter-spacing:1.6px;line-height:1;
 }
 .res #wStores span{color:var(--gold)}
 @media (min-width:900px) and (orientation:landscape){
-  header{padding:12px 26px 10px}
+  header{padding:12px 26px}
   .res{max-width:760px;margin-left:auto;gap:7px}
 }
 @media (max-width:400px){.res{gap:5px}}

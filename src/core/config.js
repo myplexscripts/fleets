@@ -37,16 +37,24 @@ export const PATROL_MS = 10 * 60 * 1000;
    and never cools, so a boss can never be lost by taking too long over her. */
 export const WANTED_COOL_PER_MIN = 0.35;
 
-/* The free careen.
+/* The free repair.
 
    A fleet at the bottom of its luck — every hull holed, an empty purse, nothing
-   in the hold to sell — used to be a dead save, because the market never bought
-   materials back and repairs cost coin nobody had. Careening is the way out:
-   run her up the beach and work on the hull yourself. It costs time instead of
-   money, it only ever touches the flagship, and paying a shipwright is still
-   strictly better — so it is an emergency, never a strategy. */
-export const CAREEN_COOLDOWN_MS = 12 * 60 * 1000;
-export const CAREEN_TO = 0.6;   // how sound she comes off the beach
+   in the hold to sell — would otherwise be a dead save, because nothing buys
+   materials back and every repair costs coin nobody has.
+
+   It is offered on exactly one condition: the flagship is damaged and you
+   cannot afford to fix her properly. That is the whole rule. No timer, because
+   being told to come back in twelve minutes is a punishment for having had a
+   bad run, and the game should not punish a player for losing. It cannot be
+   abused either — the moment you can afford a real repair the offer is gone,
+   and it only ever patches her to FREE_REPAIR_TO rather than sound. */
+export const FREE_REPAIR_TO = 0.6;
+
+/* How long a hunting ground stays empty after you clear it. Long enough that
+   beating one means something, short enough that "there is always a fight" is
+   still true — every region keeps three other fights while this one is quiet. */
+export const HUNT_COOLDOWN_MS = 4 * 60 * 1000;
 
 /* An enemy line-up is drawn once and stays drawn until it is fought or the
    water it came from changes. Reopening a mission used to redraw it, which was

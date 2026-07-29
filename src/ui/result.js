@@ -8,7 +8,7 @@
    A prize is a decision, not a payout, and every option pays exactly one kind
    of thing, so the decision is never a sum:
 
-     Keep      the hull, and nothing else. She takes a berth and needs repairing.
+     Keep      the hull, and nothing else. She takes a dock and needs repairing.
      Scuttle   supplies, and no coin.
      Ransom    coin, and no supplies.
      Chest     coin, more of it, and only off ships that were worth beating.
@@ -95,7 +95,7 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
         ], 'grid4')}
         <div class="sub"></div>
         <div class="prizeopts">
-          ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Berths free')], 'grid4'),
+          ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Docks free')], 'grid4'),
             'Keep', i, 'capture', e.type, full, 'gold')}
           ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
             'Scuttle', i, 'salvage', e.type)}
@@ -190,7 +190,7 @@ function capAct(i, mode, type) {
   const sub = el.querySelector('.sub');
 
   if (mode === 'capture') {
-    if (S.ships.length >= S.docks) return deny('Every berth is full');
+    if (S.ships.length >= S.docks) return deny('Every dock is full');
     S.ships.push(newShip(type, rnd(0.25, 0.45)));
     sub.textContent = 'Yours, damaged. Repair her in Port.';
   } else if (mode === 'salvage') {
