@@ -65,48 +65,80 @@
 }
 
 /* ---- map ---- */
-#mapwrap{position:absolute;inset:0;background:#04161c}
+#mapwrap{position:absolute;inset:0;background:#04161c;display:flex;flex-direction:column}
 #mapsvg{display:block}
 .mapnode{cursor:pointer}
 /* labels sit in their own layer and are never the thing you tap */
 .maplabels{pointer-events:none}
 
-.legend{
-  position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;
-  width:clamp(200px,17vw,320px);
+/* ---- the chart's own top strip ----
+   In flow above the map rather than floating on top of it, so the chart is not
+   drawing underneath something the player cannot move. One row per sea, and the
+   free-hull count on the right — the number that decides whether anything on
+   this screen can be tapped at all. */
+.mapbar{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:calc(env(safe-area-inset-top) + 7px) 10px 7px;
+  background:linear-gradient(180deg,#020a0c,#06181d);
+  border-bottom:2px solid var(--line);
+  box-shadow:0 3px 14px rgba(0,0,0,.6);
 }
-.leg{
+.seas{
+  display:flex;gap:8px;flex:1;min-width:0;
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+}
+.seas::-webkit-scrollbar{display:none}
+
+.sea{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:7px;
+  padding:5px 11px 5px 12px;border-radius:var(--r-sm);
+  border:2px solid var(--line);
   background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#071b21 100%);
-  padding:8px 12px 9px;border:2px solid var(--line);border-radius:var(--r-sm);
   box-shadow:var(--slab-sm);
-  animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*80ms);
+  animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
-.legrow{
-  display:flex;align-items:center;gap:7px;font-family:var(--ui);
-  font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;text-transform:uppercase;color:var(--ink);
+.sea.alert{border-color:#a05a4e;box-shadow:var(--slab-sm),0 0 16px rgba(217,74,58,.3)}
+.calm .sea{animation:none}
+
+.seaname{
+  font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.1vw,19px);
+  letter-spacing:.9px;text-transform:uppercase;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96px;
 }
-.legrow i{width:16px;height:16px;display:inline-block;flex-shrink:0}
-.legmeta{display:flex;gap:10px;align-items:center;margin-top:4px;font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim)}
-.legmeta span{display:flex;align-items:center;gap:3px}
-.leg.lock .legrow{color:#5b787b}
-.legdone{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);color:var(--gold);letter-spacing:1px;margin-top:4px}
+/* The wanted bar reads as a gauge beside the name rather than under it. */
+.sea .notobar{display:block;width:clamp(34px,9vw,56px);height:9px;margin:0;flex-shrink:0}
+.seacharter,.seapatrol,.seanoto,.seadone,.mapfleet{
+  display:inline-flex;align-items:center;gap:4px;flex-shrink:0;
+  font-family:var(--ui);font-size:16px;letter-spacing:.6px;line-height:1;
+}
+.seacharter{color:var(--goldhi)}
+.seapatrol{color:var(--grn)}
+.seanoto{color:var(--gold)}
+.seanoto.ready{color:#f0b0a6}
+.seadone{color:var(--grn)}
+.seanoto i,.mapfleet i{font-style:normal;color:var(--dim);margin:0 .1em}
+
+/* Hulls not at sea. Greyed when there are none, because at that point every
+   marker on the chart is something you cannot act on yet. */
+.mapfleet{
+  flex:0 0 auto;color:var(--ink);
+  padding:4px 11px 4px 4px;border-radius:var(--r-pill);
+  background:rgba(2,14,17,.5);box-shadow:var(--well);
+}
+.mapfleet b{font-weight:500;font-size:clamp(17px,1.2vw,20px)}
+.mapfleet.none{color:#e88a7a}
+.mapfleet.none b{color:#e88a7a}
 
 .notobar{height:10px;margin-top:6px}
 .notobar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
 .notobar.full i{background:linear-gradient(90deg,#a02c22,#e06a5a)}
 
-.maphint{
-  /* A caption, not a control. It floats over a chart that pans underneath it,
-     so without this a marker that scrolls beneath the key becomes untappable —
-     the layout reserves room for it at rest, but nothing can reserve room at
-     every scroll position. The show/hide toggle is its own button. */
-  pointer-events:none;
-  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-  font-size:clamp(16px,1.05vw,18px);color:var(--ink);
-  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#071b21 100%);
-  padding:11px 16px;border:2px solid var(--line);border-radius:var(--r);
-  box-shadow:var(--slab);
-  letter-spacing:.6px;width:max-content;max-width:calc(100% - 24px);text-align:center;line-height:1.5;
+/* The key, inside the dialog the map button opens. Two columns of symbol and
+   name — it used to be a permanent panel across the foot of the chart, which
+   spent a third of a phone answering a question you ask twice. */
+.keygrid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:4px;
 }
 
 /* animated chart lines */
@@ -163,37 +195,14 @@
 .piece.got{border-color:var(--brass);background:linear-gradient(180deg,#4a3d1c,#2a2209);box-shadow:var(--slab-sm);color:var(--goldhi)}
 .piece.got .ic{opacity:1}
 
-/* Narrow screens: the legend becomes a short scrollable chip strip instead of a
-   tall stack, which otherwise squeezes the chart down to nothing once several
-   regions are unlocked. */
-.legend.narrow{
-  flex-direction:row;gap:6px;width:auto;left:8px;right:8px;top:8px;
-  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
-  padding-bottom:2px;
-}
-.legend.narrow::-webkit-scrollbar{display:none}
-.legend.narrow .leg{flex:0 0 auto;min-width:126px;max-width:190px;padding:5px 9px 6px}
-.legend.narrow .legrow{letter-spacing:.8px}
-.legend.narrow .legrow span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.legend.narrow .legmeta{margin-top:3px;gap:9px}
-.legend.narrow .legdone{margin-top:3px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.legend.narrow .notobar{margin-top:4px}
-
 /* ---- map key: symbol then name ---- */
-.maphint{display:flex;gap:clamp(12px,2vw,28px);align-items:center;justify-content:center;flex-wrap:wrap}
-.key{display:inline-flex;align-items:center;gap:6px}
+.key{display:inline-flex;align-items:center;gap:8px}
 .key .keysh{flex-shrink:0;opacity:.95;width:40px;height:40px}
 .key span{
   font-family:var(--ui);font-size:16px;letter-spacing:1.4px;
   text-transform:uppercase;color:var(--ink);
 }
 
-/* legend: glyph plus number, not a sentence */
-.legdone{display:flex;align-items:center;gap:5px}
-.legdone .ic{width:max(40px,1.15em);height:max(40px,1.15em);flex-shrink:0}
-.legdone i{font-style:normal;color:var(--dim);margin:0 .1em}
-.legdone.ready{color:#f0b0a6}
-.leg.lock .legrow .ic{width:max(40px,1.05em);height:max(40px,1.05em);opacity:.7}
 
 /* hero stats carry their own glyph above the number */
 .hero .hstat .hstatic{display:block;width:clamp(40px,3.4vw,58px);height:clamp(40px,3.4vw,58px);margin:0 auto 3px;opacity:.9}
@@ -224,7 +233,7 @@
    The drawing is sized so the two closest markers always have a thumb between
    them; when that is bigger than the screen, this is the window onto it. */
 #mapscroll{
-  position:absolute;inset:0;overflow:auto;
+  position:relative;flex:1;min-height:0;overflow:auto;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   touch-action:pan-x pan-y;
 }
@@ -234,8 +243,10 @@
 
 /* ---- the key folds away ----
    Useful until you know it, then it is covering water. */
+/* Bottom-right of the chart: out from under the region strip, and beside the
+   key it folds away rather than on top of the water. */
 .legtoggle{
-  position:absolute;top:10px;right:10px;z-index:5;
+  position:absolute;right:10px;bottom:14px;z-index:5;
   width:56px;height:56px;display:flex;align-items:center;justify-content:center;
   border:2px solid #2f7f8a;border-radius:var(--r-sm);
   background:linear-gradient(180deg,#256e7c 0%,#1a5460 49%,#123f4a 51%,#0d2f38 100%);
@@ -244,9 +255,21 @@
 }
 .legtoggle .ic{opacity:.85;transition:opacity .2s}
 .legtoggle:active{transform:translateY(3px);box-shadow:var(--slab-down)}
-#mapwrap.nolegend .legtoggle .ic{opacity:.4}
-#mapwrap.nolegend .legend,
-#mapwrap.nolegend .maphint{display:none}
-/* the toggle sits where the legend starts, so give the legend room for it */
-.legend{padding-right:66px}
-.legend.narrow{right:74px}
+/* the toggle floats over the top-right of the chart, clear of the strip */
+
+
+/* ---- the coast ----
+   Land under the chart, so a port is a place on a shore rather than a dot in
+   open water and the dotted lines between them read as sea lanes. */
+.land{fill:#12352c}
+.landedge{fill:none;stroke:#1d5647;stroke-linejoin:round}
+.coast{opacity:.95}
+
+/* ---- zoom ----
+   The drawing sits in a transformed box over a spacer that carries the scrolled
+   size, because a transform does not change layout: without the spacer a
+   zoomed-in chart cannot be scrolled to its own edges. */
+#mapzoompad{position:absolute;top:0;left:0;pointer-events:none}
+#mapzoom{position:absolute;top:0;left:0;will-change:transform}
+#mapscroll.zooming{touch-action:none}
+#mapscroll{touch-action:pan-x pan-y pinch-zoom}

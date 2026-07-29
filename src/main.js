@@ -10,7 +10,6 @@ import { loadShipArt, artStepCount } from './art/ships.js';
 import { loadIconArt } from './art/icons.js';
 import { initSound } from './fx/sound.js';
 import { initMist } from './fx/mist.js';
-import { buildResStrip } from './ui/hud.js';
 import { buildNav, startTicker } from './ui/shell.js';
 import { initTutorial } from './ui/tutorial.js';
 import { initKeys } from './ui/keys.js';
@@ -44,7 +43,6 @@ async function boot() {
   ]);
   loadStep('Making the ship ready…');
 
-  buildResStrip();
   buildNav();
   loadStep('All hands.');
 

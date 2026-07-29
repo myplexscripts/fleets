@@ -1,7 +1,8 @@
 /* Three things that are invisible until they are wrong:
 
-     the purse shows on Port and Market and nowhere else, and carries gold and
-     a door rather than a row of totals;
+     the purse shows on Port and Market and nowhere else, carries gold and a
+     door rather than a row of totals, and is drawn by those screens rather than
+     by a global header — there is no header;
      the chart's key names every marker on it — the struck colours included —
      and folds away when you are done with it;
      the at-sea countdown runs on its own, patched in place by the world ticker
@@ -41,18 +42,26 @@ const errors = [];
   await p.click('[data-act="title-continue"]');
   await p.waitForSelector('#app.on'); await p.waitForTimeout(900);
 
-  console.log('1. the purse is two plates, on two screens');
+  console.log('1. the purse is two plates, on two screens, and nothing has a header');
+  if (await p.locator('header').count()) errors.push('a global header is back');
+
   const seen = {};
   for (const [tab, key] of [['tabFleet','fleet'],['tabFlag','flag'],['tabRoutes','routes'],['tabVoy','voy'],['tabPort','port']]) {
     await p.click('#' + tab); await p.waitForTimeout(1300);
-    seen[key] = await p.locator('#resStrip:not(.hide)').count() > 0;
+    seen[key] = await p.locator('.purse').count() > 0;
   }
   console.log('   purse visible: ' + JSON.stringify(seen));
   if (!seen.fleet || !seen.port) errors.push('purse missing from Port or Market');
   if (seen.flag || seen.routes || seen.voy) errors.push('purse showing where it should not');
 
+  /* The way into settings lives on Port, and only there. */
   await p.click('#tabFleet'); await p.waitForTimeout(1200);
-  const plates = await p.locator('#resStrip .resitem').allTextContents();
+  if (!(await p.locator('#pauseBtn').count())) errors.push('no way into settings on Port');
+  await p.click('#tabPort'); await p.waitForTimeout(1200);
+  if (await p.locator('#pauseBtn').count()) errors.push('the settings button is duplicated on Market');
+
+  await p.click('#tabFleet'); await p.waitForTimeout(1200);
+  const plates = await p.locator('.purse .resitem').allTextContents();
   console.log('   plates: ' + JSON.stringify(plates.map(t => t.trim())));
   if (plates.length !== 2) errors.push('expected 2 plates, got ' + plates.length);
   if (/\d/.test(plates[1] || '')) errors.push('the stores plate carries a number: ' + plates[1]);
@@ -63,18 +72,25 @@ const errors = [];
   }
   if (!(await p.locator('#wStores[data-act="stores"]').count())) errors.push('stores plate does not open the stores');
 
-  console.log('2. the key names the struck flag, and folds away');
+  console.log('2. the key names the struck flag, and opens on request');
   await p.click('#tabRoutes'); await p.waitForTimeout(1500);
-  const words = (await p.locator('.maphint .key span').allTextContents()).map(t => t.trim());
+  /* The key is a dialog now — it was a permanent panel taking a third of the
+     chart to answer a question the player asks twice. */
+  if (await p.locator('.keygrid').count()) errors.push('the key is on the chart, not behind the button');
+  await p.click('[data-act="legend"]'); await p.waitForTimeout(900);
+  const words = (await p.locator('.keygrid .key span').allTextContents()).map(t => t.trim());
   console.log('   key: ' + JSON.stringify(words));
+  if (!words.length) errors.push('the map button opened no key');
   if (!words.includes('Beaten')) errors.push('the struck flag is not in the key');
-  await p.click('[data-act="legend"]'); await p.waitForTimeout(1200);
-  const hidden = await p.locator('.maphint').isVisible().catch(() => false);
-  const legHidden = await p.locator('.legend').isVisible().catch(() => false);
-  console.log('   after toggle — key visible: ' + hidden + ', legend visible: ' + legHidden);
-  if (hidden || legHidden) errors.push('the toggle did not hide the key');
-  await p.click('[data-act="legend"]'); await p.waitForTimeout(1200);
-  if (!(await p.locator('.maphint').isVisible())) errors.push('the toggle did not bring the key back');
+  await p.click('[data-dlg="ok"]'); await p.waitForTimeout(900);
+  if (await p.locator('.keygrid').count()) errors.push('the key did not close');
+
+  /* And the region strip carries the one thing the chart cannot show. */
+  const seas = (await p.locator('.mapbar .sea b').allTextContents()).map(t => t.trim());
+  const fleet = (await p.locator('.mapfleet').textContent().catch(() => '')).replace(/\s+/g, '');
+  console.log('   strip: ' + JSON.stringify(seas) + ' free hulls ' + fleet);
+  if (!seas.length) errors.push('no seas on the strip');
+  if (!/\d+\/\d+/.test(fleet)) errors.push('the strip does not say how many hulls are free');
 
   console.log('3. the at-sea countdown runs on its own');
   await p.click('#node_c1'); await p.waitForSelector('#overlay.vis'); await p.waitForTimeout(800);

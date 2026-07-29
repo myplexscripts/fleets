@@ -10,20 +10,27 @@ import { CHARTERS } from '../../data/charters.js';
 import { BOSSES } from '../../data/bosses.js';
 import {
   allRoutes, effDanger, voyageOpen, bossReady, charterAvailable,
-  patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable, wantedOf
+  patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable, wantedOf,
+  allShips, busyIds
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { actions } from '../../core/actions.js';
 import { render } from '../../core/bus.js';
+import { alertDlg } from '../dialog.js';
 
 /* Whether the region cards and the shape key are on screen. They are useful
    until you know them and then they are just covering water, so they fold away
    and the chart takes the room back. Screen state, not save state. */
-let legendShown = true;
 
 /* The closest two markers are never nearer than this on screen. A thumb is
    about 44px; a marker plus breathing room either side is roughly double. */
-const MIN_NODE_GAP = 96;
+/* How far apart the two closest markers are drawn.
+
+   It used to be a full thumb's width, because the only way to hit a crowded
+   marker was for the chart to be drawn big enough. A pinch does that job now,
+   so this is the comfortable-at-rest distance rather than the guarantee, and
+   the chart is a size a person can hold in their head. */
+const MIN_NODE_GAP = 64;
 
 /* And no bigger than this in either direction, however tight the authoring. */
 const MAX_CHART = 2600;
@@ -31,6 +38,120 @@ const MAX_CHART = 2600;
 /* Drag to pan. Touch scrolls the container by itself; this is for a mouse, and
    it deliberately does not swallow taps — a drag under the slop threshold still
    lands on whatever node was under the pointer. */
+/* ---- pinch to zoom ----
+
+   The chart is drawn at whatever scale guarantees a thumb's width between the
+   two closest markers, which is right for tapping and wrong for orientation:
+   on a full map that is a drawing several screens across, and the only way to
+   see where anything is was to drag around hunting for it.
+
+   So the drawn scale stays the default and the player can pull away from it in
+   both directions — out far enough to see the whole ocean at once, in far
+   enough to separate two markers that are almost on top of each other. Zoom is
+   a transform on the drawing rather than a re-render: re-laying out the chart
+   on every frame of a pinch would fight the fingers doing it.
+
+   Scroll position is kept anchored to the midpoint between the fingers, so the
+   chart zooms about the place you are looking at rather than about its own
+   corner. */
+const ZOOM_MIN = 0.4, ZOOM_MAX = 2.6;
+let zoom = 1;
+
+export const mapZoom = () => zoom;
+export function resetZoom() { zoom = 1; }
+
+function sizeZoom(scroller) {
+  const box = scroller.querySelector('#mapzoom');
+  const svg = scroller.querySelector('#mapsvg');
+  if (!box || !svg) return;
+  box.style.transformOrigin = '0 0';
+  box.style.transform = zoom === 1 ? '' : 'scale(' + zoom + ')';
+  /* The scroller has to be told how big the drawing is at this scale, or it
+     will not let you reach the parts the zoom just pushed off the edge. A
+     transform alone does not change layout size. */
+  box.style.width = svg.getAttribute('width') + 'px';
+  box.style.height = svg.getAttribute('height') + 'px';
+  const pad = scroller.querySelector('#mapzoompad');
+  if (pad) {
+    pad.style.width = (+svg.getAttribute('width') * zoom) + 'px';
+    pad.style.height = (+svg.getAttribute('height') * zoom) + 'px';
+  }
+}
+
+function applyZoom(scroller, z, ax, ay) {
+  const prev = zoom;
+  const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (Math.abs(next - prev) < 0.001) return;
+  zoom = next;
+
+  /* Where in the drawing the anchor point was, before the scale changed. */
+  const r = scroller.getBoundingClientRect();
+  const px = (scroller.scrollLeft + (ax - r.left)) / prev;
+  const py = (scroller.scrollTop + (ay - r.top)) / prev;
+
+  sizeZoom(scroller);
+  scroller.scrollLeft = px * zoom - (ax - r.left);
+  scroller.scrollTop = py * zoom - (ay - r.top);
+}
+
+function enableZoom(scroller) {
+  const pts = new Map();
+  let base = 0, baseZoom = 1;
+
+  const dist = () => {
+    const a = [...pts.values()];
+    return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+  };
+  const mid = () => {
+    const a = [...pts.values()];
+    return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 };
+  };
+
+  scroller.addEventListener('pointerdown', ev => {
+    if (ev.pointerType !== 'touch') return;
+    pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pts.size === 2) { base = dist(); baseZoom = zoom; }
+  });
+
+  scroller.addEventListener('pointermove', ev => {
+    if (!pts.has(ev.pointerId)) return;
+    pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pts.size !== 2 || !base) return;
+    ev.preventDefault();
+    scroller.classList.add('zooming');
+    const m = mid();
+    applyZoom(scroller, baseZoom * (dist() / base), m.x, m.y);
+  }, { passive: false });
+
+  const lift = ev => {
+    pts.delete(ev.pointerId);
+    if (pts.size < 2) { base = 0; scroller.classList.remove('zooming'); }
+  };
+  scroller.addEventListener('pointerup', lift);
+  scroller.addEventListener('pointercancel', lift);
+  scroller.addEventListener('pointerleave', lift);
+
+  /* Desktop: a trackpad pinch arrives as a ctrl-wheel, and so does browser zoom
+     — taking it here keeps the gesture on the chart where it belongs. */
+  scroller.addEventListener('wheel', ev => {
+    if (!ev.ctrlKey) return;
+    ev.preventDefault();
+    applyZoom(scroller, zoom * Math.exp(-ev.deltaY * 0.0022), ev.clientX, ev.clientY);
+  }, { passive: false });
+
+  /* Double tap goes back to the scale the chart was drawn at. */
+  let lastTap = 0;
+  scroller.addEventListener('pointerup', ev => {
+    if (ev.pointerType !== 'touch' || pts.size) return;
+    const t = Date.now();
+    if (t - lastTap < 300) {
+      const r = scroller.getBoundingClientRect();
+      applyZoom(scroller, 1, r.left + r.width / 2, r.top + r.height / 2);
+    }
+    lastTap = t;
+  });
+}
+
 function enablePan(el) {
   let down = false, sx = 0, sy = 0, l0 = 0, t0 = 0, moved = 0;
   el.onpointerdown = ev => {
@@ -90,7 +211,6 @@ function nodeShape(r, col, k) {
 export function renderMap() {
   const host = $('main');
   const CW = Math.max(320, host.clientWidth || innerWidth);
-  const CH = Math.max(300, host.clientHeight || (innerHeight - 190));
   const wide = CW >= 760;
 
   const rs = allRoutes();
@@ -101,25 +221,24 @@ export function renderMap() {
   const bossKeys = Object.keys(REGIONS).filter(rk =>
     S.unlocked.includes(rk) && BOSSES[rk] && (S.bossBeaten[rk] || bossReady(rk)));
 
-  /* The legend is absolutely positioned; on a narrow screen it sits above the
-     chart, so measure it and keep the chart clear of it. Written first so the
-     SVG (inserted afterwards) lands behind it. */
   const anyBeaten = Object.keys(S.bossBeaten || {}).some(rk => S.bossBeaten[rk]);
-  $('main').innerHTML = `<div id="mapwrap" class="${legendShown ? '' : 'nolegend'}">
+  $('main').innerHTML = `<div id="mapwrap">
+    <div class="mapbar">${buildRegionBar()}</div>
     <div id="mapscroll"></div>
-    <div class="legend${wide ? '' : ' narrow'}">${buildLegend(rs)}</div>
-    <div class="maphint">${shapeKey(rs, bossKeys.some(rk => !S.bossBeaten[rk]), anyBeaten)}</div>
-    <button class="legtoggle" data-act="legend" aria-label="Show or hide the key"
-      title="${legendShown ? 'Hide the key' : 'Show the key'}">${iconHTML('map', 40)}</button>
+    <button class="legtoggle" data-act="legend" aria-label="What the markers mean"
+      title="What the markers mean">${iconHTML('map', 40)}</button>
   </div>`;
-  const legendEl = host.querySelector('.legend');
-  const hintEl = host.querySelector('.maphint');
-  const legW = (wide && legendShown) ? Math.min(320, CW * 0.17) + 46 : 0;
-  const legH = (wide || !legendShown) ? 0 : ((legendEl ? legendEl.offsetHeight : 0) + 18);
-  /* Node labels hang below their marker, so the bottom needs the hint's real
-     height plus a line of headroom — otherwise HOME PORT sits under it. And a
-     folded-away key takes none of it. */
-  const hintH = legendShown ? ((hintEl ? hintEl.offsetHeight : 40) + 16) : 20;
+  const scrollEl = $('mapscroll');
+  /* The region strip sits above the chart rather than on top of it, so it costs
+     the drawing nothing — the scroller simply starts underneath it, and the
+     chart is sized to the scroller rather than to the whole screen. */
+  const CH = Math.max(300, (scrollEl && scrollEl.clientHeight) || host.clientHeight || (innerHeight - 190));
+  const legW = 0;
+  const legH = 0;
+  /* Node labels hang below their marker, so the foot needs a line of headroom
+     or HOME PORT runs off the bottom. The key used to sit down here and took a
+     third of the screen with it; it is a dialog now. */
+  const hintH = 34;
 
   const padX = Math.max(40, CW * 0.05);
   const padTop = Math.max(46, CH * 0.07) + legH;
@@ -130,7 +249,16 @@ export function renderMap() {
      whole 360x560 authored chart wastes most of the screen in the early game,
      when only the Caribbean corner is unlocked; this zooms out as the map
      opens up. Scale is uniform so the chart never looks stretched. */
-  const pts = [HOME, ...rs.map(r => ({ x: r.x, y: r.y })), ...bossKeys.map(rk => BOSSES[rk])];
+  /* Spread the crowded markers before measuring anything, then work entirely
+     from the spread positions so the drawing and the taps agree. */
+  const POS = relaxed([
+    { id: 'HOME', x: HOME.x, y: HOME.y },
+    ...rs.map(r => ({ id: r.id, x: r.x, y: r.y })),
+    ...bossKeys.map(rk => ({ id: BOSSES[rk].id, x: BOSSES[rk].x, y: BOSSES[rk].y }))
+  ]);
+  const at = o => POS[o.id] || o;
+  const HOMEP = POS.HOME;
+  const pts = Object.keys(POS).map(k => POS[k]);
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -206,7 +334,7 @@ export function renderMap() {
     return out;
   };
 
-  const hx = MX(HOME.x), hy = MY(HOME.y);
+  const hx = MX(HOMEP.x), hy = MY(HOMEP.y);
   let lines = '', nodes = '', bossNodes = '', voyLines = '', labels = '';
 
   /* Labels are drawn in their own layer, not inside the node they belong to.
@@ -226,7 +354,7 @@ export function renderMap() {
        reach them rather than by how dangerous the water is. */
     const col = isDive ? (diveReachable(r) ? '#7ab0e0' : '#4a6070') : DHEX[d];
     const open = canVoyage(r) && voyageOpen(r);
-    const x = MX(r.x), y = MY(r.y);
+    const rp = at(r); const x = MX(rp.x), y = MY(rp.y);
 
     lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="${col}" stroke-width="${1.6 * MS}" opacity="0.7"/>`;
     if (active[r.id])
@@ -251,7 +379,8 @@ export function renderMap() {
 
   bossKeys.forEach(rk => {
     const b = BOSSES[rk];
-    const x = MX(b.x), y = MY(b.y);
+    const bp = at(b);
+    const x = MX(bp.x), y = MY(bp.y);
 
     if (S.bossBeaten[rk]) {
       bossNodes += `<g>${struckFlag(x, y, MS, '#d9c98a')}</g>`;
@@ -274,13 +403,7 @@ export function renderMap() {
         </radialGradient>
       </defs>
       <rect width="${contentW}" height="${contentH}" fill="url(#seabg)"/>
-      <g transform="scale(${LSX},${LSY})" opacity=".85">
-        <path d="M-10,470 Q60,430 120,462 Q180,494 250,470 Q320,448 370,478 L370,570 L-10,570 Z" fill="#0a2f2c"/>
-        <path d="M-10,60 Q40,90 20,150 Q0,210 30,240 L-10,260 Z" fill="#0a2f2c"/>
-        <path d="M300,-10 Q280,40 320,70 Q356,96 340,140 L370,150 L370,-10 Z" fill="#0a2f2c"/>
-        <path d="M150,300 q14,-8 30,0 q10,8 -4,14 q-20,6 -26,-14 Z" fill="#0a2f2c"/>
-        <path d="M210,380 q18,-6 30,4 q8,10 -8,13 q-22,3 -22,-17 Z" fill="#0a2f2c"/>
-      </g>
+      <g class="coast">${landHTML(MX, MY, MS)}</g>
       ${lines}${voyLines}
       <g>
         <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
@@ -293,7 +416,10 @@ export function renderMap() {
     </svg>`;
 
   const scroller = host.querySelector('#mapscroll');
-  scroller.innerHTML = svg;
+  /* The drawing lives in a box the zoom transform is applied to, with a spacer
+     behind it carrying the scrolled size — a transform does not change layout,
+     so without the spacer a zoomed-in chart cannot be scrolled to its edges. */
+  scroller.innerHTML = '<div id="mapzoompad"></div><div id="mapzoom">' + svg + '</div>';
   scroller.classList.toggle('pannable', contentW > CW + 2 || contentH > CH + 2);
 
   /* Open centred on home port — that is where the player's eye starts, and on a
@@ -301,9 +427,17 @@ export function renderMap() {
      covers the top and the key covers the foot, so centre it on the water that
      is actually visible between them rather than on the raw viewport. */
   const seenTop = legH, seenBot = hintH;
-  scroller.scrollLeft = Math.max(0, MX(HOME.x) - (legW + CW) / 2);
-  scroller.scrollTop = Math.max(0, MY(HOME.y) + HLBL + 26 - (seenTop + (CH - seenTop - seenBot)));
+  scroller.scrollLeft = Math.max(0, MX(HOMEP.x) - (legW + CW) / 2);
+  scroller.scrollTop = Math.max(0, MY(HOMEP.y) + HLBL + 26 - (seenTop + (CH - seenTop - seenBot)));
+  /* A repaint must not throw away a zoom the player set — the chart is redrawn
+     whenever anything on it changes, which during a session is often. */
+  sizeZoom(scroller);
+  if (zoom !== 1) {
+    scroller.scrollLeft *= zoom;
+    scroller.scrollTop *= zoom;
+  }
   enablePan(scroller);
+  enableZoom(scroller);
 }
 
 /* The map key: each marker silhouette against the word for what it is. A legend
@@ -351,41 +485,181 @@ function shapeKey(rs, liveBosses, beaten) {
     `<span class="key">${keySwatch(k, KEY_COL[k])}<span>${KEY_WORD[k]}</span></span>`).join('');
 }
 
-function buildLegend(rs) {
-  let li = 0;
-  return Object.keys(REGIONS).map(rk => {
-    li++;
-    if (!S.unlocked.includes(rk))
-      return `<div class="leg lock" style="--i:${li}"><div class="legrow"><i style="background:#173238"></i>`
-        + `${iconHTML('lock', 40)}<span>${esc(REGIONS[rk].n)}</span></div></div>`;
+/* ---- the coast ----
 
-    const mine = rs.filter(r => r.region === rk);
-    const maxd = mine.length ? Math.max(...mine.map(effDanger)) : 0;
-    const b = BOSSES[rk], need = b ? b.noto : 1;
-    const cur = Math.min(wantedOf(rk), need), done = S.bossBeaten[rk];
-    const chn = CHARTERS.filter(c => PORTS[c.loc].region === rk && charterAvailable(c)).length;
-    const openN = mine.filter(r => canVoyage(r) && voyageOpen(r)).length;
+   Every port on this chart used to be a dot in open water, which made a cargo
+   run to Nassau a delivery to a patch of sea. These are the landmasses the
+   ports actually sit on, authored in the same 360x560 space as everything else
+   and drawn underneath it, so a destination is a place on a shore and the
+   dotted lines between them are sea lanes rather than lines.
 
-    /* Counts of things worth a tap, as glyph + number. */
-    const meta = [
-      patrolActive(rk) ? `<span title="Patrol in force">${iconHTML('flag', 40)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : '',
-      chn ? `<span style="color:#efe3ae" title="Charters on offer">${iconHTML('star', 40)}${chn}</span>` : '',
-      openN ? `<span style="color:#63c06a" title="Ready to sail">${iconHTML('anchor', 40)}${openN}</span>` : ''
-    ].filter(Boolean).join('');
+   The coasts are drawn around where the ports already are, not the other way
+   round. Moving thirty ports to fit a coastline would have re-cut every
+   distance, every contract length and every node gap on the chart.
 
-    /* The admiral bar is a have/need on notoriety: fill it and she sails out. */
-    const noto = done
-      ? `<div class="legdone" title="${esc(b.n)} defeated">${iconHTML('flag', 40)}${esc(b.n)}</div>`
-      : `<div class="notobar ${cur >= need ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></div>
-         <div class="legdone ${cur >= need ? 'ready' : ''}" title="${cur >= need ? 'Admiral ready — attack' : 'Notoriety'}">
-           ${iconHTML('noto', 40)}${cur}<i>/</i>${need}</div>`;
+   The old shapes here were decoration stretched to the canvas by a different
+   transform from the one the ports use, so they lined up with nothing. */
+const LANDS = [
+  /* west — Veracruz down to Monte Video, up through Cape Town and Ziguinchor */
+  [[-25, 15], [112, 25], [96, 62], [124, 98], [104, 132], [132, 150], [110, 178],
+   [128, 200], [92, 230], [104, 268], [70, 292], [92, 330], [104, 352], [62, 376], [-25, 384]],
+  /* centre — Galway and Bristol down the seaboard to Boston */
+  [[124, 18], [186, 22], [172, 58], [200, 92], [178, 124], [204, 160], [176, 190],
+   [206, 222], [180, 252], [200, 278], [164, 296], [126, 272], [116, 222], [136, 182],
+   [118, 138], [140, 96], [120, 58]],
+  /* east — London and Marseille to the north, the Carolinas and Rio to the south */
+  [[198, 18], [380, 12], [380, 486], [302, 466], [256, 442], [224, 404], [208, 356],
+   [222, 314], [254, 286], [228, 258], [248, 222], [210, 196], [228, 154], [200, 116], [218, 70]],
+  /* the home island */
+  [[170, 428], [212, 424], [228, 448], [220, 478], [188, 488], [164, 466]]
+];
 
-    return `<div class="leg" style="--i:${li}">
-      <div class="legrow"><i style="background:${DHEX[maxd]}"></i><span>${esc(REGIONS[rk].n)}</span></div>
-      ${meta ? `<div class="legmeta">${meta}</div>` : ''}
-      ${noto}
-    </div>`;
+/* A closed path through the points with the corners eased, so a coast reads as
+   a coast and not as a polygon somebody forgot to round off. */
+/* ---- elbow room ----
+
+   The chart is drawn at whatever scale puts a tappable gap between the two
+   closest markers, so one crowded pair used to inflate the entire drawing:
+   a wreck charted eighteen units from a cargo lane forced a chart nearly two
+   thousand pixels tall, and the player opened the map onto home port and one
+   neighbour with everything else somewhere off the edge.
+
+   Spacing the markers is the cheaper answer than scaling around them. Anything
+   that is not pinned to a real place gets nudged off its neighbours first, and
+   the chart is then drawn at a scale that suits the whole set.
+
+   Pinned: home port, the ports themselves and the charters offered at them —
+   those sit where the coastline says they sit. Everything else is open water
+   and a few units either way costs nothing.
+
+   Deterministic on purpose. A relaxation that used randomness would have the
+   markers creep on every repaint. */
+const RELAX_GAP = 32;
+const RELAX_MAX = 20;          // no marker wanders further than this from home
+
+const PINNED = id => id === 'HOME' || id.startsWith('k_') || id.startsWith('ch_');
+
+function relaxed(pts) {
+  const p = pts.map(q => ({ id: q.id, x: q.x, y: q.y, ox: q.x, oy: q.y, pin: PINNED(q.id) }));
+
+  for (let it = 0; it < 80; it++) {
+    let worst = 0;
+    for (let i = 0; i < p.length; i++) {
+      for (let j = i + 1; j < p.length; j++) {
+        const a = p[i], b = p[j];
+        if (a.pin && b.pin) continue;
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let d = Math.hypot(dx, dy);
+        if (d >= RELAX_GAP) continue;
+        /* Two markers exactly on top of each other have no direction to push
+           along, so give them one rather than dividing by zero. */
+        if (d < 0.001) { dx = (i % 2 ? 1 : -1); dy = 1; d = Math.hypot(dx, dy); }
+        const ux = dx / d, uy = dy / d;
+        const push = (RELAX_GAP - d) * 0.5;
+        worst = Math.max(worst, push);
+        const share = (a.pin || b.pin) ? push * 2 : push;
+        if (!a.pin) { a.x -= ux * share; a.y -= uy * share; }
+        if (!b.pin) { b.x += ux * share; b.y += uy * share; }
+      }
+    }
+    /* Nothing drifts far from where it was authored — the chart should still
+       look drawn rather than simulated. */
+    p.forEach(q => {
+      if (q.pin) return;
+      const dx = q.x - q.ox, dy = q.y - q.oy, d = Math.hypot(dx, dy);
+      if (d > RELAX_MAX) { q.x = q.ox + dx / d * RELAX_MAX; q.y = q.oy + dy / d * RELAX_MAX; }
+    });
+    if (worst < 0.05) break;
+  }
+
+  const out = {};
+  p.forEach(q => { out[q.id] = { x: q.x, y: q.y }; });
+  return out;
+}
+
+function coastPath(pts, MX, MY) {
+  const p = pts.map(function (q) { return [MX(q[0]), MY(q[1])]; });
+  const mid = function (a, b) { return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; };
+  let d = '';
+  for (let i = 0; i < p.length; i++) {
+    const c = p[(i + 1) % p.length];
+    const m0 = mid(p[i], c);
+    const m1 = mid(c, p[(i + 2) % p.length]);
+    if (i === 0) d += 'M' + m0[0].toFixed(1) + ',' + m0[1].toFixed(1);
+    d += ' Q' + c[0].toFixed(1) + ',' + c[1].toFixed(1) + ' ' + m1[0].toFixed(1) + ',' + m1[1].toFixed(1);
+  }
+  return d + 'Z';
+}
+
+function landHTML(MX, MY, k) {
+  return LANDS.map(function (pts) {
+    const d = coastPath(pts, MX, MY);
+    return '<path class="land" d="' + d + '"/>'
+      + '<path class="landedge" d="' + d + '" stroke-width="' + (1.8 * k).toFixed(2) + '"/>';
   }).join('');
 }
 
-actions({ legend: () => { legendShown = !legendShown; render(); } });
+/* The strip along the top of the chart.
+
+   It used to be a card per region floating over the water, locked ones
+   included, carrying a danger swatch, a charter count, a count of things ready
+   to sail and the admiral bar. Most of that was not worth the room:
+
+     the danger swatch showed a region's WORST lane, but danger belongs to one
+     lane, so a single bad run made a whole sea look bad;
+     "ready to sail" counted markers you were already looking at;
+     locked regions had, by definition, nothing to tell you.
+
+   The charter count went the same way for the same reason: a charter is a star
+   on the chart you are looking at, so counting them above it says the same
+   thing twice.
+
+   What is left is the one thing the chart cannot show — how close each sea is
+   to sending its admiral out, which is both the progression gate and the reason
+   the ships there keep getting heavier. A patrol keeps its remaining time,
+   because a countdown is the one thing here that a marker cannot express.
+
+   Plus the thing that was missing: how many hulls are free. Every marker on
+   this screen wants one to three of them, so a fleet that is all at sea makes
+   the whole chart untappable — which the chart itself never said. */
+function buildRegionBar() {
+  const free = allShips().length - busyIds().size;
+  const total = allShips().length;
+
+  const seas = Object.keys(REGIONS).filter(rk => S.unlocked.includes(rk)).map((rk, i) => {
+    const b = BOSSES[rk], need = b ? b.noto : 1;
+    const cur = Math.min(wantedOf(rk), need), done = S.bossBeaten[rk];
+    const ready = cur >= need && !done;
+
+    const tail = done
+      ? `<span class="seadone" title="${esc(b.n)} beaten">${iconHTML('flag', 40)}</span>`
+      : `<span class="seanoto ${ready ? 'ready' : ''}" title="${ready ? 'Admiral is out — go and fight her' : 'Wanted level in these waters'}">${iconHTML('noto', 40)}${cur}<i>/</i>${need}</span>`;
+
+    /* One line per sea. Anything with a glyph on it is 40px tall by the size
+       floor, so a second row would double the strip for nothing. */
+    return `<div class="sea ${ready ? 'alert' : ''}" style="--i:${i}">
+      <b class="seaname">${esc(REGIONS[rk].n)}</b>
+      ${patrolActive(rk) ? `<span class="seapatrol" title="Patrol in force">${iconHTML('flag', 40)}${fmtDur(patrolLeft(rk) / 1000)}</span>` : ''}
+      ${done ? '' : `<span class="notobar ${ready ? 'full' : ''}"><i style="width:${cur / need * 100}%"></i></span>`}
+      ${tail}
+    </div>`;
+  }).join('');
+
+  return `<div class="seas">${seas}</div>
+    <div class="mapfleet ${free ? '' : 'none'}" title="Ships free to sail">
+      ${iconHTML('crew', 40)}<b>${free}</b><i>/</i>${total}</div>`;
+}
+
+/* What the markers mean.
+
+   This used to be a permanent panel across the foot of the chart. On a phone it
+   was taking a third of the screen to answer a question the player asks twice
+   and then never again — and it sat on top of the water, so the thing it was
+   explaining was the thing it was covering. It opens on request now. */
+actions({
+  legend: () => alertDlg({
+    title: 'The Chart',
+    chips: `<div class="keygrid">${shapeKey(allRoutes(), true, true)}</div>`,
+    ok: 'Close'
+  })
+});

@@ -1,38 +1,34 @@
 /* The purse.
 
-   One number and one door. Gold is the only figure worth carrying on every
-   screen — everything else the player owns has a screen of its own that says it
-   better, and five plates of running totals above a map is a spreadsheet
-   header, not a game. The second plate opens the Ship's Stores and carries no
-   number at all: it is a way in, not a readout.
+   One number and one door. Gold is the only figure worth carrying, and only on
+   the two screens where money is part of the decision in front of you — Port
+   and Market. Everywhere else it is a number nobody is acting on.
 
-   It shows on Port and Market, where money is the thing you are thinking about,
-   and nowhere else. */
+   It is not a header. There is no header: a bar that looked the same on every
+   screen was costing a strip of a phone on all five of them. The screens that
+   want a purse render one at the top of their own content, where it sticks to
+   the top of the scroller rather than to the top of the game. */
 
-import { $ } from '../core/dom.js';
+import { $, qsa } from '../core/dom.js';
 import { S } from '../core/state.js';
 import { readyCount } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
 
-/* Screens where money is part of the decision in front of you. */
-const PURSE_TABS = ['fleet', 'port'];
-
 let shownGold = null;
 
-export function buildResStrip() {
-  $('resStrip').innerHTML =
-    `<div class="resitem" id="wGold" title="Gold">
-       ${iconHTML('gold', 0, 'resic')}<b id="rGold">0</b>
-     </div>
-     <div class="resitem tappable" id="wStores" title="Ship's Stores" data-act="stores">
-       ${iconHTML('cargo', 0, 'resic')}<span>Stores</span>
-     </div>`;
-}
-
-/* Called on every render — the strip belongs to two screens, not all five. */
-export function showPurse(tab) {
-  const el = $('resStrip');
-  if (el) el.classList.toggle('hide', !PURSE_TABS.includes(tab));
+/* Port draws the way into settings alongside its purse; Market does not need
+   one, so the button is an option rather than part of the strip. */
+export function purseHTML(opts) {
+  const o = opts || {};
+  return `<div class="purse">
+      ${o.settings ? `<button class="iconbtn" id="pauseBtn" data-act="pause-open" aria-label="Settings"></button>` : ''}
+      <div class="resitem" id="wGold" title="Gold">
+        ${iconHTML('gold', 0, 'resic')}<b id="rGold">${S ? S.gold : 0}</b>
+      </div>
+      <div class="resitem tappable" id="wStores" title="Ship's Stores" data-act="stores">
+        ${iconHTML('cargo', 0, 'resic')}<span>Stores</span>
+      </div>
+    </div>`;
 }
 
 export function bump(id) {
@@ -44,6 +40,9 @@ export function bump(id) {
 
 export function updateRes() {
   if (!S) return;
+
+  /* The gold readout only exists on the screens that drew one, so everything
+     here is conditional rather than assumed. */
   const el = $('rGold');
   if (el) {
     const to = S.gold, from = shownGold ?? to;
@@ -59,12 +58,13 @@ export function updateRes() {
         if (p < 1) requestAnimationFrame(tick);
       })(t0);
     }
+  } else {
+    shownGold = S.gold;      // nothing on screen to animate from next time
   }
 
-  const b = $('voyBadge');
-  if (b) {
+  qsa('#voyBadge').forEach(b => {
     const n = S.voyages.length, rdy = readyCount();
     if (n) { b.style.display = ''; b.textContent = rdy || n; b.className = 'badge' + (rdy ? ' rdy' : ''); }
     else b.style.display = 'none';
-  }
+  });
 }

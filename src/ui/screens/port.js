@@ -15,6 +15,7 @@ import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, shipTiles, chip, chipRow, outOf, bagChips, priceChips, bag } from '../format.js';
 import { itemCard, itemAction, itemGrid, sect } from '../components.js';
+import { purseHTML } from '../hud.js';
 import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -32,7 +33,9 @@ export function renderPort() {
     ? itemAction('Free Repair', 'free-repair', {}, { cls: 'grn' })
     : '';
 
-  let h = itemCard({
+  let h = purseHTML({ settings: true });
+
+  h += itemCard({
     icon: 'flag', name: f.name, sub: 'Flagship',
     held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
     body: shipTiles(f, power(f)) + hullBar(f),

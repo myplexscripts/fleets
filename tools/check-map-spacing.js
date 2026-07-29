@@ -13,7 +13,15 @@ for (const where of ['playwright-core', require('path').join(process.cwd(), 'nod
   try { chromium = require(where).chromium; break; } catch (e) { /* try the next */ }
 }
 const errors = [];
-const MIN = 96;
+/* The distance the two closest markers are drawn apart at rest.
+
+   It used to be a full thumb's width, because scaling the whole chart was the
+   only way to make a crowded marker hittable — which meant one tight pair
+   inflated the drawing to several screens across and the map opened onto home
+   port and nothing else. Markers are now spaced apart in the chart's own
+   coordinates first, and a pinch handles anything still too close, so this is
+   the comfortable resting distance rather than the guarantee. */
+const MIN = 64;
 (async () => {
   if (!chromium) {
     console.log('skipped — needs playwright-core and the game served (see README)');

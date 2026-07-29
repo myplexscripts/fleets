@@ -272,6 +272,60 @@ catch (e) {
   }
   if (!gone.count) bad.push('emptying a wreck left nowhere to dive');
 
+  /* ---- 7. the chart zooms, and there is land under it ---- */
+  console.log('7. the chart zooms, and the ports are on a coast');
+  /* Several ports charted, so there are port markers to check against the
+     coast — a brand new save has one port and a charter standing on it. */
+  await fresh({ gold: 9000, unlocked: ['caribbean', 'gulf'],
+    ports: ['staug', 'charlestowne', 'jamestown', 'veracruz', 'boston', 'newyork'] });
+  await p.click('#tabRoutes');
+  await p.waitForTimeout(1600);
+
+  /* Measured off the transform, not the scrolled size: once the chart is
+     smaller than the window, scrollWidth stops shrinking with it. */
+  const zoomed = await p.evaluate(() => {
+    const sc = document.getElementById('mapscroll');
+    const box = document.getElementById('mapzoom');
+    const r = sc.getBoundingClientRect();
+    const scale = () => {
+      const m = /scale\(([\d.]+)\)/.exec(box.style.transform || '');
+      return m ? +m[1] : 1;
+    };
+    const fire = (dy, n) => { for (let i = 0; i < n; i++) sc.dispatchEvent(new WheelEvent('wheel', {
+      deltaY: dy, ctrlKey: true, bubbles: true, cancelable: true,
+      clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })); };
+    const before = scale();
+    fire(120, 6);
+    const out = scale();
+    fire(-120, 12);
+    const inn = scale();
+    return { before, out, inn, land: document.querySelectorAll('#mapsvg .land').length };
+  });
+  console.log(`   zoom ${zoomed.before} → ${zoomed.out.toFixed(2)} out → ${zoomed.inn.toFixed(2)} in`);
+  console.log('   landmasses drawn: ' + zoomed.land);
+  if (zoomed.out >= zoomed.before) bad.push('pinching out did not shrink the chart');
+  if (zoomed.inn <= zoomed.out) bad.push('pinching in did not grow the chart');
+  if (!zoomed.land) bad.push('no land under the chart — every port is a dot in open water');
+
+  /* A port must sit on land, or a delivery is a delivery to the sea. */
+  const ashore = await p.evaluate(() => {
+    const svg = document.getElementById('mapsvg');
+    const lands = [...svg.querySelectorAll('.land')];
+    const out = [];
+    svg.querySelectorAll('g.mapnode[id^="node_k_"]').forEach(g => {
+      const c = g.querySelector('circle');
+      if (!c) return;
+      const pt = svg.createSVGPoint();
+      pt.x = +c.getAttribute('cx'); pt.y = +c.getAttribute('cy');
+      out.push({ id: g.id, on: lands.some(L => L.isPointInFill(pt)) });
+    });
+    return out;
+  });
+  const adrift = ashore.filter(x => !x.on);
+  console.log(`   ports on a coast: ${ashore.length - adrift.length}/${ashore.length}`);
+  if (!ashore.length) bad.push('no port markers found to check against the coast');
+  if (adrift.length) bad.push('ports drawn in open water: ' + adrift.map(x => x.id).join(', '));
+
   await b.close();
   console.log('\n=== ' + bad.length + ' problem(s) ===');
   bad.forEach(x => console.log(' * ' + x));

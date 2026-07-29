@@ -6,7 +6,7 @@ import { on } from '../core/bus.js';
 import { action } from '../core/actions.js';
 import { anyBossReady, readyCount, fmtDur } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
-import { updateRes, showPurse } from './hud.js';
+import { updateRes } from './hud.js';
 import { wipe } from '../fx/wipe.js';
 import { deny, pop } from '../fx/pop.js';
 import { play } from '../fx/sound.js';
@@ -58,7 +58,6 @@ let paintedTab = null;
 export function render() {
   if (!S) return;
   updateRes();
-  showPurse(tab);
 
   qsa('nav button').forEach(b => b.classList.remove('on', 'alert'));
   const cur = SCREENS.find(s => s.key === tab) || SCREENS[0];
