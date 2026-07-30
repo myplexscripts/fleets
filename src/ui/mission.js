@@ -69,6 +69,10 @@ let sel = [];               // chosen ship ids, in tap order
 let curRoute = null;
 let foes = null;            // who is out there, drawn once and faced as drawn
 let fighting = false;       // a cargo lane's sheet is showing the fight, not the run
+/* Whether the enemy line-up is expanded. Screen state, not save state, and it
+   is deliberately remembered between sheets: a player who wants the detail
+   wants it every time, and one who does not should never see it again. */
+let foesOpen = false;
 
 /* A run sails under one hull; a fight — including a fight for a cargo lane —
    takes a line of three. */
@@ -163,16 +167,41 @@ function foesCard(fleet) {
   const tag = drawn && drawn.label
     ? `<span class="tag ${drawn.band === 'straggler' ? 't0' : 'bad'}">${esc(drawn.label)}</span>` : '';
 
-  const list = foes.map(e =>
-    `<div class="foe"><b>${esc(e.name)}</b>${chipRow([
-      chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim'),
-      e.chest ? chip('chest', 'BOX', 'gold', "She is carrying a captain's strongbox") : ''
-    ], 'tight')}</div>`).join('');
+  /* Folded by default, and this is the whole reason the sheet fits on a phone.
 
-  return `<div class="card oddscard" style="--i:1">
-      <div class="row"><h3>${iconHTML('target', 40)} Sails Sighted</h3>
-        ${tag}<span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span></div>
-      <div class="foelist">${list}</div>
+     Expanded, three ships is four hundred pixels of card — which either pushed
+     the fleet you are choosing from off the bottom of the screen, or, when it
+     sat below the rail instead, hid the enemy you are choosing against. Neither
+     order works while it is that tall.
+
+     So what the card says by default is what the decision actually turns on:
+     how many of them there are, what they are carrying between them, and the
+     odds. Who they are individually is one tap away rather than one scroll —
+     and a tap does not lose your place. */
+  const guns = foes.reduce((a, e) => a + e.guns, 0);
+  const hull = foes.reduce((a, e) => a + e.max, 0);
+  const box = foes.some(e => e.chest);
+
+  const body = foesOpen
+    ? `<div class="foelist">${foes.map(e =>
+        `<div class="foe"><b>${esc(e.name)}</b>${chipRow([
+          chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim'),
+          e.chest ? chip('chest', 'BOX', 'gold', "She is carrying a captain's strongbox") : ''
+        ], 'tight')}</div>`).join('')}</div>`
+    : `<div class="foesum">${chipRow([
+        chip('crew', foes.length, 'dim', 'Ships out there'),
+        chip('guns', guns, 'dim', 'Their guns, all told'),
+        chip('hull', hull, 'dim', 'Their hulls, all told'),
+        box ? chip('chest', 'BOX', 'gold', "One of them is carrying a captain's strongbox") : ''
+      ], 'tight')}</div>`;
+
+  return `<div class="card oddscard${foesOpen ? ' open' : ''}" style="--i:1">
+      <button class="foehead" data-act="toggle-foes">
+        <h3>${iconHTML('target', 40)} Sails Sighted</h3>
+        ${tag}<span class="odds ${cls}">${fleet.length ? odds + '%' : '— —'}</span>
+        <span class="foecaret">${foesOpen ? '&#9650;' : '&#9660;'}</span>
+      </button>
+      ${body}
     </div>`;
 }
 
@@ -209,11 +238,26 @@ function drawMission() {
   head += requirements(r, isBoss);
   $('sheetHead').innerHTML = head;
 
-  /* ---- body: the ships, then who is waiting ---- */
+  /* ---- body: who is waiting, then the ships to send ---- */
+
+  /* Picking a ship redraws the whole sheet, which used to throw the rail back
+     to its first card — so choosing your third hull meant scrolling the fleet
+     from the beginning again, every time. Where the player had scrolled to is
+     their place in a list, not a side effect of the render. */
+  const rail0 = $('shipPicks');
+  const railLeft = rail0 ? rail0.scrollLeft : 0;
+  const bodyTop = $('sheetBody') ? $('sheetBody').scrollTop : 0;
+
   const panel = fighting ? laneBody(r)
     : canVoyage(r) ? voyageBody(r)
     : battleBody(r, isBoss, isCh);
   $('sheetBody').innerHTML = panel.body;
+
+  if (railLeft) {
+    const rail1 = $('shipPicks');
+    if (rail1) rail1.scrollLeft = railLeft;
+  }
+  if (bodyTop) $('sheetBody').scrollTop = bodyTop;
 
   /* ---- foot: the one button that commits ---- */
   setSheetFoot(`<div class="grid2">
@@ -242,7 +286,7 @@ function requirements(r, isBoss) {
         : '',
       chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
       bagChips(lanePay(r))
-    ], 'Knock a step of danger off this lane. You are never made to — the run is one tab away, and a bad lane can be sailed as it stands.');
+    ], 'Knock a step of danger off this lane. You are never made to — the run is one tab away.');
   }
 
   if (r.type === 'cargo') {
@@ -316,9 +360,14 @@ function requirements(r, isBoss) {
       /* Said in words, not left to a tooltip on the chest chip — there are no
          tooltips on a phone, and "the strongbox is guaranteed" is the reason to
          take a fight that is deliberately above your water. */
-      ? `${esc(r.n)} is working ${esc(r.station)}. ${esc(MTYPE.bounty.tip)}`
-        + ' Her captain carries a strongbox.'
-        + ' <span class="bad">She is above what this water usually fields.</span>'
+      /* Short: the clock, the purse and the strongbox are all chips above this
+         line already, so repeating them in a paragraph was five lines of head
+         saying what the row above it had just said. */
+      /* Two short clauses, and both are load-bearing: the strongbox is the
+         reason to take a fight that is deliberately above your water, and a
+         tooltip on the chest chip does not exist on a phone. */
+      ? `Working ${esc(r.station)} — and her captain carries a strongbox.`
+        + ' <span class="bad">Above what this water usually fields.</span>'
       : esc(MTYPE[r.type].tip));
 }
 
@@ -383,9 +432,9 @@ function voyageBody(r) {
 function laneBody(r) {
   const fleet = sel.map(findShip).filter(Boolean);
   return {
-    body: `${pickHint(BATTLE_SHIPS)}
-      ${shipPicks(false)}
-      ${foesCard(fleet)}`,
+    body: `${foesCard(fleet)}
+      ${pickHint(BATTLE_SHIPS)}
+      ${shipPicks(false)}`,
     label: 'Clear Lane', act: 'lane-attack', id: 'sailBtn', cls: 'gold',
     ready: !!fleet.length
   };
@@ -416,10 +465,14 @@ function battleBody(r, isBoss, isCh) {
   }
 
   return {
+    /* Who is out there, THEN who to send. It used to be the other way round,
+       which put the enemy line-up below a rail of ship cards and off the bottom
+       of a phone — so the one thing you are choosing against was the one thing
+       you had to go looking for. */
     body: `${extra}
+      ${foesCard(fleet)}
       ${pickHint(BATTLE_SHIPS)}
-      ${shipPicks(false)}
-      ${foesCard(fleet)}`,
+      ${shipPicks(false)}`,
     label: isCh ? 'Accept' : 'Attack', act: 'attack', id: 'sailBtn',
     cls: isBoss ? 'red' : 'gold',
     ready: !!sel.length && flagOK
@@ -492,5 +545,6 @@ actions({
   'lane-attack': doLaneAttack,
   'fight-mode': () => setMode(true),
   'run-mode': () => setMode(false),
+  'toggle-foes': () => { foesOpen = !foesOpen; play('ui_tap'); drawMission(); },
   'close-sheet': closeSheet
 });

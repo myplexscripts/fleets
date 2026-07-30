@@ -134,6 +134,59 @@ const done = () => {
     await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
     await p.click('#node_c3'); await p.waitForTimeout(900); await measure('battle sheet');
 
+    /* ---- the prep sheet fits ----
+
+       This is the screen where the player decides who to send against whom, and
+       both halves of that have to be on screen at once. It used to be a column:
+       a tall head, then a rail of ship cards, then the enemy line-up somewhere
+       below the fold — so checking who you were fighting meant scrolling past
+       the fleet, and checking the fleet meant scrolling back. */
+    const fit = await p.evaluate(() => {
+      const sheet = document.querySelector('#overlay .sheet');
+      const head = document.getElementById('sheetHead');
+      const body = document.getElementById('sheetBody');
+      const rail = document.getElementById('shipPicks');
+      const foes = document.querySelector('.oddscard');
+      if (!sheet || !rail) return null;
+      const br = body.getBoundingClientRect();
+      return {
+        headPct: Math.round(head.getBoundingClientRect().height / sheet.getBoundingClientRect().height * 100),
+        railVisible: rail.getBoundingClientRect().top < br.bottom - 40,
+        foesVisible: !foes || foes.getBoundingClientRect().top < br.bottom - 40,
+        expandedByDefault: document.querySelectorAll('.foe').length > 0
+      };
+    });
+    if (fit) {
+      if (fit.headPct > 45) errors.push(vp.width + 'px: the prep sheet head is ' + fit.headPct + '% of the screen');
+      if (!fit.railVisible) errors.push(vp.width + 'px: the ships are below the fold on the prep sheet');
+      if (!fit.foesVisible) errors.push(vp.width + 'px: the enemy is below the fold on the prep sheet');
+      if (fit.expandedByDefault) errors.push(vp.width + 'px: the enemy line-up is expanded by default');
+    }
+
+    /* Picking a ship must not throw the rail back to its first card. */
+    const kept = await p.evaluate(async () => {
+      const rail = document.getElementById('shipPicks');
+      if (!rail || rail.scrollWidth <= rail.clientWidth + 10) return null;
+      rail.scrollLeft = Math.min(300, rail.scrollWidth - rail.clientWidth);
+      await new Promise(r => setTimeout(r, 120));
+      const before = rail.scrollLeft;
+      const card = rail.querySelector('[data-act="pick-ship"]');
+      if (!card) return null;
+      const id = card.dataset.id;
+      card.click();
+      await new Promise(r => setTimeout(r, 320));
+      const r2 = document.getElementById('shipPicks');
+      const after = r2 ? r2.scrollLeft : -1;
+      /* Put the selection back the way it was — the walk below picks a line and
+         sails it, and a hull left selected here would be deselected there. */
+      const same = r2 && r2.querySelector(`[data-act="pick-ship"][data-id="${id}"]`);
+      if (same) { same.click(); await new Promise(r => setTimeout(r, 280)); }
+      return { before, after };
+    });
+    if (kept && Math.abs(kept.after - kept.before) > 8) {
+      errors.push(vp.width + 'px: the ship rail jumped from ' + kept.before + ' to ' + kept.after + ' on a pick');
+    }
+
     /* And the fight itself. The order bar is four buttons across a phone, each
        carrying a 40px glyph and a label, which is the tightest row in the game —
        exactly the place a widened padding silently squeezes an icon to 39.9. */

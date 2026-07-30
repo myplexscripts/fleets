@@ -54,7 +54,11 @@ export const TUTSTEPS = [
     text: 'Open the Map and tap the diamond. Angular markers are fights.',
     wait: 'route:c3' },
 
-  { sel: '#sailBtn', lockTab: 'routes', title: 'Form the Line',
+  /* Points at the rail, not at the Attack button. The step is about choosing
+     the line, and the card is placed so as not to cover what it points at — so
+     aiming it at the button in the footer parked it directly on top of the
+     ships the player is being told to pick. */
+  { sel: '#shipPicks', lockTab: 'routes', title: 'Form the Line',
     text: 'Up to three, and tap order sets the line: first fires first, second deals +25%, third takes −25%. The odds above are a forecast. These are the ships that are out there — if the odds look bad, come back with a better fleet.',
     wait: 'launch' },
 

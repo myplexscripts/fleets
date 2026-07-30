@@ -340,13 +340,36 @@
 .odds.fair{color:var(--yel)}
 .odds.poor{color:#e88a7a;text-shadow:0 0 14px rgba(217,74,58,.3)}
 
-.foelist{display:flex;flex-direction:column;gap:5px;margin:9px 0 8px}
-.foe{
-  display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
-  border-left:3px solid #8a463e;background:rgba(58,20,16,.28);padding:6px 10px;
+/* Who is out there, as tightly as three ships can honestly be listed.
+
+   This is the card the player is choosing AGAINST, so it sits above the ship
+   rail — but at a hundred and fifty pixels a ship it filled the whole body and
+   pushed the fleet off the bottom instead, which is the same problem the other
+   way up. A name and one row of numbers is all it ever needed to be. */
+/* The header is the toggle: the whole strip, not a small chevron, because the
+   thing being tapped is "tell me more about these ships". */
+.foehead{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:none;border:none;padding:0;cursor:pointer;text-align:left;color:inherit;
 }
-.foe b{font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:1px;text-transform:uppercase;color:#f0b0a6}
-.foe span{font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.6px;color:var(--dim)}
+.foehead h3{flex:1;min-width:0}
+.foecaret{font-size:16px;line-height:1;color:var(--dim);flex-shrink:0}
+.foesum{margin-top:8px}
+.foesum .chips{margin:0}
+
+.foelist{display:flex;flex-direction:column;gap:4px;margin:7px 0 2px}
+.foe{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  border-left:3px solid #8a463e;background:rgba(58,20,16,.28);padding:5px 9px;
+}
+.foe b{
+  font-family:var(--ui);font-size:16px;line-height:1.05;letter-spacing:1px;
+  text-transform:uppercase;color:#f0b0a6;
+}
+.foe span{font-family:var(--ui);font-size:16px;letter-spacing:.6px;color:var(--dim)}
+/* The glyphs keep their 40px floor; everything around them gives way instead. */
+.foe .chips{margin:0;gap:5px}
+.foe .chip{padding:2px 8px 2px 3px}
 
 /* ---- mission sheet, chip era ----
    The picker carries each hull's four numbers as chips, so the right ship for a

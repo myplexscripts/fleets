@@ -69,9 +69,17 @@ catch (e) {
     await p.waitForTimeout(700);
   };
 
-  const foeLine = () => p.evaluate(() =>
-    [...document.querySelectorAll('.foelist .foe')]
-      .map(f => f.textContent.replace(/\s+/g, ' ').trim()).join(' | '));
+  /* The enemy line-up folds up by default now — a card four hundred pixels tall
+     pushed the fleet off the bottom of the sheet. Expand it before reading it,
+     because who is out there by NAME is the thing this rule is about. */
+  const foeLine = () => p.evaluate(async () => {
+    if (!document.querySelectorAll('.foelist .foe').length) {
+      const t = document.querySelector('[data-act="toggle-foes"]');
+      if (t) { t.click(); await new Promise(r => setTimeout(r, 300)); }
+    }
+    return [...document.querySelectorAll('.foelist .foe')]
+      .map(f => f.textContent.replace(/\s+/g, ' ').trim()).join(' | ');
+  });
 
   /* ---- 1. the draw is drawn once ---- */
   console.log('1. a line-up is drawn once, not every time you look at it');
