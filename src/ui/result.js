@@ -53,21 +53,37 @@ import { tutEvent, refreshTut } from './tutorial.js';
 
 /* ---- the account ----
 
-   Everything a battle put in your hands, counted once at the end.
+   Everything a battle put in your hands, in one place, once.
 
-   The report itself is spread across time on purpose — the haul is at the top,
-   the prizes are decided one at a time underneath it, and each decision pays
-   out the moment it is made. That is right for deciding, and useless for
-   knowing what the fight was worth: by the time the last prize is settled the
-   first one is off the top of the screen.
+   It used to be in three: a reward row on the victory banner (the barrel, the
+   admiral's title), a strongbox at the top of the report (the coin and the
+   materials), a modal of its own for a collectible, and then the prizes paying
+   out one at a time underneath. Four places, three of which you had to dismiss
+   to reach the next, and none of which was the total.
 
-   So everything is written down as it happens, and the total gets a screen of
-   its own on the way out. */
+   Now the fight is a verdict, the prizes are decisions, and everything either
+   one produced arrives together on one screen at the end. Anything found before
+   the report opens — the banner's barrel, a piece off a beaten hull — is parked
+   in `carried` and swept in when it does. */
 let ledger = null;
 let tallyShown = false;
+let carried = null;
 
 function newLedger() {
-  return { gold: 0, wood: 0, metal: 0, cloth: 0, goods: {}, ships: [], chests: 0 };
+  return {
+    gold: 0, wood: 0, metal: 0, cloth: 0,
+    goods: {}, ships: [], barrels: 0, titles: [], pieces: []
+  };
+}
+
+/* Handed over by the battle before the report exists. Kept until showResult
+   sweeps it up, so nothing found at the end of a fight is lost between the
+   banner closing and the account opening. */
+export function carry(o) {
+  carried = carried || { barrels: 0, titles: [], pieces: [] };
+  if (o.barrels) carried.barrels += o.barrels;
+  if (o.title) carried.titles.push(o.title);
+  if (o.piece) carried.pieces.push(o.piece);
 }
 
 function logBag(o) {
@@ -78,9 +94,6 @@ function logGoods(g) {
   if (!g || !g.n) return;
   ledger.goods[g.good] = (ledger.goods[g.good] || 0) + g.n;
 }
-
-const ledgerEmpty = () => !ledger || (!ledger.gold && !ledger.wood && !ledger.metal
-  && !ledger.cloth && !Object.keys(ledger.goods).length && !ledger.ships.length);
 
 /* Numbers arrive by counting up rather than simply being there. A total that
    was always on screen is a receipt; one that climbs is a haul. */
@@ -93,33 +106,60 @@ function countUp(el, to, ms) {
   })(t0);
 }
 
-function drawTally() {
-  const rows = [];
+/* One thing you came away with. Glyph on top, what it is under that, how much
+   at the foot — a column, so a dozen of them tile across a phone where a dozen
+   full-width rows would be a scroll. */
+function tcard(i, art, name, value, cls) {
+  const num = typeof value === 'number'
+    ? `<b class="tn" data-to="${value}">0</b>`
+    : `<b class="tn word">${esc(value)}</b>`;
+  return `<div class="tcard ${cls || ''}" style="--i:${i}">
+    <div class="tart">${art}</div><span class="tname">${esc(name)}</span>${num}</div>`;
+}
+
+function drawTally(title, sub, lines) {
+  const cards = [];
   let i = 0;
-  const push = (icon, n, label) => rows.push(
-    `<div class="tallyrow" style="--i:${i++}">${iconHTML(icon, 0, 'tallyic')}`
-    + `<b class="tallyn" data-to="${n}">0</b><span>${esc(label)}</span></div>`);
+  const push = (art, name, value, cls) => cards.push(tcard(i++, art, name, value, cls));
+  const glyph = k => iconHTML(k, 0, 'tallyic');
 
-  if (ledger.gold) push('gold', ledger.gold, 'Gold');
-  MAT_KEYS.forEach(m => { if (ledger[m]) push(m, ledger[m], matName(m)); });
-  Object.keys(ledger.goods).forEach(g => push(g, ledger.goods[g], GOODS[g] ? GOODS[g].n : g));
-  /* A hull is not a quantity, so it gets her name where a number would be and
-     her class where the label goes. */
-  ledger.ships.forEach(sh => rows.push(
-    `<div class="tallyrow ship" style="--i:${i++}">${shipHTML(sh.type, 'player', 0.55)}`
-    + `<b class="tallyname">${esc(sh.name)}</b><span>${esc(TYPES[sh.type].n)}</span></div>`));
+  if (ledger.gold) push(glyph('gold'), 'Gold', ledger.gold);
+  MAT_KEYS.forEach(m => { if (ledger[m]) push(glyph(m), matName(m), ledger[m]); });
+  Object.keys(ledger.goods).forEach(g =>
+    push(glyph(g), GOODS[g] ? GOODS[g].n : g, ledger.goods[g]));
+  /* Powder and shot for the barrels: a victory is worth one, and it used to be
+     announced on the banner and then never mentioned again. */
+  if (ledger.barrels) push(glyph('barrels'), 'Fire Barrels', ledger.barrels);
 
-  $('rHead').innerHTML = `<div class="rverdict good">The Account</div>
-    <div class="rwhere">What the fight was worth</div>`;
-  $('rBody').innerHTML = `<div class="tally">${rows.join('')}</div>${wantedMeter()}`;
+  /* A hull is not a quantity, so her name goes where the number would be. */
+  ledger.ships.forEach(sh =>
+    push(shipHTML(sh.type, 'player', 0.6), TYPES[sh.type].n, sh.name, 'ship'));
+
+  /* Off a beaten hull, for the great cabin. This used to stop the game with a
+     modal of its own seven hundred milliseconds after the banner. */
+  ledger.pieces.forEach(p => push(glyph('relic'), p.name,
+    p.of ? `${p.have}/${p.of}` : 'Oddment', 'relic' + (p.complete ? ' setdone' : '')));
+
+  /* And what beating an admiral makes you. */
+  ledger.titles.forEach(t => push(glyph('star'), 'Title Earned', t, 'title'));
+
+  $('rHead').innerHTML = `<div class="rverdict ${cards.length ? 'good' : 'bad'}">${esc(title)}</div>
+    <div class="rwhere">${esc(sub)}</div>`;
+  $('rBody').innerHTML =
+    ((lines && lines.length) ? `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : '')
+    + (cards.length ? `<div class="tally">${cards.join('')}</div>`
+      : '<div class="sub center tallynone">Nothing came of it but the wear on your hulls.</div>')
+    + wantedMeter();
   $('rBody').scrollTop = 0;
   $('rFoot').innerHTML = `<button class="btn gold wide" data-act="close-result">Continue</button>`;
 
-  /* Each figure starts its climb as its row lands, so the screen fills rather
-     than appearing already finished. */
-  qsa('#rBody .tallyn').forEach((el, n) => {
+  /* Each card pops as it lands and its figure starts climbing with it, so the
+     screen fills rather than appearing already finished. The stagger is short
+     because there can be a dozen of these — long enough to read as a sequence,
+     not so long that the last one is still arriving after a thumb has moved. */
+  qsa('#rBody .tn[data-to]').forEach((el, n) => {
     const to = +el.dataset.to || 0;
-    setTimeout(() => { countUp(el, to, 520); play('coin'); }, 220 + n * 130);
+    setTimeout(() => { countUp(el, to, 480); play('coin'); }, 200 + n * 90);
   });
 
   /* And then the bar moves, last, after the money has finished counting — it is
@@ -135,7 +175,7 @@ function drawTally() {
           play('boss_horn');
         }, 900);
       }
-    }, 260 + i * 130);
+    }, 320 + i * 90);
   }
 }
 
@@ -184,6 +224,11 @@ let pending = 0;
 /* The wanted level before this fight, so the account can show it move. */
 let wantedWas = 0;
 let wantedRegion = '';
+/* What the account will be headed with, held from showResult until the last
+   prize has been answered for. */
+let tallyLines = [];
+let tallyTitle = '';
+let tallyWhere = '';
 
 export function showResult({ route, success, msg, captives = [], evt = '', noto = 0, prizeMsg = '', extra = null, spoils = null, holds = null, fromVoyage = false }) {
   const paid = { ...(route.rew || {}) };
@@ -208,36 +253,41 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     (holds || []).forEach(logGoods);
   }
 
-  /* ---- head: the verdict, and where it happened ---- */
-  $('rHead').innerHTML = `<div class="rverdict ${success ? 'good' : 'bad'}">${title}</div>
-    <div class="rwhere">${esc(route.n)}</div>`;
-
-  /* ---- body: the haul first, everything else after ---- */
-  let h = strongbox(paid, spoils, holds);
+  /* Anything the fight handed over before this screen existed — the barrel a
+     victory is worth, a piece off a beaten hull, an admiral's title. */
+  if (carried) {
+    ledger.barrels += carried.barrels;
+    ledger.titles = ledger.titles.concat(carried.titles);
+    ledger.pieces = ledger.pieces.concat(carried.pieces);
+    carried = null;
+  }
 
   const lines = [msg, prizeMsg, evt].filter(Boolean);
-  if (lines.length) {
-    h += `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>`;
-  }
-  /* How wanted this made you is not mentioned here. It used to be a chip
-     reading "34/100" in the middle of the report, which is both the scale the
-     rest of the game stopped showing and a number nobody can do anything with
-     at that moment. It has a bar on the account at the end instead, where it
-     moves from where it was to where it is.
-
-     The prizes are not built here either — they come up one at a time on the
-     way out, each replacing the last. See nextPrize(). */
-  h += '<div id="prizeSlot"></div>';
-
-  $('rBody').innerHTML = h;
-  $('rBody').scrollTop = 0;
-
   queue = captives.slice();
   atPrize = 0;
   pending = captives.length;
-  if (pending) nextPrize();
-  drawFoot();
-  openResult();
+  tallyLines = lines;
+  tallyTitle = title;
+  tallyWhere = route.n;
+
+  /* With nothing to decide there is nothing to report: the account IS the
+     report, and putting a screen in front of it that only says what the account
+     is about to say is a tap for no reason. Straight there. */
+  if (!pending) {
+    tallyShown = true;
+    drawTally(title, route.n, lines);
+    openResult();
+  } else {
+    $('rHead').innerHTML = `<div class="rverdict ${success ? 'good' : 'bad'}">${esc(title)}</div>
+      <div class="rwhere">${esc(route.n)}</div>`;
+    /* Only the decisions live here. What the fight was worth — the coin, the
+       materials, the holds — is not shown twice; it is all on the account. */
+    $('rBody').innerHTML = '<div id="prizeSlot"></div>';
+    $('rBody').scrollTop = 0;
+    nextPrize();
+    drawFoot();
+    openResult();
+  }
 
   if (success && paid.gold) {
     setTimeout(() => coinFly(Math.min(12, Math.ceil(paid.gold / 200))), 420);
@@ -246,28 +296,6 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
   updateRes();
   refreshTut();
 }
-
-/* The haul, big, before any prose, and on one line whatever it holds.
-
-   Tiles rather than chips: the glyph sits over the number, so six kinds of
-   winnings fit across a phone at 40px a glyph where six chips would wrap. The
-   contract money and the materials off the enemy are the same metal, so they
-   are added rather than listed twice. */
-function strongbox(paid, sp, holds) {
-  const bag = { ...paid };
-  if (sp && sp.mats) MAT_KEYS.forEach(m => { if (sp.mats[m]) bag[m] = (bag[m] || 0) + sp.mats[m]; });
-
-  const won = [bagTiles(bag, 'gold')];
-  if (sp && sp.goods && sp.goods.n) won.push(tile(sp.goods.good, sp.goods.n, 'gold', sp.goods.name));
-  /* A convoy's holds are the point of taking one, so they sit in the strongbox
-     with everything else rather than being mentioned in the prose. */
-  (holds || []).forEach(g => won.push(tile(g.good, g.n, 'gold', g.name)));
-
-  const inner = tileRow(won);
-  if (!inner) return '';
-  return `<div class="strongbox"><div class="sboxlbl">Taken</div>${inner}</div>`;
-}
-
 
 /* ---- the prizes, one at a time ----
 
@@ -348,14 +376,12 @@ export function closeResult() {
   if (!el.classList.contains('on')) return;
   if (pending) return;                     // decisions first
 
-  /* One more screen on the way out: the total. It only appears when there is
-     something to say — a lost battle that earned nothing and moved nothing
-     closes straight away rather than showing an empty ledger. A fight that paid
-     nothing but stirred the water still has the wanted bar to show. */
-  if (!tallyShown && (!ledgerEmpty() || wantedMeter())) {
+  /* The account, on the way out. Reached from the prize sequence — a fight with
+     nothing to decide went straight there and has already shown it. */
+  if (!tallyShown) {
     tallyShown = true;
     play('victory');
-    drawTally();
+    drawTally(tallyTitle, tallyWhere, tallyLines);
     return;
   }
 
@@ -368,37 +394,28 @@ export function closeResult() {
 function capAct(i, mode, type) {
   const t = TYPES[type], el = $('cap' + i);
   if (!el) return;
-  const sub = el.querySelector('.sub');
 
   if (mode === 'capture') {
     if (S.ships.length >= S.docks) return deny('Every dock is full');
     const taken = newShip(type, rnd(0.25, 0.45));
     S.ships.push(taken);
     ledger.ships.push(taken);
-    sub.textContent = 'Yours, damaged. Repair her in Port.';
   } else if (mode === 'salvage') {
     grant(SCRAP_YIELD[type]);
     logBag(SCRAP_YIELD[type]);
     play('repair');
-    sub.textContent = 'Broken up for timber, iron and canvas.';
   } else if (mode === 'ransom') {
     S.gold += t.ransom;
     logBag({ gold: t.ransom });
     coinFly(6);
     play('coin');
-    sub.textContent = 'Her crew ransomed. The hull goes to the bottom.';
   } else if (mode === 'chest') {
     const box = chestValue(t);
     S.gold += box;
     logBag({ gold: box });
     coinFly(10);
     play('coin');
-    sub.textContent = 'Her strongbox came up off the cabin sole.';
   }
-
-  const opts = el.querySelector('.prizeopts');
-  if (opts) opts.remove();
-  el.classList.add('decided');
 
   pending = Math.max(0, pending - 1);
   atPrize++;
@@ -408,21 +425,20 @@ function capAct(i, mode, type) {
   save();
   tutEvent('prize');
 
-  /* Let the decision land — the card says what became of her and settles — and
-     then bring the next one up. Swapping instantly would make three prizes feel
-     like one card flickering. */
-  const wait = queue[atPrize] ? 900 : 620;
+  /* Straight on to the next one. A decided hull used to hold for the best part
+     of a second, saying what became of her, before sliding out — which is a
+     sentence nobody reads twice and a wait on every single tap. What became of
+     her is on the account at the end anyway, itemised, so the card's whole job
+     ends the moment it is answered. It leaves at once. */
+  el.classList.add('gone');
   setTimeout(() => {
     if (!$('cap' + i)) return;              // screen closed under us
-    el.classList.add('gone');
-    setTimeout(() => {
-      if (queue[atPrize]) { nextPrize(); $('rBody').scrollTop = 0; }
-      else {
-        const slot = $('prizeSlot');
-        if (slot) slot.innerHTML = '';
-      }
-    }, 260);
-  }, wait);
+    if (queue[atPrize]) { nextPrize(); $('rBody').scrollTop = 0; }
+    else {
+      const slot = $('prizeSlot');
+      if (slot) slot.innerHTML = '';
+    }
+  }, 190);
 }
 
 actions({

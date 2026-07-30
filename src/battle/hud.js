@@ -17,6 +17,10 @@ import { play } from '../fx/sound.js';
 import { buzz } from '../fx/haptics.js';
 import { BT, aliveE, aliveP, boardable } from './state.js';
 import { hasFit } from '../core/selectors.js';
+/* The account is built after the battle is over, so what the fight itself
+   handed over has to be parked somewhere until then. result.js imports nothing
+   from battle/, so this does not close a cycle. */
+import { carry } from '../ui/result.js';
 
 /* What the player can do, in display order. `hot` is the keyboard shortcut. */
 export const ORDERS = [
@@ -97,20 +101,24 @@ export function showBanner(kind) {
   sig = '';
   refreshTut();
 
-  if (win) { S.barrels = Math.min(9, S.barrels + 1); play('victory'); buzz('win'); }
-  else if (kind === 'loss') { play('defeat'); buzz('lose'); }
+  if (win) {
+    const before = S.barrels;
+    S.barrels = Math.min(9, S.barrels + 1);
+    /* The banner used to list what a win was worth — a barrel, the prizes
+       waiting, an admiral's title — and then the report listed the haul, and
+       then the account totalled it. The same win announced three times, in
+       three formats, none of them the total. The banner is the verdict now and
+       nothing else; everything it was reporting goes to the account, which is
+       the one screen that adds up. */
+    carry({ barrels: S.barrels - before, title: isBoss ? b.boss.title : null });
+    play('victory'); buzz('win');
+  } else if (kind === 'loss') { play('defeat'); buzz('lose'); }
 
   const cols = { win: 'var(--grn)', loss: 'var(--red)', escaped: 'var(--yel)' };
   const txt = { win: isBoss ? 'Admiral Broken' : 'Victorious', loss: 'Defeated', escaped: 'Escaped' };
 
   let inner = `<div class="big" style="color:${cols[kind]}">${txt[kind]}</div>`;
-  if (win) {
-    const prizes = b.enemies.filter(e => e.disabled && !e.isBoss).length;
-    inner += `<div class="rewrow">
-        <span>${iconHTML('barrels', 40)} +1 barrel</span>
-        <span>${iconHTML('anchor', 40)} ${prizes} prize${prizes !== 1 ? 's' : ''}</span>
-        ${isBoss ? `<span>${iconHTML('star', 40)} ${b.boss.title}</span>` : ''}</div>`;
-  } else if (kind === 'loss') {
+  if (kind === 'loss') {
     inner += `<div class="sub" style="margin-top:10px">What is still afloat turns for home and the surgeons.</div>`;
   }
   inner += `<button class="btn gold" style="margin-top:22px;min-width:180px" data-act="battle-continue" data-kind="${kind}">Continue</button>`;

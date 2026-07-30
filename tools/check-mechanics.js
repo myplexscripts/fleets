@@ -21,6 +21,7 @@
      8. Every region offers a convoy, and no two ships in a fleet share a name.
      9. One diving bell means one wreck at a time — refused in the systems layer,
         and said on the button before it is pressed.
+    10. Everything a fight was worth reaches the account, and only the account.
 
    Run:  node tools/check-mechanics.js [url] */
 
@@ -450,6 +451,55 @@ catch (e) {
     console.log('   second wreck: button disabled ' + said.disabled + ', says "' + said.warn.trim() + '"');
     if (!said.disabled) bad.push('the second wreck still offers a live Send Divers button');
     if (!/bell/i.test(said.warn)) bad.push('the sheet does not explain that the bell is already down');
+  }
+
+  /* ---- 10. everything a fight was worth lands on one screen ----
+
+     The haul used to be reported in four places: a reward row on the victory
+     banner, a strongbox at the top of the report, a modal of its own for a
+     collectible, and the prizes paying out one at a time underneath. None of
+     them was the total, and three had to be dismissed to reach the next.
+
+     So the rule is that the account is the only account: whatever a fight
+     produced — coin, materials, goods, the barrel a win is worth, hulls kept,
+     a piece for the great cabin, an admiral's title — is on it, and the banner
+     it came from lists none of it. */
+  console.log('10. every kind of winnings reaches the account');
+  const acct = await p.evaluate(async () => {
+    const res = await import('/src/ui/result.js');
+    const st = await import('/src/core/state.js');
+    st.S.docks = 9;
+
+    /* The things the fight hands over before the report exists. */
+    res.carry({ barrels: 1, title: 'Scourge of the Windward' });
+    res.carry({ piece: { name: 'Brass Astrolabe', setName: 'Kit', have: 2, of: 4 } });
+
+    res.showResult({
+      route: { id: 'x', region: 'caribbean', n: 'Test Water', type: 'boss',
+        rew: { gold: 900, wood: 10 } },
+      success: true, msg: 'Test.', noto: 10,
+      spoils: { mats: { metal: 5 }, goods: { good: 'rum', n: 7, name: 'Rum' } },
+      holds: [{ good: 'sugar', n: 12, name: 'Sugar' }],
+      captives: []
+    });
+    await new Promise(r => setTimeout(r, 400));
+
+    const names = [...document.querySelectorAll('.tcard .tname')].map(e => e.textContent.trim().toLowerCase());
+    return {
+      names,
+      grid: getComputedStyle(document.querySelector('.tally')).display,
+      /* Nothing may be reported on the banner that the account also reports. */
+      bannerHTML: document.getElementById('banner').innerHTML
+    };
+  });
+  console.log('   account carries: ' + acct.names.join(', '));
+  const want = ['gold', 'wood', 'metal', 'rum', 'sugar', 'fire barrels', 'brass astrolabe', 'title earned'];
+  want.forEach(w => {
+    if (!acct.names.some(n => n === w)) bad.push(`the account does not carry "${w}"`);
+  });
+  if (acct.grid !== 'grid') bad.push('the account is not laid out as a grid');
+  if (/barrel/i.test(acct.bannerHTML)) {
+    bad.push('the victory banner still lists the barrel — it belongs to the account alone');
   }
 
   await b.close();

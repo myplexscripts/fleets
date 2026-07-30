@@ -16,33 +16,31 @@ import { addNoto } from './wanted.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { clearDraw } from './enemies.js';
 import { goodsHaul, matsHaul, convoyHaul } from './loot.js';
-import { showResult } from '../ui/result.js';
+import { showResult, carry } from '../ui/result.js';
 import { award } from '../fx/award.js';
 import { buzz } from '../fx/haptics.js';
 
 const prizesFrom = enemies => enemies.filter(e => e.disabled);
 
-/* Beaten ships occasionally give up something for the great cabin. A find is
-   never a line of text you might miss — it stops the game and asks to be taken,
-   which is also why the tutorial never produces one: a modal that lands on top
-   of a scripted step is fighting the script. */
 /* How often a beaten ship gives up something for the great cabin.
 
    Deliberately small. A collectible turning up one fight in six is not a find,
    it is a drip — and the sets are meant to be the thing you are quietly hoping
    for over a whole session rather than something you can count on this
-   afternoon. */
+   afternoon.
+
+   A find used to stop the game with a modal of its own, seven hundred
+   milliseconds after the banner — a fourth screen between the fight and the
+   port, landing while the player was already reaching for Continue. It goes on
+   the account with everything else now, on a card that says which set it
+   belongs to and how far along that set is. The tutorial still never produces
+   one, because a find that lands on a scripted step is fighting the script. */
 const DROP_CHANCE = 0.035;
 
 function battleDrop() {
   if (typeof S.tut === 'number') return null;
   const d = Math.random() < DROP_CHANCE ? rollDrop('battle') : null;
-  if (d) {
-    setTimeout(() => award({
-      icon: 'relic', kind: 'Taken Off Her', title: d.name,
-      text: `${d.setName} — ${d.have} of ${d.of}.`, ok: 'Continue'
-    }), 700);
-  }
+  if (d) carry({ piece: d });
   return d;
 }
 
@@ -139,15 +137,13 @@ export function charterVictory(route, enemies) {
 
   if (c.prize) {
     if (c.prize.piece) {
+      /* On the account with the rest of the haul, same as a piece off a beaten
+         hull. A new port and a legendary refit still stop the game below — those
+         change what you can do, and are worth a screen. A collectible is
+         something you got. */
       const got = awardPiece(c.prize.piece);
-      if (got) {
-        setTimeout(() => award({
-          icon: 'relic', kind: 'Collectible', title: got.name,
-          text: `${got.setName} — ${got.have} of ${got.of}.`, ok: 'Continue'
-        }), 900);
-      } else {
-        prizeMsg = `${c.prize.piece} again. You already have one; it goes in a drawer.`;
-      }
+      if (got) carry({ piece: got });
+      else prizeMsg = `${c.prize.piece} again. You already have one; it goes in a drawer.`;
     }
     if (c.prize.boon) {
       S.flagBoons.push(c.prize.boon);
