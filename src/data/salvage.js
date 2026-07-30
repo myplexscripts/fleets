@@ -18,12 +18,14 @@ export const BELL_NAMES = [
 ];
 
 /* Cost to go from tier `b` to `b + 1`. */
+/* A deeper bell opens water nobody else is working, so it compounds like the
+   flagship tracks rather than climbing in flat steps. */
 export function bellCost(b) {
   return {
-    gold: 500 * (b + 1) + (b >= 2 ? 200 * (b - 1) : 0),
-    metal: 14 * (b + 1),
-    wood: 8 * (b + 1),
-    cloth: 4 * (b + 1)
+    gold: Math.round(900 * Math.pow(1.95, b)),
+    metal: Math.round(20 * Math.pow(1.6, b)),
+    wood: Math.round(12 * Math.pow(1.6, b)),
+    cloth: Math.round(6 * Math.pow(1.6, b))
   };
 }
 

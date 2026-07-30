@@ -2,10 +2,13 @@
    `cost` is in gold; `ransom` is the gold a captured crew fetches. */
 
 export const TYPES = {
-  schooner: { n: 'Schooner',    speed: 8, guns: 3,  hull: 20, cargo: 10, cost: 320,  rep: 3, salv: 6,  ransom: 150 },
-  brig:     { n: 'Brig',        speed: 5, guns: 5,  hull: 35, cargo: 20, cost: 680,  rep: 4, salv: 10, ransom: 300 },
-  frigate:  { n: 'Frigate',     speed: 4, guns: 8,  hull: 55, cargo: 30, cost: 1500, rep: 6, salv: 16, ransom: 600 },
-  manowar:  { n: "Man o' War",  speed: 2, guns: 12, hull: 90, cargo: 50, cost: 3200, rep: 8, salv: 26, ransom: 1200 }
+  /* `cost` is what the shipwright asks; `ransom` is what her crew fetches when
+     you take her. Buying is deliberately the expensive way to get a hull —
+     the cheap way is to go and take one — so the two are not close. */
+  schooner: { n: 'Schooner',    speed: 8, guns: 3,  hull: 20, cargo: 10, cost: 900,  rep: 3, salv: 6,  ransom: 150 },
+  brig:     { n: 'Brig',        speed: 5, guns: 5,  hull: 35, cargo: 20, cost: 2100, rep: 4, salv: 10, ransom: 300 },
+  frigate:  { n: 'Frigate',     speed: 4, guns: 8,  hull: 55, cargo: 30, cost: 5200, rep: 6, salv: 16, ransom: 600 },
+  manowar:  { n: "Man o' War",  speed: 2, guns: 12, hull: 90, cargo: 50, cost: 12000, rep: 8, salv: 26, ransom: 1200 }
 };
 
 export const NAMES = ['Adder', 'Tempest', 'Marigold', 'Vixen', 'Corsair', 'Reliant', 'Sea Wolf',

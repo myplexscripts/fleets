@@ -219,6 +219,93 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
   }
   console.log('');
 
+  /* ---- the economy ----
+
+     What a fight LISTS is not what a fight PAYS. Every hull you beat is a prize
+     worth 150 to 1,200 gold on its own, so a patrol that lists 180 gold and
+     hands you three ships is really worth closer to a thousand. That gap is why
+     the game could be broken open in five minutes: the costs were being set
+     against the listed numbers and the player was earning the real ones.
+
+     So income here is modelled the way it is actually made — listed reward plus
+     the ransoms off the line you just beat — and checked against what there is
+     to spend it on. */
+  const ec = await p.evaluate(async () => {
+    const routes = await import('/src/data/routes.js');
+    const world = await import('/src/data/world.js');
+    const fl = await import('/src/data/flagship.js');
+    const ships = await import('/src/data/ships.js');
+    const salv = await import('/src/data/salvage.js');
+
+    const ladder = k => {
+      let g = 0;
+      for (let t = 0; t < 6; t++) g += fl.tierCost(k, t).gold;
+      return g;
+    };
+    const flagAll = fl.TIER_KEYS.reduce((a, k) => a + ladder(k), 0)
+      + Object.values(fl.FITTINGS).reduce((a, f) => a + f.cost.gold, 0);
+
+    let bells = 0;
+    for (let i = 0; i < salv.MAX_BELL; i++) bells += salv.bellCost(i).gold;
+
+    const byRegion = {};
+    for (const rk in world.REGIONS) {
+      const rs = routes.makeRoutes().filter(r => r.region === rk);
+      const listed = rs.reduce((a, r) => a + ((r.rew && r.rew.gold) || 0), 0);
+      const fights = rs.filter(r => world.BATTLE_TYPES.includes(r.type)).length;
+      byRegion[rk] = { listed, fights };
+    }
+
+    return {
+      byRegion, flagAll, bells,
+      firstTier: fl.tierCost('plate', 0).gold,
+      lastTier: fl.tierCost('plate', 5).gold,
+      ransom: Object.fromEntries(Object.entries(ships.TYPES).map(([k, t]) => [k, t.ransom])),
+      hullCost: Object.fromEntries(Object.entries(ships.TYPES).map(([k, t]) => [k, t.cost]))
+    };
+  });
+
+  /* A won fight leaves two or three hulls on the water; ransoming the middling
+     one is the ordinary choice, so that is what a sweep is priced at. */
+  const perPrize = ec.ransom.brig;
+  const PRIZES = 2.5;
+
+  console.log('ECONOMY');
+  let sweep = 0;
+  for (const rk of data.regions) {
+    const r = ec.byRegion[rk];
+    const real = r.listed + Math.round(r.fights * PRIZES * perPrize);
+    if (rk === 'caribbean') sweep = real;
+    console.log(`  ${data.names[rk].padEnd(18)} listed ${String(r.listed).padStart(5)}  `
+      + `+ ${r.fights} fights of prizes  = about ${real} a sweep`);
+  }
+  console.log(`  first flagship tier ${ec.firstTier}, last ${ec.lastTier}`);
+  console.log(`  the whole flagship ${ec.flagAll}, every bell ${ec.bells}`);
+  console.log(`  a Caribbean sweep buys ${(sweep / ec.flagAll * 100).toFixed(1)}% of the flagship`);
+
+  /* The first upgrade has to land early — a game that makes you wait for the
+     first taste of progress is one nobody reaches the second of. */
+  if (ec.firstTier > sweep / 2) {
+    bad.push(`the first flagship tier (${ec.firstTier}) costs more than half a Caribbean sweep — too slow to start`);
+  }
+  /* And the whole thing has to be a campaign, not an afternoon. One sweep of
+     the starting region should not visibly dent it. */
+  const dent = sweep / ec.flagAll;
+  if (dent > 0.06) {
+    bad.push(`one Caribbean sweep buys ${(dent * 100).toFixed(0)}% of the flagship — the game is over in an evening`);
+  }
+  if (dent < 0.005) {
+    bad.push(`one Caribbean sweep buys only ${(dent * 100).toFixed(1)}% of the flagship — a grind`);
+  }
+  /* Buying a hull must never be cheaper than the prize it competes with, or
+     nobody would ever bother taking one. */
+  for (const k in ec.hullCost) {
+    if (ec.hullCost[k] <= ec.ransom[k] * 2) {
+      bad.push(`a ${k} costs ${ec.hullCost[k]} and ransoms for ${ec.ransom[k]} — buying is not the expensive way`);
+    }
+  }
+  console.log('');
+
   await b.close();
 
   if (bad.length) {

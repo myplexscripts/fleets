@@ -92,6 +92,64 @@ const MIN = 64;
     if (r.n > 1 && r.min < MIN - 1) errors.push(label + ': markers only ' + r.min.toFixed(0) + 'px apart (' + r.pair + ')');
     if (r.hit < 26) errors.push(label + ': tap radius only ' + r.hit.toFixed(0));
 
+    /* ---- the words, not just the dots ----
+
+       Spacing the markers is only half of it. A label is far wider than the
+       marker it hangs off — "CUTLASS JACK DOYLE" is several times the width of
+       its own dot — so a chart with every marker comfortably apart could still
+       print two names straight through each other. */
+    const lbl = await p.evaluate(() => {
+      const svg = document.getElementById('mapsvg');
+      const ts = [...svg.querySelectorAll('.maplabels text')].map(t => {
+        const r = t.getBBox();
+        return { t: t.textContent.trim(), x0: r.x, y0: r.y, x1: r.x + r.width, y1: r.y + r.height };
+      });
+      const hit = [];
+      for (let i = 0; i < ts.length; i++) {
+        for (let j = i + 1; j < ts.length; j++) {
+          const a = ts[i], b = ts[j];
+          if (a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1) {
+            hit.push(`"${a.t}" x "${b.t}"`);
+          }
+        }
+      }
+      return { n: ts.length, hit };
+    });
+    console.log('  ' + lbl.n + ' labels, ' + (lbl.hit.length ? lbl.hit.length + ' COLLIDING' : 'none colliding'));
+    if (lbl.hit.length) errors.push(label + ': labels overlap — ' + lbl.hit.join(', '));
+
+    /* ---- bleed ----
+
+       Pulled all the way back, the sea has to run past every edge of the window.
+       A chart that stops in a straight line reads as a picture of a map rather
+       than as an ocean. */
+    const out = await p.evaluate(async () => {
+      const sc = document.getElementById('mapscroll');
+      const svg = document.getElementById('mapsvg');
+      const r = sc.getBoundingClientRect();
+      for (let i = 0; i < 40; i++) {
+        sc.dispatchEvent(new WheelEvent('wheel', {
+          deltaY: 120, ctrlKey: true, bubbles: true, cancelable: true,
+          clientX: r.left + r.width / 2, clientY: r.top + r.height / 2
+        }));
+      }
+      await new Promise(x => setTimeout(x, 250));
+      const s = svg.getBoundingClientRect();
+      return {
+        left: Math.round(s.left - r.left), right: Math.round(r.right - s.right),
+        top: Math.round(s.top - r.top), bottom: Math.round(r.bottom - s.bottom)
+      };
+    });
+    const gaps = ['left', 'right', 'top', 'bottom'].filter(k => out[k] > 0);
+    console.log('  zoomed out: ' + (gaps.length ? 'EDGE SHOWS on ' + gaps.join(', ') : 'sea past every edge'));
+    gaps.forEach(k => errors.push(`${label}: the chart's ${k} edge shows when zoomed out (${out[k]}px)`));
+    await p.evaluate(async () => {
+      const m = await import('/src/ui/screens/map.js');
+      m.resetZoom();
+    });
+    await p.click('#tabFleet'); await p.waitForTimeout(300);
+    await p.click('#tabRoutes'); await p.waitForTimeout(900);
+
     /* Every node must actually be clickable where it is drawn. */
     const ids = await p.locator('#mapsvg g.mapnode').evaluateAll(g => g.map(x => x.id));
     for (const id of ids.slice(0, 4)) {

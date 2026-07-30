@@ -335,5 +335,12 @@
    zoomed-in chart cannot be scrolled to its own edges. */
 #mapzoompad{position:absolute;top:0;left:0;pointer-events:none}
 #mapzoom{position:absolute;top:0;left:0;will-change:transform}
+
+/* One finger scrolls; two fingers are ours.
+
+   This used to end in `pinch-zoom`, which hands the gesture to the BROWSER —
+   so a pinch on the chart was fighting the page's own zoom and the chart's
+   handler never saw a thing. Leaving it out is what makes the pinch work:
+   the pointer events arrive at the scroller and applyZoom() gets them. */
+#mapscroll{touch-action:pan-x pan-y}
 #mapscroll.zooming{touch-action:none}
-#mapscroll{touch-action:pan-x pan-y pinch-zoom}

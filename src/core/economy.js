@@ -7,5 +7,7 @@
 import { S } from './state.js';
 
 /* Each dock costs more than the last, so a large fleet is a decision rather
-   than something that quietly accumulates. */
-export const dockCost = () => ({ gold: 350 + (S.docks - 2) * 250 + (S.docks >= 6 ? 400 : 0) });
+   than something that quietly accumulates — and it compounds, because the fleet
+   a dock lets you keep is itself what earns the next one. A linear ramp meant
+   the sixth dock cost less than one ransomed frigate. */
+export const dockCost = () => ({ gold: Math.round(600 * Math.pow(1.65, Math.max(0, S.docks - 3))) });

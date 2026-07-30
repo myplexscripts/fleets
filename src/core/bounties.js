@@ -82,10 +82,15 @@ export function bountyFrac(b) {
 
 function makeBounty(rk, spot) {
   const life = BOUNTY_LIFE_MS;
+  /* Somebody nobody else is currently being hunted for. Two captains of the
+     same name on one chart is the same problem as two ships called Petrel, and
+     worse here — the name IS the marker. */
+  const taken = new Set((S.bounties || []).map(b => b.captain));
+  const free = CAPTAINS.filter(c => !taken.has(c));
   return {
     id: 'b' + (seq++) + '_' + (now() % 100000),
     region: rk,
-    captain: pick(CAPTAINS),
+    captain: pick(free.length ? free : CAPTAINS),
     n: spot.n, x: spot.x, y: spot.y,
     endsAt: now() + life,
     life

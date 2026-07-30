@@ -31,10 +31,16 @@ import { bountyFrac, bountyLeft } from '../../core/bounties.js';
    marker was for the chart to be drawn big enough. A pinch does that job now,
    so this is the comfortable-at-rest distance rather than the guarantee, and
    the chart is a size a person can hold in their head. */
-const MIN_NODE_GAP = 64;
+const MIN_NODE_GAP = 88;
 
-/* And no bigger than this in either direction, however tight the authoring. */
-const MAX_CHART = 2600;
+/* And no bigger than this in either direction, however tight the authoring.
+
+   Raised once the whole ocean started carrying bounties and wrecks as well as
+   fixed routes: at 2600 the fully-opened chart could not be drawn large enough
+   to give its markers the room they had already been spaced for in authored
+   units, so they arrived on screen closer than intended. The chart pans, and it
+   pinches, so a bigger one costs nothing but scrolling. */
+const MAX_CHART = 4400;
 
 /* Drag to pan. Touch scrolls the container by itself; this is for a mouse, and
    it deliberately does not swallow taps — a drag under the slop threshold still
@@ -111,7 +117,14 @@ function enableZoom(scroller) {
   scroller.addEventListener('pointerdown', ev => {
     if (ev.pointerType !== 'touch') return;
     pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-    if (pts.size === 2) { base = dist(); baseZoom = zoom; }
+    if (pts.size === 2) {
+      base = dist(); baseZoom = zoom;
+      /* Hold both fingers even if one slides off the scroller or over a marker
+         — losing one mid-pinch was most of what made the gesture feel like it
+         kept giving up on you. */
+      pts.forEach((_, id) => { try { scroller.setPointerCapture(id); } catch (e) { /* gone */ } });
+      scroller.classList.add('zooming');
+    }
   });
 
   scroller.addEventListener('pointermove', ev => {
@@ -119,12 +132,14 @@ function enableZoom(scroller) {
     pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     if (pts.size !== 2 || !base) return;
     ev.preventDefault();
-    scroller.classList.add('zooming');
     const m = mid();
     applyZoom(scroller, baseZoom * (dist() / base), m.x, m.y);
   }, { passive: false });
 
   const lift = ev => {
+    if (pts.has(ev.pointerId)) {
+      try { scroller.releasePointerCapture(ev.pointerId); } catch (e) { /* already gone */ }
+    }
     pts.delete(ev.pointerId);
     if (pts.size < 2) { base = 0; scroller.classList.remove('zooming'); }
   };
@@ -268,9 +283,9 @@ export function renderMap() {
   /* Spread the crowded markers before measuring anything, then work entirely
      from the spread positions so the drawing and the taps agree. */
   const POS = relaxed([
-    { id: 'HOME', x: HOME.x, y: HOME.y },
-    ...rs.map(r => ({ id: r.id, x: r.x, y: r.y })),
-    ...bossKeys.map(rk => ({ id: BOSSES[rk].id, x: BOSSES[rk].x, y: BOSSES[rk].y }))
+    { id: 'HOME', x: HOME.x, y: HOME.y, room: ROOM.home },
+    ...rs.map(r => ({ id: r.id, x: r.x, y: r.y, room: roomFor(r) })),
+    ...bossKeys.map(rk => ({ id: BOSSES[rk].id, x: BOSSES[rk].x, y: BOSSES[rk].y, room: ROOM.boss }))
   ]);
   const at = o => POS[o.id] || o;
   const HOMEP = POS.HOME;
@@ -358,10 +373,15 @@ export function renderMap() {
      the box a tap is aimed at — so a label hanging below the marker drags that
      box down until the middle of it is empty water. Keeping the words out means
      a node's box is the marker, which is what you are aiming at anyway. */
-  const labelAt = (x, y, text, size, fill, stroke, spacing) =>
-    `<text x="${labelX(x, text, LBL)}" y="${y}" text-anchor="middle" fill="${fill}"`
-    + ` font-size="${size}" font-family="Oswald" letter-spacing="${spacing}"`
-    + ` style="paint-order:stroke" stroke="${stroke}" stroke-width="3">${esc(text)}</text>`;
+  /* Labels are collected rather than emitted, so they can be laid out against
+     each other once every marker is placed. A chart with eleven activities on
+     it will otherwise print BARNABY SKEFFINGTON straight through DEPTH 1 — the
+     markers are spaced, but the words hanging off them are not, and the words
+     are much the wider of the two. See placeLabels() below. */
+  const labelSpecs = [];
+  const labelAt = (x, y, text, size, fill, stroke, spacing, second) => {
+    labelSpecs.push({ x, y, text, size, fill, stroke, spacing, second });
+  };
 
   rs.forEach(r => {
     const isCh = r.type === 'charter', isDive = r.type === 'dive';
@@ -409,10 +429,12 @@ export function renderMap() {
       ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
       ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
     </g>`;
-    if (label) labels += labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#04161c', 1);
-    if (isBt) {
-      labels += labelAt(x, y + 18 * MS + LBL * 2.5,
-        fmtDur(bountyLeft(r) / 1000) + ' LEFT', LBL * 0.92, '#ffc9be', '#2a0a06', 1);
+    /* A bounty's name and her clock are one label on two lines, not two labels.
+       As two they were each other's nearest neighbour and the layout below
+       spent its effort prising apart the one pair that is meant to be together. */
+    if (label) {
+      labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#04161c', 1,
+        isBt ? { text: fmtDur(bountyLeft(r) / 1000) + ' LEFT', fill: '#ffc9be' } : null);
     }
   });
 
@@ -434,23 +456,39 @@ export function renderMap() {
     labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#f0b0a6', '#0a0507', 1.2);
   });
 
-  const svg = `<svg id="mapsvg" width="${contentW}" height="${contentH}"
-      viewBox="0 0 ${contentW} ${contentH}" preserveAspectRatio="none">
+  labelAt(hx, hy + 22 * MS + HLBL, 'HOME PORT', HLBL, '#d9c98a', '#04161c', 2);
+  labels = placeLabels(labelSpecs, LBL);
+
+  /* ---- bleed ----
+
+     The drawing used to end exactly where the outermost marker did, so pulling
+     the chart back showed its corners and the sea stopped in a straight line —
+     which reads as a picture of a map rather than as an ocean. There is a band
+     of open water all the way round now, wide enough that at the furthest zoom
+     out there is still sea past the edge of the screen.
+
+     Everything inside is drawn shifted by BLEED, so the projection above did
+     not have to know about any of this. */
+  const bleed = Math.round(Math.max(CW, CH) * (1 / ZOOM_MIN - 1) * 0.55) + 120;
+  const fullW = contentW + bleed * 2, fullH = contentH + bleed * 2;
+
+  const svg = `<svg id="mapsvg" width="${fullW}" height="${fullH}"
+      viewBox="0 0 ${fullW} ${fullH}" preserveAspectRatio="none">
       <defs>
         <radialGradient id="seabg" cx="45%" cy="40%" r="80%">
           <stop offset="0%" stop-color="#0e3a40"/><stop offset="55%" stop-color="#082830"/><stop offset="100%" stop-color="#04161c"/>
         </radialGradient>
       </defs>
-      <rect width="${contentW}" height="${contentH}" fill="url(#seabg)"/>
-      <g class="coast">${landHTML(MX, MY, MS)}</g>
-      ${lines}${voyLines}
-      <g>
-        <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
-        <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
-      </g>
-      ${nodes}${bossNodes}
-      <g class="maplabels">${labels}
-        ${labelAt(hx, hy + 22 * MS + HLBL, 'HOME PORT', HLBL, '#d9c98a', '#04161c', 2)}
+      <rect width="${fullW}" height="${fullH}" fill="url(#seabg)"/>
+      <g transform="translate(${bleed},${bleed})">
+        <g class="coast">${landHTML(MX, MY, MS)}</g>
+        ${lines}${voyLines}
+        <g>
+          <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
+          <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
+        </g>
+        ${nodes}${bossNodes}
+        <g class="maplabels">${labels}</g>
       </g>
     </svg>`;
 
@@ -466,8 +504,10 @@ export function renderMap() {
      covers the top and the key covers the foot, so centre it on the water that
      is actually visible between them rather than on the raw viewport. */
   const seenTop = legH, seenBot = hintH;
-  scroller.scrollLeft = Math.max(0, MX(HOMEP.x) - (legW + CW) / 2);
-  scroller.scrollTop = Math.max(0, MY(HOMEP.y) + HLBL + 26 - (seenTop + (CH - seenTop - seenBot)));
+  /* Everything inside the drawing is shifted by the bleed, so home port is that
+     much further into the scrolled area than its projected position. */
+  scroller.scrollLeft = Math.max(0, bleed + MX(HOMEP.x) - (legW + CW) / 2);
+  scroller.scrollTop = Math.max(0, bleed + MY(HOMEP.y) + HLBL + 26 - (seenTop + (CH - seenTop - seenBot)));
   /* A repaint must not throw away a zoom the player set — the chart is redrawn
      whenever anything on it changes, which during a session is often. */
   sizeZoom(scroller);
@@ -573,20 +613,56 @@ const LANDS = [
 
    Deterministic on purpose. A relaxation that used randomness would have the
    markers creep on every repaint. */
-const RELAX_GAP = 32;
-const RELAX_MAX = 20;          // no marker wanders further than this from home
+/* How much room a marker needs around it, in authored units.
+
+   Not one number for everything, because a marker is not what takes up the
+   space — its LABEL is, and the labels are wildly different sizes. "DEPTH 2" is
+   a third the width of "CUTLASS JACK DOYLE", and a bounty carries two lines
+   where everything else carries one. Spacing them all identically meant either
+   the chart was needlessly huge or the big labels had nowhere to go, and no
+   amount of shuffling the words afterwards could fix markers that were simply
+   too close together for what they were carrying. */
+const ROOM = {
+  plain:  46,     // an unlabelled marker: a raid, a patrol, a convoy
+  dive:   58,     // "DEPTH 3"
+  port:   72,     // "NEW ORLEANS"
+  home:   82,     // "HOME PORT", and everything radiates from it
+  boss:   86,     // "ALMIRANTE SOMBRA"
+  bounty: 100     // a captain's full name, over a clock, on two lines
+};
+
+const roomFor = r =>
+  r.type === 'bounty' ? ROOM.bounty
+    : r.type === 'dive' ? ROOM.dive
+      : (r.portId || r.type === 'charter') ? ROOM.port
+        : ROOM.plain;
+
+const RELAX_GAP = 46;
+/* How far a marker may drift from where it was authored.
+
+   It has to be generous enough that a crowded corner can actually untangle: at
+   full unlock there are forty-odd markers in a 360x560 chart, and a short leash
+   means every one of them is yanked back into its neighbour on the same
+   iteration it was pushed clear of it. */
+const RELAX_MAX = 74;
 
 const PINNED = id => id === 'HOME' || id.startsWith('k_') || id.startsWith('ch_');
 
 function relaxed(pts) {
-  const p = pts.map(q => ({ id: q.id, x: q.x, y: q.y, ox: q.x, oy: q.y, pin: PINNED(q.id) }));
+  const p = pts.map(q => ({
+    id: q.id, x: q.x, y: q.y, ox: q.x, oy: q.y,
+    pin: PINNED(q.id), room: q.room || RELAX_GAP
+  }));
 
-  for (let it = 0; it < 80; it++) {
+  for (let it = 0; it < 120; it++) {
     let worst = 0;
     for (let i = 0; i < p.length; i++) {
       for (let j = i + 1; j < p.length; j++) {
         const a = p[i], b = p[j];
         if (a.pin && b.pin) continue;
+        /* The pair is spaced by whichever of the two needs more room, so a
+           bounty pushes a dive away rather than meeting it halfway. */
+        const RELAX_GAP = Math.max(a.room, b.room);
         let dx = b.x - a.x, dy = b.y - a.y;
         let d = Math.hypot(dx, dy);
         if (d >= RELAX_GAP) continue;
@@ -614,6 +690,104 @@ function relaxed(pts) {
   const out = {};
   p.forEach(q => { out[q.id] = { x: q.x, y: q.y }; });
   return out;
+}
+
+/* ---- laying the labels out ----
+
+   Markers are spaced by relaxed(); their labels are not, and a label is far
+   wider than the marker it hangs off — "BARNABY SKEFFINGTON" is eight times the
+   width of the dot it belongs to. So on a busy chart the dots were all
+   comfortably apart and the words were printed straight through one another.
+
+   Each label is boxed, then any two boxes that overlap are pushed apart
+   vertically: down for the lower one, up for the upper, which keeps a label
+   under its own marker rather than beside somebody else's. Vertical only,
+   because horizontal movement breaks the one thing a label has to do — say
+   which dot it belongs to.
+
+   Oswald is condensed; 0.52em a character plus the tracking is close enough for
+   a box that only has to be right to a few pixels. */
+const LABEL_PAD_Y = 3;
+const LINE_GAP = 1.15;          // a second line, in multiples of the font size
+
+function labelWidth(text, size, spacing) {
+  return text.length * (size * 0.52 + (spacing || 0)) + 10;
+}
+
+function labelBox(s) {
+  const w = Math.max(
+    labelWidth(s.text, s.size, s.spacing),
+    s.second ? labelWidth(s.second.text, s.size * 0.92, s.spacing) : 0);
+  const deep = s.second ? s.size * LINE_GAP : 0;
+  return { x0: s.x - w / 2, x1: s.x + w / 2, y0: s.y - s.size, y1: s.y + deep + LABEL_PAD_Y };
+}
+
+function placeLabels(specs, base) {
+  const put = specs.map(s => ({ s, b: labelBox(s), home: s.y, homeX: s.x }));
+  /* How far a label may hang from its own marker before it stops reading as
+     belonging to it. Generous, because two labels printed through each other is
+     a worse failure than one sitting a little low or a little to one side. */
+  const DOWN = base * 5;
+  const SIDE = base * 6;
+
+  const overlapping = (A, B) =>
+    A.b.x0 < B.b.x1 && B.b.x0 < A.b.x1 && A.b.y0 < B.b.y1 && B.b.y0 < A.b.y1;
+
+  /* Move one label as far as its own allowance permits and report how far it
+     actually got. Refusing to move a pair at all because ONE of them was at its
+     limit used to leave both exactly where they overlapped. */
+  const shift = (q, dx, dy) => {
+    const nx = Math.max(q.homeX - SIDE, Math.min(q.homeX + SIDE, q.s.x + dx));
+    const ny = Math.max(q.home - DOWN, Math.min(q.home + DOWN, q.s.y + dy));
+    const got = Math.abs(nx - q.s.x) + Math.abs(ny - q.s.y);
+    q.s.x = nx; q.s.y = ny;
+    q.b = labelBox(q.s);
+    return got;
+  };
+
+  /* Down first, then sideways, alternating.
+
+     Each pass can undo a little of the other's work — a label pushed down to
+     clear one neighbour lands in a third one's column — so running each once
+     left a collision on a busy chart about half the time. Alternating settles
+     it. Vertical is tried first and harder because a label under its marker is
+     the one that reads correctly; sideways is the fallback. */
+  for (let round = 0; round < 6; round++) {
+    let worst = 0;
+    for (const sideways of [false, true]) {
+      for (let it = 0; it < 40; it++) {
+        let moved = 0;
+        for (let i = 0; i < put.length; i++) {
+          for (let j = i + 1; j < put.length; j++) {
+            const A = put[i], B = put[j];
+            if (!overlapping(A, B)) continue;
+            if (sideways) {
+              const [left, right] = A.s.x <= B.s.x ? [A, B] : [B, A];
+              const step = Math.min(8, (Math.min(A.b.x1, B.b.x1) - Math.max(A.b.x0, B.b.x0)) / 2 + 1);
+              moved = Math.max(moved, shift(left, -step, 0), shift(right, step, 0));
+            } else {
+              const [up, down] = A.s.y <= B.s.y ? [A, B] : [B, A];
+              const step = (Math.min(A.b.y1, B.b.y1) - Math.max(A.b.y0, B.b.y0) + 2) / 2;
+              moved = Math.max(moved, shift(up, 0, -step), shift(down, 0, step));
+            }
+          }
+        }
+        if (moved < 0.4) break;
+        worst = Math.max(worst, moved);
+      }
+    }
+    if (worst < 0.4) break;
+  }
+
+  return put.map(({ s }) =>
+    `<text x="${s.x.toFixed(1)}" y="${s.y.toFixed(1)}" text-anchor="middle" fill="${s.fill}"`
+    + ` font-size="${s.size}" font-family="Oswald" letter-spacing="${s.spacing}"`
+    + ` style="paint-order:stroke" stroke="${s.stroke}" stroke-width="3">${esc(s.text)}`
+    + (s.second
+      ? `<tspan x="${s.x.toFixed(1)}" dy="${(s.size * LINE_GAP).toFixed(1)}" fill="${s.second.fill}"`
+        + ` font-size="${(s.size * 0.92).toFixed(1)}">${esc(s.second.text)}</tspan>`
+      : '')
+    + '</text>').join('');
 }
 
 function coastPath(pts, MX, MY) {
