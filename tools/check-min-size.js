@@ -146,20 +146,29 @@ const done = () => {
       const head = document.getElementById('sheetHead');
       const body = document.getElementById('sheetBody');
       const rail = document.getElementById('shipPicks');
-      const foes = document.querySelector('.oddscard');
+      /* The enemy is chips on the head strip now, not a card in the body. */
+      const foes = document.querySelector('.foechip');
       if (!sheet || !rail) return null;
       const br = body.getBoundingClientRect();
       return {
         headPct: Math.round(head.getBoundingClientRect().height / sheet.getBoundingClientRect().height * 100),
         railVisible: rail.getBoundingClientRect().top < br.bottom - 40,
-        foesVisible: !foes || foes.getBoundingClientRect().top < br.bottom - 40,
+        foesVisible: !!foes && foes.getBoundingClientRect().width > 0,
+        /* Two chips wearing one glyph on the same strip is one thing said twice. */
+        dupGlyphs: (() => {
+          const n = [...document.querySelectorAll('.reqbar .chip .chipic')].map(i => i.dataset.icon);
+          return n.filter((x, i) => n.indexOf(x) !== i);
+        })(),
         expandedByDefault: document.querySelectorAll('.foe').length > 0
       };
     });
     if (fit) {
       if (fit.headPct > 45) errors.push(vp.width + 'px: the prep sheet head is ' + fit.headPct + '% of the screen');
       if (!fit.railVisible) errors.push(vp.width + 'px: the ships are below the fold on the prep sheet');
-      if (!fit.foesVisible) errors.push(vp.width + 'px: the enemy is below the fold on the prep sheet');
+      if (!fit.foesVisible) errors.push(vp.width + 'px: the enemy is not on the prep sheet head strip');
+      if (fit.dupGlyphs.length) {
+        errors.push(vp.width + 'px: two chips share a glyph — ' + fit.dupGlyphs.join(', '));
+      }
       if (fit.expandedByDefault) errors.push(vp.width + 'px: the enemy line-up is expanded by default');
     }
 

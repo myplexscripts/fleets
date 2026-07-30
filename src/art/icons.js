@@ -99,10 +99,13 @@ function svgIcon(name) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="160" height="160">${(ICONS[name] || ICONS.gold)(c)}</svg>`;
 }
 
+/* `data-icon` carries the glyph's name into the DOM. Nothing in the game reads
+   it — the tooling does, so a check can say "these two chips are wearing the
+   same picture" without decoding a data: URI to find out. */
 export function iconHTML(name, size, cls) {
   const st = size ? `style="width:${size}px;height:${size}px"` : '';
   const src = ICON_URL[name] || ('data:image/svg+xml;utf8,' + encodeURIComponent(svgIcon(name)));
-  return `<img class="ic ${cls || ''}" alt="" ${st} src="${src}">`;
+  return `<img class="ic ${cls || ''}" alt="" data-icon="${name}" ${st} src="${src}">`;
 }
 
 /* Probe for player-supplied art; missing files just keep the placeholder. */

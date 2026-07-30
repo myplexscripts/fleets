@@ -162,7 +162,7 @@
   position:relative;overflow:hidden;
   border:2px solid var(--brass);border-radius:var(--r-sm);
   background:linear-gradient(180deg,#4a3d1c 0%,#33290f 46%,#241d0a 100%);
-  padding:11px 14px;margin-top:10px;
+  padding:9px 12px;margin-top:7px;
   box-shadow:var(--slab-sm);
 }
 .reqbar::before{
@@ -170,10 +170,24 @@
   background:linear-gradient(180deg,rgba(255,255,255,.08),transparent);
 }
 .reqbar > *{position:relative}
-.reqbar .chips{margin-top:0}
-.reqbar .chip{background:rgba(0,0,0,.42)}
-.reqbar .chips.big .chip{font-size:clamp(18px,1.45vw,25px)}
-.reqbar .chips.big .chip .chipic{width:max(40px,1.55em);height:max(40px,1.55em)}
+/* One row, scrolling sideways — not a block that wraps.
+
+   Eight readings at this size is three wrapped rows and a third of a phone
+   screen spent before the player reaches anything they can act on. Sideways,
+   it is one row however many numbers a mission happens to carry, the first
+   four are always the ones that decide it, and the rest are a flick away —
+   the same trade the ship rail below it already makes. */
+.reqbar .chips{
+  margin-top:0;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  padding-bottom:2px;
+}
+.reqbar .chips::-webkit-scrollbar{display:none}
+.reqbar .chip{background:rgba(0,0,0,.42);flex-shrink:0}
+/* The glyphs keep the 40px floor the whole game holds to; the numbers beside
+   them give up a few points instead, which is what lets four fit across. */
+.reqbar .chips.big .chip{font-size:clamp(17px,1.15vw,21px);padding:3px 11px 3px 4px}
+.reqbar .chips.big .chip .chipic{width:40px;height:40px}
 .reqnote{
   font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim);
   margin-top:6px;
@@ -201,15 +215,15 @@
    sheet so the choice is visible before anything is scrolled, and neither is
    compulsory — the run tab is always there to sail it as it stands.
    ---------------------------------------------------------------- */
-.mtabs{display:flex;gap:0;margin-top:10px;border:2px solid var(--line2);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--slab-sm)}
+.mtabs{display:flex;gap:0;margin-top:7px;border:2px solid var(--line2);border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--slab-sm)}
 .mtab{
   flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
   background:linear-gradient(180deg,#0e2f37,#081f25);
   border:none;border-right:2px solid var(--line2);
   color:var(--dim);font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.15vw,20px);
-  letter-spacing:1.6px;text-transform:uppercase;padding:8px;cursor:pointer;
+  letter-spacing:1.6px;text-transform:uppercase;padding:5px 8px;cursor:pointer;
   box-shadow:inset 0 3px 7px rgba(0,0,0,.45);
-  transition:background .2s,color .2s,box-shadow .2s;min-height:58px;
+  transition:background .2s,color .2s,box-shadow .2s;min-height:50px;
 }
 .mtab:last-child{border-right:none}
 .mtab .ic{opacity:.6;transition:opacity .2s;flex-shrink:0}

@@ -346,18 +346,34 @@
    rail — but at a hundred and fifty pixels a ship it filled the whole body and
    pushed the fleet off the bottom instead, which is the same problem the other
    way up. A name and one row of numbers is all it ever needed to be. */
-/* The header is the toggle: the whole strip, not a small chevron, because the
-   thing being tapped is "tell me more about these ships". */
-.foehead{
-  display:flex;align-items:center;gap:10px;width:100%;
-  background:none;border:none;padding:0;cursor:pointer;text-align:left;color:inherit;
+/* The enemy count is a chip like every other reading on the strip, except that
+   this one is pressable — it opens the line-up. The caret is what says so. */
+.foechip{
+  cursor:pointer;font-family:inherit;color:inherit;
+  border:1px solid #8a463e !important;background:rgba(58,20,16,.5) !important;
 }
-.foehead h3{flex:1;min-width:0}
-.foecaret{font-size:16px;line-height:1;color:var(--dim);flex-shrink:0}
-.foesum{margin-top:8px}
-.foesum .chips{margin:0}
+.foechip b{color:#f0b0a6}
+/* Drawn, not typed. A "▼" is a text node, and text on this screen holds to a
+   16px floor it has no business meeting — it is an arrow, not a word. */
+.foechip .caret{
+  width:0;height:0;margin-left:6px;flex-shrink:0;
+  border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:6px solid #f0b0a6;opacity:.85;
+}
+.foechip.on .caret{border-top:none;border-bottom:6px solid #ffd0c6}
+.foechip.on{background:rgba(96,34,28,.7) !important;border-color:#c07060 !important}
 
-.foelist{display:flex;flex-direction:column;gap:4px;margin:7px 0 2px}
+.foeband{margin-bottom:6px}
+
+/* The line-up, shown only when the chip above is pressed. It is the first thing
+   in the BODY rather than in the head, so opening it pushes the ships down
+   rather than shoving the head over what is being read. */
+.foelist{
+  display:flex;flex-direction:column;gap:4px;margin:0 0 12px;
+  border:2px solid #8a463e;border-radius:var(--r-sm);padding:8px;
+  background:rgba(58,20,16,.22);
+  animation:cardIn .3s ease both;
+}
 .foe{
   display:flex;flex-direction:column;align-items:flex-start;gap:3px;
   border-left:3px solid #8a463e;background:rgba(58,20,16,.28);padding:5px 9px;
