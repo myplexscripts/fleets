@@ -174,6 +174,51 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
     console.log('');
   }
 
+  /* ---- bounties ----
+
+     The one fight on the chart that is deliberately above its water. She has to
+     land in a narrow place: hard enough that beating the region's ordinary
+     traffic does not qualify you, winnable enough that she is an invitation
+     rather than a wall — and paying enough to be worth the risk of a mauling.
+
+     She is measured against the fleet you have while a region is your current
+     one, not the one you arrive with, because a bounty is something you take on
+     when you are established somewhere. */
+  const bt = await p.evaluate(async () => {
+    const cfg = await import('/src/core/config.js');
+    return {
+      mult: cfg.BOUNTY_RATING_MULT,
+      gold: cfg.BOUNTY_GOLD_PER_RATING,
+      lifeMin: cfg.BOUNTY_LIFE_MS / 60000
+    };
+  });
+
+  console.log('BOUNTIES  — drawn at ' + bt.mult + 'x her water, ' + bt.lifeMin + ' minute window');
+  for (const rk of data.regions) {
+    const worst = rating(rk, 2, 2);
+    const her = Math.round(worst * bt.mult);
+    /* Her line rolls a band like anything else, so she spans the same spread. */
+    const lo = Math.round(her * 0.90), hi = Math.round(her * 1.30);
+    const ready = CHALLENGE[rk];
+    const oLo = odds(ready, lo), oHi = odds(ready, hi);
+    const heavyTop = Math.round(worst * 1.6);
+    const purse = Math.round(her * bt.gold);
+
+    console.log(`  ${data.names[rk].padEnd(18)} enemy ${String(lo).padStart(3)}-${String(hi).padStart(3)}  `
+      + `odds ${pct(oHi)}-${pct(oLo)} for the ${ready}-power fleet  purse ${purse}`);
+
+    if (her <= Math.round(worst * 1.1)) {
+      bad.push(`${rk}: a bounty (${her}) is no harder than the water she is in (${worst}) — not a challenge`);
+    }
+    if (oHi < 25) bad.push(`${rk}: a bounty is only ${oHi}% at her worst — a wall, not an invitation`);
+    if (oLo > 90) bad.push(`${rk}: a bounty is ${oLo}% at her easiest — free money on a timer`);
+    const bp = data.bossPower[rk];
+    if (bp && her >= bp.line) {
+      bad.push(`${rk}: a bounty (${her}) is at least as hard as the admiral (${bp.line}) — she outranks the set piece`);
+    }
+  }
+  console.log('');
+
   await b.close();
 
   if (bad.length) {

@@ -17,6 +17,7 @@ import { iconHTML } from '../../art/icons.js';
 import { actions } from '../../core/actions.js';
 import { render } from '../../core/bus.js';
 import { alertDlg } from '../dialog.js';
+import { bountyFrac, bountyLeft } from '../../core/bounties.js';
 
 /* Whether the region cards and the shape key are on screen. They are useful
    until you know them and then they are just covering water, so they fold away
@@ -204,6 +205,16 @@ function nodeShape(r, col, k) {
          + [-0.62, 0, 0.62].map(o =>
              `<rect x="${x - s * 0.7}" y="${y + o * s * 0.62 - s * 0.16}" width="${s * 1.4}"`
              + ` height="${s * 0.32}" rx="${s * 0.16}" fill="#1a0d08"/>`).join('');
+  if (r.type === 'bounty')                          // a ring of spikes: a price on a head
+    return `<circle cx="${x}" cy="${y}" r="${s * 1.15}" fill="${col}" stroke="rgba(0,0,0,.55)" stroke-width="1.3"/>`
+         + [0, 60, 120, 180, 240, 300].map(a => {
+             const rad = a * Math.PI / 180;
+             const x1 = x + Math.cos(rad) * s * 1.15, y1 = y + Math.sin(rad) * s * 1.15;
+             const x2 = x + Math.cos(rad) * s * 1.85, y2 = y + Math.sin(rad) * s * 1.85;
+             return `<path d="M${x1},${y1} L${x2},${y2}" stroke="${col}"`
+               + ` stroke-width="${1.7 * k}" stroke-linecap="round"/>`;
+           }).join('')
+         + `<circle cx="${x}" cy="${y}" r="${s * 0.42}" fill="#2a0a06"/>`;
   if (r.type === 'hunt')                            // crossed blades: open water
     return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
          + `<path d="M${x - s * 0.62},${y - s * 0.62} L${x + s * 0.62},${y + s * 0.62}`
@@ -365,21 +376,44 @@ export function renderMap() {
     if (active[r.id])
       voyLines += `<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#7ab0e0" stroke-width="${2.4 * MS}" opacity="0.95"/>`;
 
+    const isBt = r.type === 'bounty';
     const label = isCh ? PORTS[r.charterDef.loc].n.toUpperCase()
       : r.portId ? PORTS[r.portId].n.toUpperCase()
       : isDive ? 'DEPTH ' + r.depth
+      : isBt ? r.n.toUpperCase()
       : '';
-    const labelColor = isCh ? '#efe3ae' : (isDive ? '#8fb8d8' : '#a8c4c6');
+    const labelColor = isCh ? '#efe3ae' : (isDive ? '#8fb8d8' : (isBt ? '#f0a89a' : '#a8c4c6'));
 
-    nodes += `<g id="node_${r.id}" data-act="mission" data-id="${r.id}" class="mapnode">
+    /* A bounty is the one marker with a clock on it, so the clock is drawn ON
+       it: a ring that empties as her window runs down, and the time left in
+       words underneath her name. Both are needed — the ring is what you read at
+       a glance across the whole chart, the figure is what you read when you are
+       deciding whether there is time to go. */
+    let clockRing = '';
+    if (isBt) {
+      const f = bountyFrac(r);
+      const rr = 15 * MS, C = 2 * Math.PI * rr;
+      clockRing = `<circle cx="${x}" cy="${y}" r="${rr}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="${3 * MS}"/>`
+        + `<circle class="btring" cx="${x}" cy="${y}" r="${rr}" fill="none"`
+        + ` stroke="${f < 0.25 ? '#ff8f7a' : '#e8705c'}" stroke-width="${3 * MS}" stroke-linecap="round"`
+        + ` stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}"`
+        + ` transform="rotate(-90 ${x} ${y})"/>`;
+    }
+
+    nodes += `<g id="node_${r.id}" data-act="mission" data-id="${r.id}"
+      class="mapnode${isBt ? ' bountynode' : ''}">
       ${hitShapes(x, y, label, LBL, 18 * MS)}
       ${isCh
         ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
-        : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${nodeShape({ ...r, x, y }, col, MS)}`}
+        : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${clockRing}${nodeShape({ ...r, x, y }, col, MS)}`}
       ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
       ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
     </g>`;
     if (label) labels += labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#04161c', 1);
+    if (isBt) {
+      labels += labelAt(x, y + 18 * MS + LBL * 2.5,
+        fmtDur(bountyLeft(r) / 1000) + ' LEFT', LBL * 0.92, '#ffc9be', '#2a0a06', 1);
+    }
   });
 
   bossKeys.forEach(rk => {
@@ -452,15 +486,15 @@ export function renderMap() {
    It lists only what is actually drawn right now, which is what keeps it both
    complete and short: the Caribbean alone needs five entries, an admiral adds
    hers the moment she sails, and a shape can never appear unnamed. */
-const KEY_ORDER = ['cargo', 'dive', 'convoy', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'beaten'];
+const KEY_ORDER = ['cargo', 'dive', 'convoy', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'bounty', 'charter', 'boss', 'beaten'];
 const KEY_WORD = {
   cargo: 'Cargo', dive: 'Wreck', convoy: 'Convoy', hunt: 'Hunt', patrol: 'Patrol', escort: 'Escort',
-  raid: 'Raid', blockade: 'Blockade', charter: 'Charter',
+  raid: 'Raid', blockade: 'Blockade', bounty: 'Bounty', charter: 'Charter',
   boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
   cargo: '#63c06a', dive: '#7ab0e0', convoy: '#c9a24e', hunt: '#e0a03a', patrol: '#e0a03a', escort: '#e0a03a',
-  raid: '#e0a03a', blockade: '#e0a03a', charter: '#efe3ae',
+  raid: '#e0a03a', blockade: '#e0a03a', bounty: '#e8705c', charter: '#efe3ae',
   boss: '#f0b0a6', beaten: '#d9c98a'
 };
 

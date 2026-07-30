@@ -164,6 +164,11 @@
 }
 .seacharter{color:var(--goldhi)}
 .seapatrol{color:var(--grn)}
+/* A patrol badge says "this water is quiet right now", which is a status, not a
+   countdown to something happening. It was picking up the at-sea clock styling
+   — 25px of pale blue — and so dominated the card it sat on and read as a
+   mystery timer. It keeps the card's own size and its own green. */
+.seapatrol .clock{font-size:16px;letter-spacing:1px;color:inherit}
 .seanoto{color:var(--gold)}
 .seanoto.ready{color:#f0b0a6}
 .seadone{color:var(--grn)}
@@ -203,7 +208,16 @@
 @keyframes starpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
 .charterstar{animation:starpulse 1.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
 
+/* A bounty is the one marker on the chart that will not be there tomorrow, so
+   she is the one marker that beats faster than the rest. The ring around her is
+   her window emptying — drawn as an arc rather than animated, because it has to
+   read correctly the instant the chart is painted rather than after a cycle. */
+@keyframes btpulse{0%,100%{opacity:.35}50%{opacity:1}}
+.bountynode .nodeglow{animation:btpulse 1s ease-in-out infinite}
+.btring{filter:drop-shadow(0 0 4px rgba(232,112,92,.7))}
+
 .calm .routeline,.calm .voyline,.calm .nodeglow,.calm .bossglow,.calm .charterstar{animation:none}
+.calm .bountynode .nodeglow{animation:none;opacity:.7}
 .calm .nodeglow{opacity:.45}
 .calm .bossglow{opacity:.6}
 

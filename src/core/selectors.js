@@ -18,6 +18,7 @@ import { SETS, SET_KEYS } from '../data/collectibles.js';
 import { bellMaxDepth, CHEST_VALUE } from '../data/salvage.js';
 import { contractRoute } from './contracts.js';
 import { ensureDives, diveRoute, diveById } from './dives.js';
+import { ensureBounties, bountyRoute, bountyById, liveBounties } from './bounties.js';
 import { now } from './dom.js';
 
 /* ---- ships ---- */
@@ -289,7 +290,11 @@ export function waterRating(region, danger) {
 }
 
 /* The rating of the water a given route sits in, danger projected as of now. */
-export const routeRating = r => waterRating(r.region, isBattle(r) ? (r.danger || 0) : effDanger(r));
+/* What this fight is drawn at. `ratingMult` lets a mission sit deliberately
+   above the water it happens in — the one thing that makes a bounty a step up
+   from what the region normally fields rather than another of the same. */
+export const routeRating = r =>
+  Math.round(waterRating(r.region, isBattle(r) ? (r.danger || 0) : effDanger(r)) * (r.ratingMult || 1));
 
 /* ---- bosses ---- */
 export function bossReady(rk) {
@@ -361,6 +366,13 @@ export function allRoutes() {
   (S.dives || []).forEach(d => {
     if (S.unlocked.includes(d.region)) out.push(diveRoute(d));
   });
+
+  /* And a bounty is a live set of one: a named captain working the region for
+     as long as her clock runs. See core/bounties.js. */
+  ensureBounties();
+  liveBounties().forEach(b => {
+    if (S.unlocked.includes(b.region)) out.push(bountyRoute(b));
+  });
   S.ports.forEach(pid => {
     const p = PORTS[pid];
     if (!p || !S.unlocked.includes(p.region)) return;
@@ -376,6 +388,10 @@ export function routeById(id) {
   if (id.startsWith('dv_')) {
     const d = diveById(id);
     return d ? diveRoute(d) : null;
+  }
+  if (id.startsWith('bt_')) {
+    const b = bountyById(id);
+    return b ? bountyRoute(b) : null;
   }
   const bk = Object.keys(BOSSES).find(k => BOSSES[k].id === id);
   if (bk) return bossAsRoute(BOSSES[bk]);

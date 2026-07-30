@@ -41,8 +41,10 @@ import {
   routeById, allShips, findShip, busyIds, isBusy, diveOut, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
-  bellDepth, laneRiseIn, laneFight, lanePay, battleOdds
+  bellDepth, laneRiseIn, laneFight, lanePay, battleOdds, routeRating
 } from '../core/selectors.js';
+import { bountyLeft } from '../core/bounties.js';
+import { BOUNTY_GOLD_PER_RATING } from '../core/config.js';
 /* Rate of fire is a battle number, but it is a reason to pick one hull over
    another, so the picker needs it. battle/state.js only reads config, so there
    is no cycle back into the fight from here. */
@@ -285,7 +287,15 @@ function requirements(r, isBoss) {
 
   const fp = fleetPower(fleet);
   const odds = foes && picked ? battleOdds(fleet, foes) : 0;
+  const isBt = r.type === 'bounty';
+  /* A bounty's clock is the first thing on her bar and it is live, so a player
+     reading the sheet can watch it run rather than having to remember what it
+     said when they opened it. */
+  const left = isBt ? bountyLeft(r) : 0;
   return reqBar([
+    isBt ? chip('time',
+      `<b class="clock" data-endsat="${r.endsAt}">${fmtDur(left / 1000)}</b>`,
+      left < 3 * 60 * 1000 ? 'bad' : 'warn', 'Before she sails') : '',
     r.power ? have('power', fp, r.power, 'Fleet power against what this fight is rated for')
             : chip('power', fp, '', 'Fleet power'),
     chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
@@ -293,14 +303,23 @@ function requirements(r, isBoss) {
       ? chip('target', odds + '%', odds >= 85 ? 'ok' : odds >= 60 ? 'warn' : 'bad', 'Estimated odds')
       : '',
     chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
-    bagChips(r.rew),
+    isBt ? chip('gold', Math.round(routeRating(r) * BOUNTY_GOLD_PER_RATING), 'gold', 'The price on her')
+         : bagChips(r.rew),
+    isBt ? chip('chest', 'YES', 'gold', 'Her captain always carries a strongbox') : '',
     isBoss && r.bossDef.unlocks
       ? chip('map', esc(REGIONS[r.bossDef.unlocks].n), 'gold', 'Unlocked on victory') : ''
   ], isBoss
     ? esc(r.bossDef.desc) + (isBusy('FLAG')
       ? ' <span class="bad">Your flagship is at sea. Bring her home before you face an admiral.</span>'
       : ' <span class="bad">Your flagship sails or nobody does.</span>')
-    : esc(MTYPE[r.type].tip));
+    : isBt
+      /* Said in words, not left to a tooltip on the chest chip — there are no
+         tooltips on a phone, and "the strongbox is guaranteed" is the reason to
+         take a fight that is deliberately above your water. */
+      ? `${esc(r.n)} is working ${esc(r.station)}. ${esc(MTYPE.bounty.tip)}`
+        + ' Her captain carries a strongbox.'
+        + ' <span class="bad">She is above what this water usually fields.</span>'
+      : esc(MTYPE[r.type].tip));
 }
 
 /* Which way this lane is heading, and the one thing that holds it down. */

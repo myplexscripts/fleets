@@ -116,6 +116,32 @@ export const HUNT_COOLDOWN_MS = 4 * 60 * 1000;
    the same afternoon you emptied the last. */
 export const CONVOY_COOLDOWN_MS = 7 * 60 * 1000;
 
+/* ---- bounties ----
+
+   The one thing on the chart that will not wait. A named captain works a region
+   for this long and then sails, whether or not you went after her.
+
+   Twelve minutes is chosen so that seeing a bounty is nearly always an
+   invitation you can take now: a hard fight is under a minute of it, and the
+   rest is room to sail home, repair, and pick a line first. It is not a window
+   you have to drop everything for. Missing one costs nothing.
+
+   The gap after her keeps a region from permanently carrying one — the marker
+   only means something if it is sometimes absent. */
+export const BOUNTY_LIFE_MS = 12 * 60 * 1000;
+export const BOUNTY_GAP_MS = 5 * 60 * 1000;
+export const BOUNTY_MAX = 1;
+
+/* How far above her water she is drawn. At 1.55 she sits between the heavy and
+   hunter bands of her own region — a genuine step up from what you have been
+   comfortably beating, without being an admiral. */
+export const BOUNTY_RATING_MULT = 1.55;
+
+/* And what she is worth. Gold scales with the region's rating so a Grand Banks
+   bounty is worth chasing after a Caribbean one has stopped mattering. */
+export const BOUNTY_GOLD_PER_RATING = 9;
+export const BOUNTY_MATS = 14;
+
 /* An enemy line-up is drawn once and stays drawn until it is fought or the
    water it came from changes. Reopening a mission used to redraw it, which was
    a reroll wearing a disguise. */

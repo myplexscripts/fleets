@@ -429,15 +429,19 @@ function capAct(i, mode, type) {
      of a second, saying what became of her, before sliding out — which is a
      sentence nobody reads twice and a wait on every single tap. What became of
      her is on the account at the end anyway, itemised, so the card's whole job
-     ends the moment it is answered. It leaves at once. */
+     ends the moment it is answered. It leaves at once.
+
+     And when the last one is answered, the account follows it in. Emptying the
+     slot and waiting for Continue left the player looking at a bare screen with
+     a button on it — a whole beat of nothing between the decision and the
+     payoff, which is the one place in the game that should never stall. */
   el.classList.add('gone');
   setTimeout(() => {
     if (!$('cap' + i)) return;              // screen closed under us
-    if (queue[atPrize]) { nextPrize(); $('rBody').scrollTop = 0; }
-    else {
-      const slot = $('prizeSlot');
-      if (slot) slot.innerHTML = '';
-    }
+    if (queue[atPrize]) { nextPrize(); $('rBody').scrollTop = 0; return; }
+    tallyShown = true;
+    play('victory');
+    drawTally(tallyTitle, tallyWhere, tallyLines);
   }, 190);
 }
 

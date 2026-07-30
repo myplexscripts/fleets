@@ -18,13 +18,14 @@ export const HOME = { x: 196, y: 452 };
 
 /* Extra notoriety on top of the danger-scaled base, by mission type. */
 export const NOTO_BONUS = {
-  cargo: 0, dive: 2, hunt: 6, convoy: 9, patrol: 4, escort: 6, raid: 10, blockade: 14, charter: 8
+  cargo: 0, dive: 2, hunt: 6, convoy: 9, patrol: 4, escort: 6, raid: 10, blockade: 14, charter: 8,
+  bounty: 16
 };
 
 /* Voyages leave port and come back later; battles happen where you stand. No
    mission is ever both. */
 export const VOYAGE_TYPES = ['cargo', 'dive'];
-export const BATTLE_TYPES = ['hunt', 'convoy', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss'];
+export const BATTLE_TYPES = ['hunt', 'convoy', 'patrol', 'escort', 'raid', 'blockade', 'charter', 'boss', 'bounty'];
 
 /* One clause each. The chips carry the numbers; the tip only says what the
    mission is for. */
@@ -38,5 +39,6 @@ export const MTYPE = {
   escort:   { n: 'Escort',          tip: 'Keep the merchant alive or lose.' },
   blockade: { n: 'Blockade Break',  tip: 'The hardest fight on the chart.' },
   boss:     { n: 'Admiral',         tip: 'Flagship must sail. Opens the next region.' },
-  charter:  { n: 'Charter',         tip: 'One-off. Opens a port for good.' }
+  charter:  { n: 'Charter',         tip: 'One-off. Opens a port for good.' },
+  bounty:   { n: 'Bounty',          tip: 'She sails when the clock runs out. Harder than this water, and pays like it.' }
 };

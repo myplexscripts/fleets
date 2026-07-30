@@ -75,7 +75,7 @@ export function newGame() {
     flag: newFlag(),
     unlocked: ['caribbean'],
     done: {}, patrol: {}, lanes: {}, wanted: {}, summoned: {}, draws: {},
-    dives: [], hunts: {},
+    dives: [], hunts: {}, bounties: [], bountyNext: {},
     bossBeaten: {}, voyages: [],
     ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
     won: false,
@@ -134,6 +134,11 @@ function migrate() {
      now, topped up from the bell you own — an empty list is simply one that has
      not been charted yet, which ensureDives() fixes on the next look. */
   S.dives = Array.isArray(S.dives) ? S.dives : [];
+  /* Bounties are newer than most saves, and they are a live set with their own
+     clock — an empty list is one nobody has charted yet, which ensureBounties()
+     fixes on the next look at the map. */
+  S.bounties = Array.isArray(S.bounties) ? S.bounties : [];
+  S.bountyNext = S.bountyNext || {};
   delete S.careenAt;   // the careen cooldown is gone; free repair is conditional now
 
   /* Notoriety became a wanted level. The number is the same number, but it now

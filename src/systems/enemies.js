@@ -113,6 +113,17 @@ function drawLine(r) {
       if (sh.type === 'schooner') ships[i] = { ...makeShip('brig', 1, sh.name), chest: sh.chest, named: sh.named };
     });
   }
+
+  /* A bounty is a person, so the ship at the head of her line is her: she
+     carries the name on the chart and the strongbox that is otherwise a
+     one-in-five roll. The rest are whoever sails with her. */
+  if (r.type === 'bounty' && ships.length) {
+    ships[0].name = r.n;
+    ships[0].named = true;
+    ships[0].chest = true;
+    ships.slice(1).forEach(s => { s.chest = false; });
+  }
+
   return { band: band.key, label: band.n, rating, ships };
 }
 

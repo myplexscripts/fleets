@@ -6,12 +6,18 @@
    thing in the game that lowers danger. */
 
 import { S, syncFlag } from '../core/state.js';
-import { PATROL_MS, HUNT_COOLDOWN_MS, CONVOY_COOLDOWN_MS } from '../core/config.js';
+import {
+  PATROL_MS, HUNT_COOLDOWN_MS, CONVOY_COOLDOWN_MS,
+  BOUNTY_GOLD_PER_RATING, BOUNTY_MATS
+} from '../core/config.js';
 import { now } from '../core/dom.js';
 import { REGIONS, DNAMES } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { BOONS } from '../data/flagship.js';
-import { fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger } from '../core/selectors.js';
+import {
+  fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger, routeRating
+} from '../core/selectors.js';
+import { clearBounty } from '../core/bounties.js';
 import { addNoto } from './wanted.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { clearDraw } from './enemies.js';
@@ -57,6 +63,9 @@ export function battleVictory(route, enemies) {
   };
 
   let msg = 'The water is yours. What was floating out here is not any more.';
+  /* Anything granted below that is not part of the route's own reward, so the
+     account can total it. */
+  const paidExtra = {};
 
   if (route.type === 'convoy') {
     /* Taken. The lane goes quiet until the next sailing. */
@@ -82,10 +91,26 @@ export function battleVictory(route, enemies) {
     msg = 'The merchant makes port with her cargo and her crew, and says so loudly to anyone who will listen.';
   } else if (route.type === 'blockade') {
     msg = 'The blockade is broken open and the ships behind it are already moving.';
+  } else if (route.type === 'bounty') {
+    /* She was only ever going to be here for a while. Taking her ends that
+       early, and pays the price that was on her. */
+    const purse = { gold: Math.round(routeRating(route) * BOUNTY_GOLD_PER_RATING) };
+    grant(purse);
+    for (const k in purse) paidExtra[k] = (paidExtra[k] || 0) + purse[k];
+    const kit = { wood: BOUNTY_MATS, metal: BOUNTY_MATS, cloth: Math.round(BOUNTY_MATS * 0.7) };
+    grant(kit);
+    spoils.mats = kit;
+    clearBounty(route.id);
+    msg = `${route.n} is taken off ${route.station}, and the price on her is yours. `
+      + 'Somebody else will be working this water inside the week.';
   }
 
   battleDrop();
-  showResult({ route, success: true, msg, spoils, holds, captives: prizesFrom(enemies), noto });
+  showResult({
+    route, success: true, msg, spoils, holds, noto,
+    extra: Object.keys(paidExtra).length ? paidExtra : null,
+    captives: prizesFrom(enemies)
+  });
 }
 
 /* Clearing a cargo lane: the fight you may take on a lane that has gone bad,

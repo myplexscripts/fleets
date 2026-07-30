@@ -22,6 +22,7 @@
      9. One diving bell means one wreck at a time — refused in the systems layer,
         and said on the button before it is pressed.
     10. Everything a fight was worth reaches the account, and only the account.
+    11. A bounty is offered only while her clock runs, and leaves when it stops.
 
    Run:  node tools/check-mechanics.js [url] */
 
@@ -501,6 +502,71 @@ catch (e) {
   if (/barrel/i.test(acct.bannerHTML)) {
     bad.push('the victory banner still lists the barrel — it belongs to the account alone');
   }
+
+  /* ---- 11. a bounty turns up, and a bounty leaves ----
+
+     The one thing on the chart with a clock on it. Everything else is a place
+     and will still be there tomorrow; she is a person working a region for a
+     while. The rules that make that fair rather than merely stressful:
+
+       she is offered as a route only while her window is open;
+       when it closes she leaves the save, and her draw leaves with her;
+       taking her also takes her off, and the region waits before another;
+       never more than one per region, so the marker stays an event. */
+  console.log('11. a bounty turns up, runs on a clock, and goes');
+  const bty = await p.evaluate(async () => {
+    const st = await import('/src/core/state.js');
+    const bo = await import('/src/core/bounties.js');
+    const sel = await import('/src/core/selectors.js');
+    const cfg = await import('/src/core/config.js');
+    const world = await import('/src/data/world.js');
+
+    st.S.unlocked = Object.keys(world.REGIONS);
+    st.S.bounties = []; st.S.bountyNext = {}; st.S.draws = {};
+    bo.ensureBounties();
+    const charted = st.S.bounties.length;
+
+    /* Running it again must not double up — it is called on every render. */
+    bo.ensureBounties(); bo.ensureBounties();
+    const afterRepeats = st.S.bounties.length;
+    const perRegion = {};
+    st.S.bounties.forEach(x => { perRegion[x.region] = (perRegion[x.region] || 0) + 1; });
+
+    const asRoutes = sel.allRoutes().filter(r => r.type === 'bounty');
+    const one = asRoutes[0];
+    const live = one ? { id: one.id, mult: one.ratingMult, station: !!one.station } : null;
+    /* Her draw, so we can prove it is dropped when she goes. */
+    if (one) { const en = await import('/src/systems/enemies.js'); en.genEnemies(one); }
+    const hadDraw = !!(one && st.S.draws[one.id]);
+
+    /* Wind every clock past its end and look again. */
+    st.S.bounties.forEach(x => { x.endsAt = Date.now() - 1; });
+    const routesWhenDead = sel.allRoutes().filter(r => r.type === 'bounty').length;
+    const leftInSave = st.S.bounties.filter(x => x.endsAt < Date.now() - 0).length;
+    const drawGone = one ? !st.S.draws[one.id] : true;
+
+    return {
+      charted, afterRepeats, perRegion, live, hadDraw,
+      routesWhenDead, leftInSave, drawGone,
+      max: cfg.BOUNTY_MAX, lifeMin: cfg.BOUNTY_LIFE_MS / 60000, gapMin: cfg.BOUNTY_GAP_MS / 60000
+    };
+  });
+  console.log(`   charted ${bty.charted}, still ${bty.afterRepeats} after re-running; `
+    + `${bty.lifeMin} min windows, ${bty.gapMin} min gap`);
+  console.log('   per region: ' + JSON.stringify(bty.perRegion));
+  if (!bty.charted) bad.push('no bounty was ever charted');
+  if (bty.afterRepeats !== bty.charted) bad.push('ensureBounties is not idempotent — it charts more each call');
+  Object.keys(bty.perRegion).forEach(rk => {
+    if (bty.perRegion[rk] > bty.max) bad.push(`${rk} carries ${bty.perRegion[rk]} bounties at once`);
+  });
+  if (!bty.live) bad.push('a charted bounty is not offered as a route');
+  else if (!(bty.live.mult > 1)) bad.push('a bounty is not drawn above her water — she is no harder than a raid');
+  if (!bty.hadDraw) bad.push('a bounty draws no line-up');
+  console.log(`   after her window: ${bty.routesWhenDead} routes, ${bty.leftInSave} left in the save, `
+    + `draw dropped ${bty.drawGone}`);
+  if (bty.routesWhenDead) bad.push('an expired bounty is still offered');
+  if (bty.leftInSave) bad.push('an expired bounty stays in the save for ever');
+  if (!bty.drawGone) bad.push("an expired bounty's line-up is kept — the next captain inherits her ships");
 
   await b.close();
   console.log('\n=== ' + bad.length + ' problem(s) ===');
