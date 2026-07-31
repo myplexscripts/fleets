@@ -18,6 +18,7 @@ import {
   fmtDur, bossAsRoute, grant, clearLane, calmRegion, lanePay, effDanger, routeRating
 } from '../core/selectors.js';
 import { clearBounty } from '../core/bounties.js';
+import { figForBoss } from '../data/figureheads.js';
 import { addNoto } from './wanted.js';
 import { awardPiece, rollDrop } from './collectibles.js';
 import { clearDraw } from './enemies.js';
@@ -195,6 +196,15 @@ export function bossVictory(boss, enemies) {
   battleDrop();
   grant(boss.rew);
   buzz('win');
+
+  /* Her figurehead. The only source of it — an admiral's carving cannot be
+     bought, and beating all four is the only way to hold all four. */
+  const fig = figForBoss(boss.region);
+  if (fig && !(S.figureheads || []).includes(fig)) {
+    S.figureheads = S.figureheads || [];
+    S.figureheads.push(fig);
+    carry({ fig });
+  }
 
   /* Boss titles are written with their article ("The Ironclad"), so no "The". */
   let msg = `${boss.n} strikes her colours with what is left of her upperworks on fire. ${boss.title} is broken, and every captain in these waters will know it by morning.`;

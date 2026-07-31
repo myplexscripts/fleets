@@ -41,9 +41,10 @@ import {
   routeById, allShips, findShip, busyIds, isBusy, diveOut, tname, power, fleetPower, holdCap,
   effDanger, patrolActive, patrolLeft, canVoyage, voyDuration, tradeChance,
   notoGain, chartersAt, fmtDur, goodsHeld, diveReachable, diveChests, chestValue,
-  bellDepth, laneRiseIn, laneFight, lanePay, battleOdds, routeRating
+  bellDepth, laneRiseIn, laneFight, lanePay, battleOdds, routeRating, storeCap
 } from '../core/selectors.js';
 import { bountyLeft } from '../core/bounties.js';
+import { storeName } from '../data/storage.js';
 import { BOUNTY_GOLD_PER_RATING } from '../core/config.js';
 /* Rate of fire is a battle number, but it is a reason to pick one hull over
    another, so the picker needs it. battle/state.js only reads config, so there
@@ -400,8 +401,15 @@ function voyageBody(r) {
     const held = goodsHeld(r.good);
     const holdOK = holdCap(fleet) >= r.qty;
     ready = held >= r.qty && holdOK && !!fleet.length;
-    if (held < r.qty) warn = `${r.qty - held} short — run more contracts or take some off the enemy.`;
-    else if (!holdOK && fleet.length) warn = 'That hull is too small.';
+    /* A contract bigger than the warehouse is one the player can never gather
+       for, however long they trade — so it says that, rather than counting down
+       "12 short" for ever at somebody who has no way of holding the twelve. */
+    if (r.qty > storeCap()) {
+      warn = `Your ${storeName(S.wh)} holds ${storeCap()} of a kind. `
+        + `This asks for ${r.qty} — a bigger warehouse is for sale at the Market.`;
+    } else if (held < r.qty) {
+      warn = `${r.qty - held} short — run more contracts or take some off the enemy.`;
+    } else if (!holdOK && fleet.length) warn = 'That hull is too small.';
     else if (already) warn = 'Already running this contract.';
   } else {
     /* One bell, one wreck. The button has to say so before it is pressed —

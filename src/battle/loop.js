@@ -27,7 +27,9 @@
 import { $, sleep } from '../core/dom.js';
 import { S, save } from '../core/state.js';
 import { rnd, pick, fx } from '../core/rng.js';
-import { power, hasFit } from '../core/selectors.js';
+/* `fx` here is already the log's message formatter, so the figurehead door
+   comes in under its own name. */
+import { power, hasFit, fx as figFx } from '../core/selectors.js';
 import {
   BRACE_MS, BRACE_COOLDOWN_MS, BRACE_MULT, BRACE_RELOAD_MULT,
   BOARD_COOLDOWN_MS, VOLLEY_EVERY_MS, VOLLEY_WARN_MS
@@ -104,8 +106,8 @@ export function startBattle(fleet, enemies, escort, onEnd, boss) {
   /* Set after BT.b exists — gim() reads it, and inside the literal above it
      would still have been answering about the last battle's admiral. */
   b.volleyAt = gim('broadside') ? VOLLEY_EVERY_MS : 0;
-  primeTimers(fleet, true).forEach((v, k) => b.timers.set(k, v));
-  primeTimers(enemies, true).forEach((v, k) => b.timers.set(k, v));
+  primeTimers(fleet, true, true).forEach((v, k) => b.timers.set(k, v));
+  primeTimers(enemies, true, false).forEach((v, k) => b.timers.set(k, v));
 
   if (hasFit('magazine')) S.barrels = Math.min(9, S.barrels + 1);
 
@@ -196,8 +198,14 @@ function advance(list, dt, mine) {
 
 /* ---- gunnery ------------------------------------------------------------ */
 
-function damageFrom(s, mult) {
-  return Math.max(1, Math.round(s.guns * rnd(0.8, 1.2) * (mult || 1)));
+/* A shot's weight. `carve` says which side of the figurehead to read, because
+   the same carving is two different numbers depending on which end of the shot
+   you are: 'gun' for one of yours firing, 'hull' for one landing on yours.
+   Omitted means neither — an escorted merchant is not your hull, and a carving
+   on your bow has no business protecting somebody else's ship. */
+function damageFrom(s, mult, carve) {
+  const carved = carve === 'gun' ? figFx('dmg') : carve === 'hull' ? figFx('armour') : 1;
+  return Math.max(1, Math.round(s.guns * rnd(0.8, 1.2) * (mult || 1) * carved));
 }
 
 /* One ship, one broadside. Everything visual is fire-and-forget: the clock does
@@ -210,7 +218,7 @@ function fire(s, mine) {
     const t = preferredTarget();
     if (!t) return;
     const slot = b.fleet.indexOf(s);
-    const dmg = damageFrom(s, slot === 1 ? 1.25 : 1);   // centre of the line hits harder
+    const dmg = damageFrom(s, slot === 1 ? 1.25 : 1, 'gun');   // centre of the line hits harder
     land(s, t, dmg, false, false);
 
     /* Chase Guns give the flagship a second, weaker shot behind the first. */
@@ -218,7 +226,7 @@ function fire(s, mine) {
       setTimeout(() => {
         if (b.over) return;
         const t2 = preferredTarget();
-        if (t2) land(s, t2, damageFrom(s, 0.6), false, false);
+        if (t2) land(s, t2, damageFrom(s, 0.6, 'gun'), false, false);
       }, 260);
     }
     return;
@@ -234,7 +242,7 @@ function fire(s, mine) {
   /* Mostly they pick your strongest, sometimes at random. */
   const t = Math.random() < 0.65 ? ps.reduce((a, x) => (power(x) > power(a) ? x : a)) : pick(ps);
   const rear = b.fleet.indexOf(t) === 2 ? 0.75 : 1;
-  land(s, t, damageFrom(s, rear * (b.brace > 0 ? BRACE_MULT : 1)), true, false);
+  land(s, t, damageFrom(s, rear * (b.brace > 0 ? BRACE_MULT : 1), 'hull'), true, false);
 }
 
 /* Put a shot into somebody, with all the noise that goes with it. */
@@ -314,7 +322,7 @@ function maybeReinforce(dead) {
   b.enemies.push(nd);
   /* She cuts out of the fog already in the fight — no run-in for a ship that
      was waiting for you. */
-  b.timers.set(nd, { at: 0.1, of: reloadMs(nd), closing: false });
+  b.timers.set(nd, { at: 0.1, of: reloadMs(nd, false), closing: false, mine: false });
   blog(`Another sail cuts out of the fog where there was nothing — the ${nd.name} takes her place in the line.`, 'bad');
   if (BT.scene) BT.scene.spawnReinforcement(nd, dead);
   retarget();
@@ -391,7 +399,7 @@ export function cmd(c) {
     const t = preferredTarget();
     const from = aliveP()[0];
     if (t && from) {
-      const dmg = damageFrom(from, 2.4);
+      const dmg = damageFrom(from, 2.4, 'gun');
       t.hull = Math.max(0, t.hull - dmg);
       blog(`A barrel goes over in a lazy arc and bursts across the ${t.name}'s deck — ${dmg}.`, 'good');
       buzz('big');

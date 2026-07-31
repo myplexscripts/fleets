@@ -19,14 +19,16 @@
    steppers. A completed deal pops off the button that did it rather than
    announcing itself across the top of the screen. */
 
-import { $ } from '../../core/dom.js';
+import { $, esc } from '../../core/dom.js';
 import { S, save } from '../../core/state.js';
 import { render } from '../../core/bus.js';
 import { actions } from '../../core/actions.js';
 import { PORTS } from '../../data/ports.js';
 import { GOODS, GOOD_KEYS } from '../../data/goods.js';
 import { MAX_BELL, BELL_NAMES, bellCost, bellMaxDepth, DEPTH_NAMES } from '../../data/salvage.js';
-import { canPay, pay } from '../../core/selectors.js';
+import { WAREHOUSE, MAX_WAREHOUSE, warehouseCost, storeCapAt } from '../../data/storage.js';
+import { FIGUREHEADS, SHOP_FIGS } from '../../data/figureheads.js';
+import { canPay, pay, storeCap, hasFig } from '../../core/selectors.js';
 import { rechartDives } from '../../core/dives.js';
 import { chip, chipRow, outOf, priceChips } from '../format.js';
 import { itemCard, itemAction, itemGrid, stepper, sect } from '../components.js';
@@ -99,6 +101,45 @@ export function renderMarket() {
       cls: 'owned'
     });
 
+    /* The warehouse. Bought here because everything it holds is bought and sold
+       here, and because a cap the player cannot see the price of is a cap that
+       reads as an arbitrary refusal. */
+    const whMax = S.wh >= MAX_WAREHOUSE;
+    const wc = warehouseCost(S.wh);
+    h += sect('Storage', i++);
+    h += itemCard({
+      icon: 'cargo', name: WAREHOUSE[S.wh].n, sub: WAREHOUSE[S.wh].sub,
+      held: chipRow([outOf('cargo', S.wh, MAX_WAREHOUSE, '', 'Warehouse level')], 'tight'),
+      body: chipRow([
+        chip('cargo', storeCap(), '', 'Room for this much of every material and every good'),
+        whMax ? '' : chip('cargo', '+' + (storeCapAt(S.wh + 1) - storeCap()), 'ok',
+          'Next: ' + WAREHOUSE[S.wh + 1].n)
+      ], 'tight') + `<div class="sub">Anything over the line is sold on the quay at half price.</div>`,
+      price: whMax ? '' : priceChips(wc),
+      action: itemAction(whMax ? 'Max' : 'Upgrade', 'buy-warehouse', {}, { disabled: whMax || !canPay(wc) }),
+      cls: 'owned'
+    });
+
+    /* The chandler's three. Plain, cheap enough to own all of them early, and
+       one obvious effect each — so the mechanic is understood long before an
+       admiral's carving turns up. */
+    h += sect('Figureheads', i++);
+    h += itemGrid(SHOP_FIGS.map(k => {
+      const d = FIGUREHEADS[k], owned = hasFig(k);
+      /* Flavour in the caption slot, effect in the body. The other way round put
+         the one thing you buy it for into small caps and wrapped it over three
+         lines, while the line about the paintwork got the readable prose. */
+      return itemCard({
+        icon: 'figure', name: d.n, sub: d.sub,
+        held: owned ? chipRow([chip('flag', 'OWNED', 'gold')], 'tight') : '',
+        body: `<div class="sub">${esc(d.desc)}</div>`,
+        price: owned ? '' : priceChips(d.cost),
+        action: itemAction(owned ? 'Owned' : 'Buy', 'buy-fig', { key: k },
+          { disabled: owned || !canPay(d.cost) }),
+        cls: owned ? 'owned' : ''
+      });
+    }).join(''));
+
     h += sect('Harbour', i++);
     h += itemCard({
       icon: 'port', name: 'Charted Ports', sub: 'Each keeps a contract open',
@@ -141,6 +182,32 @@ function sellGood(key, n) {
     '+' + paid, 'gold', 'gold', () => goodCard(key));
 }
 
+function buyWarehouse() {
+  if (S.wh >= MAX_WAREHOUSE) return;
+  const c = warehouseCost(S.wh);
+  if (!canPay(c)) { deny('Not enough for that'); return; }
+  pay(c);
+  S.wh++;
+  play('upgrade');
+  save();
+  render();
+}
+
+function buyFig(k) {
+  const d = FIGUREHEADS[k];
+  if (!d || !d.cost || hasFig(k)) return;
+  if (!canPay(d.cost)) { deny('Not enough for that'); return; }
+  pay(d.cost);
+  S.figureheads = S.figureheads || [];
+  S.figureheads.push(k);
+  /* Rigged straight away if the bowsprit is bare — buying a thing and then
+     having to go and turn it on is a step that exists for no reason. */
+  if (!S.figurehead) S.figurehead = k;
+  play('upgrade');
+  save();
+  render();
+}
+
 function buyBell() {
   if (S.bell >= MAX_BELL) return;
   const c = bellCost(S.bell);
@@ -169,5 +236,7 @@ actions({
   'mkt-tab': d => setTab(d.tab),
   'good-qty': d => bump('g' + d.key, +d.d, S.goods[d.key], () => goodCard(d.key)),
   'sell-good': d => sellGood(d.good, d.n),
-  'buy-bell': buyBell
+  'buy-bell': buyBell,
+  'buy-warehouse': buyWarehouse,
+  'buy-fig': d => buyFig(d.key)
 });

@@ -91,6 +91,22 @@ const done = () => {
     await p.waitForSelector('#app.on'); await p.waitForTimeout(800);
 
     const measure = async label => {
+      /* Wait for the entrance animations before measuring anything.
+
+         Cards come in from scale(.97), so an icon caught mid-flight measures
+         38.8px — which is 40 x .97, not a layout fault. Every "icon under the
+         floor" this reported on a long screen was the tool photographing the
+         animation rather than the page. */
+      await p.evaluate(() => Promise.race([
+        Promise.all(document.getAnimations()
+          /* Skip the ones that never end — a marker's pulse and a ready glow
+             loop for ever, and awaiting those waits for ever. */
+          .filter(a => (a.effect.getTiming().iterations || 1) !== Infinity)
+          .map(a => a.finished.catch(() => {}))),
+        new Promise(r => setTimeout(r, 2500))
+      ]));
+      await p.waitForTimeout(120);
+
       const bad = await p.evaluate(lim => {
         const out = [];
         document.querySelectorAll('body *').forEach(el => {

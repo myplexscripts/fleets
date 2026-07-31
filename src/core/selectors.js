@@ -10,9 +10,11 @@ import { TYPES } from '../data/ships.js';
 import { REGIONS, NOTO_BONUS, VOYAGE_TYPES, MAX_DANGER } from '../data/world.js';
 import { REGION_RATING, DANGER_MULT, HEAT_MULT } from '../data/water.js';
 import { PORTS } from '../data/ports.js';
+import { storeCapAt, OVERFLOW_RATE } from '../data/storage.js';
+import { FIGUREHEADS } from '../data/figureheads.js';
 import { CHARTERS } from '../data/charters.js';
 import { BOSSES } from '../data/bosses.js';
-import { GOOD_KEYS } from '../data/goods.js';
+import { GOOD_KEYS, GOODS } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { SETS, SET_KEYS } from '../data/collectibles.js';
 import { bellMaxDepth, CHEST_VALUE } from '../data/salvage.js';
@@ -53,11 +55,72 @@ export function pay(c) {
   S.gold -= (c.gold || 0);
   MAT_KEYS.forEach(m => { S.mats[m] -= (c[m] || 0); });
 }
+/* ---- figureheads ----
+
+   One carving at a time, and everything it changes is read through fx(). No
+   screen and no system reads S.figurehead itself, so a new carving is a line in
+   data/figureheads.js and nothing else. A missing key returns 1, the identity
+   for every multiplier here — a figurehead that does not mention a thing does
+   not change it.
+
+   figOn() is guarded for a null save because `S` does not exist until a game is
+   started or loaded, and reloadMs() — which reads this — is legitimately asked
+   about a hull before then: the shipwright's list, the tooling, anything that
+   prices a ship nobody owns yet. No save means no carving, not a crash. */
+export const figOn = () => (S && S.figurehead && FIGUREHEADS[S.figurehead]) || null;
+export function fx(key, dflt) {
+  const f = figOn();
+  const v = f && f.fx ? f.fx[key] : undefined;
+  return v === undefined ? (dflt === undefined ? 1 : dflt) : v;
+}
+export const hasFig = k => !!(S && (S.figureheads || []).includes(k));
+
+/* ---- the warehouse ----
+
+   Every material and every good is capped, per kind, and everything the game
+   hands you passes through addStock(). Anything over the cap is sold on the
+   quay rather than lost: room is worth paying for, but going and getting
+   something is never a mistake. See data/storage.js for why each of those is
+   the way it is. */
+export const storeCap = () => Math.round(storeCapAt((S && S.wh) || 0) * fx('store'));
+
+/* What a ton of overflowing timber fetches. Materials have no market price of
+   their own, so they go for scrap; deliberately poor. */
+const MAT_SELL = 3;
+
+/* What the last grant could not fit and sold instead — read once by whoever
+   reports it, then cleared, so the message belongs to the thing that caused it
+   rather than turning up on some later screen. */
+let spilled = null;
+export function takeSpill() { const s = spilled; spilled = null; return s; }
+
+function addStock(k, n) {
+  if (!n) return;
+  const isMat = MAT_KEYS.includes(k);
+  const bin = isMat ? S.mats : S.goods;
+  const kept = Math.min(n, Math.max(0, storeCap() - (bin[k] || 0)));
+  bin[k] = (bin[k] || 0) + kept;
+
+  const over = n - kept;
+  if (over <= 0) return;
+  const unit = isMat ? MAT_SELL : Math.round((GOODS[k].sell || 2) * OVERFLOW_RATE);
+  const paid = Math.max(1, Math.round(over * Math.max(1, unit)));
+  S.gold += paid;
+  spilled = spilled || { units: 0, gold: 0, kinds: [] };
+  spilled.units += over;
+  spilled.gold += paid;
+  if (!spilled.kinds.includes(k)) spilled.kinds.push(k);
+}
+
 export function grant(o) {
   if (!o) return;
   S.gold += (o.gold || 0);
-  MAT_KEYS.forEach(m => { S.mats[m] += (o[m] || 0); });
+  MAT_KEYS.forEach(m => addStock(m, o[m] || 0));
 }
+/* Goods arrive from loot and from delivered contracts; both come through here
+   so the cap is enforced in exactly one place. */
+export function grantGood(k, n) { addStock(k, n); }
+
 export const totalGoods = () => GOOD_KEYS.reduce((a, k) => a + S.goods[k], 0);
 export const totalMats = () => MAT_KEYS.reduce((a, k) => a + S.mats[k], 0);
 

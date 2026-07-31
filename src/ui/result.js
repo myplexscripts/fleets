@@ -36,12 +36,14 @@ import { S, save, newShip } from '../core/state.js';
 import { actions } from '../core/actions.js';
 import { render } from '../core/bus.js';
 import { rnd } from '../core/rng.js';
-import { grant, wantedOf } from '../core/selectors.js';
+import { grant, wantedOf, fx, takeSpill } from '../core/selectors.js';
 import { TYPES } from '../data/ships.js';
 import { SCRAP_YIELD, MAT_KEYS } from '../data/materials.js';
 import { GOODS } from '../data/goods.js';
 import { REGIONS } from '../data/world.js';
 import { BOSSES } from '../data/bosses.js';
+import { FIGUREHEADS } from '../data/figureheads.js';
+import { storeName } from '../data/storage.js';
 import { shipHTML } from '../art/ships.js';
 import { iconHTML } from '../art/icons.js';
 import { tile, tileRow, bagTiles, matName } from './format.js';
@@ -72,7 +74,7 @@ let carried = null;
 function newLedger() {
   return {
     gold: 0, wood: 0, metal: 0, cloth: 0,
-    goods: {}, ships: [], barrels: 0, titles: [], pieces: []
+    goods: {}, ships: [], barrels: 0, titles: [], pieces: [], figs: []
   };
 }
 
@@ -80,10 +82,11 @@ function newLedger() {
    sweeps it up, so nothing found at the end of a fight is lost between the
    banner closing and the account opening. */
 export function carry(o) {
-  carried = carried || { barrels: 0, titles: [], pieces: [] };
+  carried = carried || { barrels: 0, titles: [], pieces: [], figs: [] };
   if (o.barrels) carried.barrels += o.barrels;
   if (o.title) carried.titles.push(o.title);
   if (o.piece) carried.pieces.push(o.piece);
+  if (o.fig) carried.figs.push(o.fig);
 }
 
 function logBag(o) {
@@ -139,6 +142,10 @@ function drawTally(title, sub, lines) {
      modal of its own seven hundred milliseconds after the banner. */
   ledger.pieces.forEach(p => push(glyph('relic'), p.name,
     p.of ? `${p.have}/${p.of}` : 'Oddment', 'relic' + (p.complete ? ' setdone' : '')));
+
+  /* Cut off her stern. The rarest card this screen ever shows. */
+  ledger.figs.forEach(k => FIGUREHEADS[k]
+    && push(glyph('figure'), FIGUREHEADS[k].n, 'Figurehead', 'relic setdone'));
 
   /* And what beating an admiral makes you. */
   ledger.titles.forEach(t => push(glyph('star'), 'Title Earned', t, 'title'));
@@ -214,7 +221,10 @@ function wantedMeter() {
    Only ships that outclassed their water carry one, so it is the payoff for
    taking the fight you were allowed to walk away from. */
 const CHEST_MULT = 2.2;
-const chestValue = t => Math.round(t.ransom * CHEST_MULT);
+/* A figurehead that pays for prisoners pays for the strongbox too — both are
+   what her people were worth. */
+const ransomOf = t => Math.round(t.ransom * fx('ransom'));
+const chestValue = t => Math.round(ransomOf(t) * CHEST_MULT);
 
 /* The prizes still to be answered for, and where in that queue we are. The
    screen is a sequence now, so it has to remember its own place. */
@@ -259,10 +269,22 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     ledger.barrels += carried.barrels;
     ledger.titles = ledger.titles.concat(carried.titles);
     ledger.pieces = ledger.pieces.concat(carried.pieces);
+    ledger.figs = ledger.figs.concat(carried.figs || []);
     carried = null;
   }
 
-  const lines = [msg, prizeMsg, evt].filter(Boolean);
+  /* Anything the warehouse could not take was sold on the quay on the way in.
+     It has to be said — money appearing that the player did not agree to is
+     worse than the overflow itself, and this is the screen that accounts for
+     everything else the fight produced. */
+  const spill = takeSpill();
+  const spillLine = spill
+    ? `The ${storeName(S.wh)} would not take all of it. `
+      + `${spill.units} went on the quay for ${spill.gold} gold.`
+    : '';
+  if (spill) ledger.gold += spill.gold;
+
+  const lines = [msg, prizeMsg, evt, spillLine].filter(Boolean);
   queue = captives.slice();
   atPrize = 0;
   pending = captives.length;
@@ -339,7 +361,7 @@ function nextPrize() {
           'Keep', i, 'capture', e.type, full, 'gold')}
         ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
           'Scuttle', i, 'salvage', e.type)}
-        ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', t.ransom, 'gold', 'Ransom for her crew')], 'grid4'),
+        ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', ransomOf(t), 'gold', 'Ransom for her crew')], 'grid4'),
           'Ransom', i, 'ransom', e.type)}
         ${e.chest ? prizeOpt(tileRow([tile('chest', chestValue(t), 'gold', "The captain's own strongbox")], 'grid4'),
           "Captain's Chest", i, 'chest', e.type, false, 'gold') : ''}
@@ -405,8 +427,9 @@ function capAct(i, mode, type) {
     logBag(SCRAP_YIELD[type]);
     play('repair');
   } else if (mode === 'ransom') {
-    S.gold += t.ransom;
-    logBag({ gold: t.ransom });
+    const paid = ransomOf(t);
+    S.gold += paid;
+    logBag({ gold: paid });
     coinFly(6);
     play('coin');
   } else if (mode === 'chest') {

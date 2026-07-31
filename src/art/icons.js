@@ -7,6 +7,7 @@ const ICON_COLOR = {
   gold: '#efe3ae', cargo: '#c8a97a', mats: '#9fb8bd', barrels: '#d9883a',
   sea: '#7ab0e0', plate: '#9fb8bd', guns: '#d9883a', rig: '#cfe3e4', hold: '#c8a97a',
   relic: '#d9c98a', flag: '#efe3ae', star: '#efe3ae', anchor: '#63c06a',
+  figure: '#e0b98a',
   wheel: '#d9c98a', map: '#7ab0e0', port: '#c8a97a', scales: '#c8a97a',
   /* trade goods */
   rum: '#b5701f', sugar: '#e0d6bd', tobacco: '#8a6a32', wine: '#8f3050', spice: '#c9702a',
@@ -31,6 +32,11 @@ const ICONS = {
   rig: c => `<path d="M11.4 2.6v18.8" stroke="${c}" stroke-width="1.7"/><path d="M12.7 4.4l5.9 6h-5.9zM12.7 12l5.9 6.4h-5.9z" fill="${c}"/><path d="M10.1 5.2l-4.7 5.2h4.7zM10.1 12.6l-4.7 5.8h4.7z" fill="${c}" opacity=".68"/>`,
   hold: c => `<rect x="3.5" y="6.5" width="17" height="12" rx="1.5" fill="${c}"/><path d="M3.5 10.6h17M3.5 14.6h17M8.6 6.5v12M15.4 6.5v12" stroke="#2a1f12" stroke-width="1.2"/>`,
   relic: c => `<path d="M8.2 3h7.6v2h-2.1c2.9 1.5 4.6 4.1 4.6 7.1 0 4.4-3.1 7.9-6.3 7.9s-6.3-3.5-6.3-7.9c0-3 1.7-5.6 4.6-7.1H8.2z" fill="${c}"/><path d="M9 20.6h6" stroke="${c}" stroke-width="1.8"/>`,
+  /* A carving under the bowsprit: head thrown back, hair streaming aft, the
+     shoulder falling away into the scroll, water beneath. Its own glyph and not
+     the relic urn — a figurehead is not a thing in a cabinet, and one glyph
+     meaning two things is a glyph meaning neither. */
+  figure: c => `<circle cx="14.2" cy="5.6" r="3.2" fill="${c}"/><path d="M11.4 8.6c2.9 0 5.1 1.4 6.3 3.9 1 2.1 1.1 4.5.3 7.1l-3.4-1c.6-1.9.5-3.5-.2-4.8-.7-1.3-1.9-2-3.5-2z" fill="${c}"/><path d="M11.2 3.4C8.5 3.5 6.1 4.9 4.2 7.3c2.2-.5 3.9-.3 5.1.5-1.9 1.2-3.1 3-3.7 5.4 2-1.6 3.9-2.2 5.5-2z" fill="${c}" opacity=".7"/><path d="M2.6 21.2c2.4 0 2.4-1.3 4.8-1.3s2.4 1.3 4.8 1.3 2.4-1.3 4.8-1.3 2.4 1.3 4.4 1.3" fill="none" stroke="${c}" stroke-width="1.5" opacity=".62"/>`,
   flag: c => `<path d="M6.2 2.4v19.2" stroke="${c}" stroke-width="1.9"/><path d="M7.6 4h11l-3 4 3 4h-11z" fill="${c}"/>`,
   star: c => `<path d="M12 2.4l2.7 6.4 6.9.5-5.3 4.5 1.7 6.8L12 16.9 6 20.6l1.7-6.8-5.3-4.5 6.9-.5z" fill="${c}"/>`,
   anchor: c => `<circle cx="12" cy="4.4" r="2.2" fill="none" stroke="${c}" stroke-width="1.8"/><path d="M12 6.6v14M7 10.2h10" stroke="${c}" stroke-width="1.8"/><path d="M4.4 14.2c0 4 3.6 6.3 7.6 6.3s7.6-2.3 7.6-6.3" fill="none" stroke="${c}" stroke-width="1.8"/>`,

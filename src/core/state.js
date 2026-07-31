@@ -11,6 +11,7 @@ import { makeRoutes } from '../data/routes.js';
 import { GOOD_KEYS } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { PIECE_SET } from '../data/collectibles.js';
+import { storeCapAt, MAX_WAREHOUSE } from '../data/storage.js';
 import { BOSSES } from '../data/bosses.js';
 
 export let S = null;
@@ -70,7 +71,7 @@ export function newGame() {
     gold: 500, barrels: 3, docks: 3,
     goods: { ...zeroed(GOOD_KEYS), sugar: 10, rum: 6 },
     mats: { ...zeroed(MAT_KEYS), wood: 8, metal: 6, cloth: 4 },
-    bell: 0,
+    bell: 0, wh: 0,
     ships: [newShip('schooner'), newShip('schooner'), newShip('brig')],
     flag: newFlag(),
     unlocked: ['caribbean'],
@@ -78,6 +79,7 @@ export function newGame() {
     dives: [], hunts: {}, bounties: [], bountyNext: {},
     bossBeaten: {}, voyages: [],
     ports: ['staug'], charters: {}, contracts: {}, collected: {}, flagBoons: [],
+    figureheads: [], figurehead: null,
     won: false,
     tut: localStorage.getItem(TUT_KEY) ? 'done' : 0,
     startedAt: Date.now()
@@ -214,6 +216,32 @@ function migrate() {
   delete S.parts;
 
   if (typeof S.bell !== 'number') S.bell = 0;
+
+  /* The warehouse is newer than most saves. A save from before it existed may
+     be holding far more than a Lean-To ever could — so it starts at whatever
+     level actually fits what is already in the barn, rather than confiscating
+     a stockpile somebody earned under the old rules.
+
+     This has to sit BELOW the cargo->goods and parts->mats conversions above:
+     it reads the stock to size the barn, and on a save old enough to predate
+     those two fields there is no stock to read yet. Moving it up throws on the
+     first old save and takes every conversion after it down as well. */
+  S.mats = S.mats || zeroed(MAT_KEYS);
+  S.goods = S.goods || zeroed(GOOD_KEYS);
+  if (S.wh == null) {
+    const most = Math.max(
+      0, ...MAT_KEYS.map(m => S.mats[m] || 0), ...GOOD_KEYS.map(g => S.goods[g] || 0));
+    S.wh = 0;
+    while (S.wh < MAX_WAREHOUSE && storeCapAt(S.wh) < most) S.wh++;
+  }
+  S.wh = Math.max(0, Math.min(MAX_WAREHOUSE, S.wh | 0));
+
+  /* Figureheads. `figurehead` is the one on the bow and may legitimately be
+     null — a bare bowsprit is a valid choice — but it must never name a carving
+     that is not owned, or fx() would be reading a buff off a save that never
+     earned it. */
+  S.figureheads = Array.isArray(S.figureheads) ? S.figureheads : [];
+  if (S.figurehead && !S.figureheads.includes(S.figurehead)) S.figurehead = null;
 
   /* Flat relic list became named collectible sets. Slot the old names into
      whichever set claims them and keep anything unrecognised in `loose`. */

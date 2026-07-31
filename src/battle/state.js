@@ -3,6 +3,7 @@
 import {
   RELOAD_BASE_MS, RELOAD_PER_SPEED, RELOAD_FLOOR_MS, APPROACH_MULT
 } from '../core/config.js';
+import { fx } from '../core/selectors.js';
 
 export const BT = {
   b: null,        // the current engagement
@@ -34,9 +35,13 @@ export const aliveP = () => BT.b.fleet.filter(s => s.hull > 0);
 
    A floor on the reload time keeps a fully worked-up flagship from firing so
    fast that nothing else in the fight matters. */
-export function reloadMs(ship) {
+export function reloadMs(ship, mine) {
   const t = RELOAD_BASE_MS / (1 + (ship.speed || 1) * RELOAD_PER_SPEED);
-  return Math.max(RELOAD_FLOOR_MS, Math.round(t));
+  /* A figurehead is on YOUR bow, so it only ever hurries your own crews. The
+     picker asks about your hulls and passes nothing, which is why `mine`
+     defaults to true — an enemy's reload is asked for explicitly. */
+  const carved = (mine === false) ? 1 : fx('reload');
+  return Math.max(RELOAD_FLOOR_MS, Math.round(t * carved));
 }
 
 /* How far through her reload a ship is, 0..1. The scene draws this under every
@@ -53,7 +58,9 @@ export function boardable(hasGrapple) {
   const b = BT.b;
   if (!b || b.boardCd > 0 || gim('ironclad')) return null;
   const t = b.enemies[b.target];
-  const thr = hasGrapple ? 0.55 : 0.40;
+  /* Grappling hooks and La Sombra both raise the threshold; whichever is
+     kinder wins rather than the two stacking into a free capture. */
+  const thr = Math.max(hasGrapple ? 0.55 : 0.40, fx('board', 0));
   return (t && !t.disabled && t.hull <= t.max * thr) ? t : null;
 }
 
@@ -66,15 +73,20 @@ export function boardable(hasGrapple) {
    meter still fills the whole way across during the approach, it just fills
    slower, so the bar reads as a ship closing rather than as a bar that has
    stopped working. */
-export function primeTimers(list, stagger) {
+export function primeTimers(list, stagger, mine) {
   const t = new Map();
   list.forEach((s, i) => {
     /* Nobody starts loaded, and nobody starts together — a line that fired in
        one volley would just be the old turn loop wearing a clock. */
+    /* The Drowned Girl means your line comes over the horizon already loaded:
+       no run-in, and the first broadside is yours. Only ever your line — the
+       carving is on your bow. */
+    const primed = mine && fx('primed', 0) > 0;
     t.set(s, {
-      at: (stagger ? (i * 0.22) : 0) + Math.random() * 0.18,
-      of: Math.round(reloadMs(s) * APPROACH_MULT),
-      closing: true
+      at: primed ? 0.995 : (stagger ? (i * 0.22) : 0) + Math.random() * 0.18,
+      of: primed ? reloadMs(s, mine) : Math.round(reloadMs(s, mine) * APPROACH_MULT),
+      closing: !primed,
+      mine: !!mine
     });
   });
   return t;
@@ -85,5 +97,5 @@ export function primeTimers(list, stagger) {
 export function closed(t, ship) {
   if (!t.closing) return;
   t.closing = false;
-  t.of = reloadMs(ship);
+  t.of = reloadMs(ship, t.mine);
 }

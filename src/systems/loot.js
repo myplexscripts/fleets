@@ -10,6 +10,7 @@ import { REGIONS } from '../data/world.js';
 import { GOODS, goodsForTier } from '../data/goods.js';
 import { MAT_KEYS } from '../data/materials.js';
 import { pick, rnd } from '../core/rng.js';
+import { grant, grantGood } from '../core/selectors.js';
 
 /* Goods taken off a beaten enemy. Richer water carries richer cargo — but not
    every ship is carrying any. A hold that filled itself on every single win
@@ -24,7 +25,7 @@ export function goodsHaul(region, danger) {
   /* Scaled with the water, because the deep-sea contracts ask for sixty crates
      and nothing else in the game hands out trade goods. */
   const n = Math.max(2, Math.round(rnd(2 + tier, 4 + tier * 2.6 + (danger || 0) * 1.5)));
-  S.goods[good] += n;
+  grantGood(good, n);
   return { good, n, unit: GOODS[good].unit, name: GOODS[good].n };
 }
 
@@ -41,7 +42,7 @@ export function returnCargo(region, delivered, qty) {
   if (!choices.length) return null;
   const good = pick(choices);
   const n = Math.max(2, Math.round(qty * rnd(0.4, 0.75)));
-  S.goods[good] += n;
+  grantGood(good, n);
   return { good, n, unit: GOODS[good].unit, name: GOODS[good].n };
 }
 
@@ -66,7 +67,7 @@ export function convoyHaul(region, danger) {
   }
   return picked.map(good => {
     const n = Math.max(4, Math.round(rnd(5 + tier * 2, 10 + tier * 4 + (danger || 0) * 3)));
-    S.goods[good] += n;
+    grantGood(good, n);
     return { good, n, unit: GOODS[good].unit, name: GOODS[good].n };
   });
 }
@@ -82,6 +83,8 @@ export function matsHaul(region, danger) {
     const m = pick(MAT_KEYS);
     out[m] = (out[m] || 0) + 1;
   }
-  MAT_KEYS.forEach(m => { if (out[m]) S.mats[m] += out[m]; });
+  /* Through grant(), so the warehouse cap and its overflow sale apply to
+     everything the game hands over rather than to some of it. */
+  grant(out);
   return out;
 }
