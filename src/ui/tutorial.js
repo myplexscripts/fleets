@@ -10,7 +10,10 @@ import { action } from '../core/actions.js';
 /* Named preconditions referenced by TUTSTEPS.when */
 const WHEN = {
   battle: () => $('battleScr').classList.contains('on'),
-  prize: () => $('overlay').classList.contains('on') && !!$('cap0')
+  /* Any prize card, not #cap0 — the card is renumbered as each hull is settled,
+     so naming the first one hid the tip for every prize after it. */
+  prize: () => $('overlay').classList.contains('on')
+    && !!document.querySelector('.prizecard')
 };
 
 export const tutActive = () => !!S && typeof S.tut === 'number';

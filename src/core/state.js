@@ -72,7 +72,14 @@ export function newGame() {
     goods: { ...zeroed(GOOD_KEYS), sugar: 10, rum: 6 },
     mats: { ...zeroed(MAT_KEYS), wood: 8, metal: 6, cloth: 4 },
     bell: 0, wh: 0,
-    ships: [newShip('schooner'), newShip('schooner'), newShip('brig')],
+    /* You start with the flagship and nothing else. Every other hull in the
+       game is one you took off somebody — the three worn-out ships that used to
+       be here made the first hour a question of which of four ships to send
+       rather than whether you could go at all, and handed the player a fleet
+       before they had done anything to deserve one. Solo, the opening fights
+       are close-run and the first captured hull is the best thing that has
+       happened to you. See tools/check-solo.js for what keeps that fair. */
+    ships: [],
     flag: newFlag(),
     unlocked: ['caribbean'],
     done: {}, patrol: {}, lanes: {}, wanted: {}, summoned: {}, draws: {},
