@@ -26,15 +26,26 @@
 /* What a region's water is rated at before danger and heat touch it. Tuned
    against the fleet a player can realistically field on arrival:
 
-     Caribbean  ~74 power (starting fleet)
+     Caribbean  ~34 power (the flagship, alone — see below)
      Gulf      ~103        (flagship coming along, a captured frigate)
      Atlantic  ~132
      Grand     ~165        (~194 fully maxed, which is the ceiling)
 
    The expected draw sits a little under that, so the fight this water is rated
-   for is one you should win — and the heavy tail is one you might not. */
+   for is one you should win — and the heavy tail is one you might not.
+
+   The Caribbean figure used to read ~74, because the game used to hand out
+   three worn-out ships at the start. It does not any more: a new captain has
+   the flagship and nothing else, at 34 power. Home water rated for 40 meant
+   the fight it was rated for was a coin flip rather than one you should win,
+   and every single Caribbean mission measured 38-52% for a lone flagship —
+   with no softer thing anywhere to build a fleet out of.
+
+   So the Caribbean is rated for the ship you actually arrive with. It is
+   supposed to become easy: you out-sail home water by taking hulls off it, and
+   then the Gulf is waiting at a rating that assumes you did. */
 export const REGION_RATING = {
-  caribbean: 40,
+  caribbean: 30,
   gulf:      61,
   atlantic:  78,
   grand:     103

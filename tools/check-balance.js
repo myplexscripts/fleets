@@ -27,7 +27,11 @@ const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome
    is the assumption the whole curve is tuned against, so it is written down
    here rather than living in somebody's head. */
 const ARRIVE = {
-  caribbean: { n: 'starting fleet',                 power: 34 + 22 + 18 },
+  /* The flagship, alone. This used to read 34+22+18, because the game used to
+     open with three worn-out hulls in port; it opens with her and nothing else
+     now, and every number below that reads "arriving in the Caribbean" has to
+     mean that or the whole curve is measured against a fleet nobody has. */
+  caribbean: { n: 'the flagship, alone',            power: 34 },
   gulf:      { n: 'flagship coming along + brigs',  power: 52 + 22 + 22 },
   atlantic:  { n: 'half-built flagship + frigates', power: 70 + 31 + 31 },
   grand:     { n: 'worked-up flagship + heavies',   power: 88 + 44 + 31 },
@@ -38,11 +42,30 @@ const ARRIVE = {
    which is a region's worth of fighting — so she is measured against the fleet
    you have by the time you have earned her, not the one you turned up with. */
 const CHALLENGE = {
-  caribbean: 45 + 22 + 31,
+  /* A region's worth of fighting in home water buys an upgrade or two and two
+     captured hulls — not the three-ship line the old opening handed over for
+     free, so this comes down with ARRIVE. */
+  caribbean: 45 + 22 + 18,
   gulf:      64 + 31 + 31,
   atlantic:  88 + 44 + 31,
   grand:     106 + 44 + 44
 };
+
+/* Bounties get their own reference, halfway between arriving and having earned
+   the admiral.
+
+   CHALLENGE is the fleet that has finished with a region — the one that goes
+   and provokes its admiral. An admiral is gated behind exactly that, so she is
+   rightly measured against it. A bounty is not: she turns up on a timer from
+   the first minute and keeps turning up, so the fleet that actually meets her
+   is the one somewhere in the middle of the region, and that is what deciding
+   whether she is "a real fight" has to be asked about.
+
+   This mattered the moment home water was re-rated for a lone flagship. The
+   Caribbean now spans 34 to 85 power inside one region, so measuring its bounty
+   against 85 asked her to be a fight for a fleet that has already left. */
+const BOUNTY_FLEET = Object.fromEntries(
+  Object.keys(CHALLENGE).map(k => [k, Math.round((ARRIVE[k].power + CHALLENGE[k]) / 2)]));
 
 let chromium;
 try { ({ chromium } = require('playwright-core')); }
@@ -199,13 +222,13 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
     const her = Math.round(worst * bt.mult);
     /* Her line rolls a band like anything else, so she spans the same spread. */
     const lo = Math.round(her * 0.90), hi = Math.round(her * 1.30);
-    const ready = CHALLENGE[rk];
+    const ready = BOUNTY_FLEET[rk];
     const oLo = odds(ready, lo), oHi = odds(ready, hi);
     const heavyTop = Math.round(worst * 1.6);
     const purse = Math.round(her * bt.gold);
 
     console.log(`  ${data.names[rk].padEnd(18)} enemy ${String(lo).padStart(3)}-${String(hi).padStart(3)}  `
-      + `odds ${pct(oHi)}-${pct(oLo)} for the ${ready}-power fleet  purse ${purse}`);
+      + `odds ${pct(oHi)}-${pct(oLo)} for the ${ready}-power fleet mid-region  purse ${purse}`);
 
     if (her <= Math.round(worst * 1.1)) {
       bad.push(`${rk}: a bounty (${her}) is no harder than the water she is in (${worst}) — not a challenge`);
@@ -252,8 +275,13 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
     for (const rk in world.REGIONS) {
       const rs = routes.makeRoutes().filter(r => r.region === rk);
       const listed = rs.reduce((a, r) => a + ((r.rew && r.rew.gold) || 0), 0);
-      const fights = rs.filter(r => world.BATTLE_TYPES.includes(r.type)).length;
-      byRegion[rk] = { listed, fights };
+      const battles = rs.filter(r => world.BATTLE_TYPES.includes(r.type));
+      /* Prizes are worth what was drawn, and what is drawn scales with the
+         rating the mission sits at. A shallow fight (ratingMult below 1) leaves
+         smaller hulls and fewer of them, so counting it as a whole fight's worth
+         of brigs credited the beginner tier with income it does not pay. */
+      const tonnage = battles.reduce((a, r) => a + (r.ratingMult || 1), 0);
+      byRegion[rk] = { listed, fights: battles.length, tonnage };
     }
 
     return {
@@ -274,10 +302,10 @@ const pct = n => String(Math.round(n)).padStart(3) + '%';
   let sweep = 0;
   for (const rk of data.regions) {
     const r = ec.byRegion[rk];
-    const real = r.listed + Math.round(r.fights * PRIZES * perPrize);
+    const real = r.listed + Math.round(r.tonnage * PRIZES * perPrize);
     if (rk === 'caribbean') sweep = real;
     console.log(`  ${data.names[rk].padEnd(18)} listed ${String(r.listed).padStart(5)}  `
-      + `+ ${r.fights} fights of prizes  = about ${real} a sweep`);
+      + `+ ${r.fights} fights of prizes (${r.tonnage.toFixed(2)} rated)  = about ${real} a sweep`);
   }
   console.log(`  first flagship tier ${ec.firstTier}, last ${ec.lastTier}`);
   console.log(`  the whole flagship ${ec.flagAll}, every bell ${ec.bells}`);

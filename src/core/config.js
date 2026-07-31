@@ -132,9 +132,13 @@ export const BOUNTY_LIFE_MS = 12 * 60 * 1000;
 export const BOUNTY_GAP_MS = 5 * 60 * 1000;
 export const BOUNTY_MAX = 1;
 
-/* How far above her water she is drawn. At 1.55 she sits between the heavy and
-   hunter bands of her own region — a genuine step up from what you have been
-   comfortably beating, without being an admiral. */
+/* How far above her water she is drawn. She sits between the heavy and hunter
+   bands of her own region — a genuine step up from what you have been
+   comfortably beating, without being an admiral.
+
+   The ceiling on this number is the admiral: she has to stay the hardest thing
+   in her region, and 1.75 put bounties above all three of the later ones. The
+   floor is that a bounty must not be a formality. 1.55 clears both. */
 export const BOUNTY_RATING_MULT = 1.55;
 
 /* And what she is worth. Gold scales with the region's rating so a Grand Banks

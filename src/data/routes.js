@@ -55,6 +55,27 @@ export function makeRoutes() {
     { id: 'cv1', region: 'caribbean', n: 'The Sugar Convoy', type: 'convoy',
       danger: 1, rew: { gold: 180 }, x: 150, y: 388 },
 
+    /* ---- the shallows: home water's beginner tier ----
+
+       A captain with one hull and nothing else needs somewhere to win. The five
+       above are the fights the Caribbean is rated for, and a rated fight is
+       meant to be close — which is right once there is a fleet, and no way to
+       build one when every option on the chart is a coin flip.
+
+       These three sit deliberately under the water they are in (`ratingMult`),
+       pay accordingly, and are where a first captured hull realistically comes
+       from. They stay on the chart for good rather than vanishing once they are
+       outgrown: a bad night in the Atlantic should always have somewhere to
+       limp back to. */
+    { id: 'ch2', region: 'caribbean', n: 'The Nassau Shallows', type: 'hunt',
+      danger: 0, ratingMult: 0.55, rew: { gold: 90 }, x: 178, y: 404 },
+
+    { id: 'c6', region: 'caribbean', n: 'Cut Out the Lugger', type: 'raid',
+      danger: 0, ratingMult: 0.6, power: 18, rew: { gold: 200, wood: 4 }, x: 92, y: 336 },
+
+    { id: 'c7', region: 'caribbean', n: 'See the Packet In', type: 'escort',
+      danger: 0, ratingMult: 0.72, power: 24, rew: { gold: 260, cloth: 4 }, x: 214, y: 368 },
+
     /* ---- Gulf Coast ---- */
     { id: 'g1', region: 'gulf', n: 'Tortuga → New Orleans', type: 'cargo',
       good: 'rum', qty: 18, power: 30, speed: 5, dest: 'New Orleans', riseMin: 20, dangerCap: 2, danger: 1, len: 3,
