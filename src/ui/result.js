@@ -346,7 +346,8 @@ function nextPrize() {
     <div class="card prizecard${e.chest ? ' chesty' : ''}" style="--i:2" id="cap${i}">
       <div class="prizehead">
         <div class="prizeart">${shipHTML(e.type, e.pal === 'boss' ? 'boss' : 'enemy', 0.85)}</div>
-        <h3>${e.derelict ? 'Derelict' : 'Captured'} ${t.n}</h3>
+        <h3>${esc(e.name || t.n)}</h3>
+        <span class="tag">${e.derelict ? 'DERELICT' : t.n.toUpperCase()}</span>
         ${e.chest ? '<span class="tag gold">STRONGBOX</span>' : ''}
       </div>
       ${tileRow([
@@ -419,7 +420,10 @@ function capAct(i, mode, type) {
 
   if (mode === 'capture') {
     if (S.ships.length >= S.docks) return deny('Every dock is full');
-    const taken = newShip(type, rnd(0.25, 0.45));
+    /* She keeps the name she was flying — read off the hull being decided
+       rather than threaded through the button, because the queue already knows
+       which one that is. */
+    const taken = newShip(type, rnd(0.25, 0.45), (queue[i] || {}).name);
     S.ships.push(taken);
     ledger.ships.push(taken);
   } else if (mode === 'salvage') {

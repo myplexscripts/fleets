@@ -13,7 +13,7 @@ import {
   patrolActive, patrolLeft, fmtDur, canVoyage, diveReachable, wantedOf,
   allShips, busyIds
 } from '../../core/selectors.js';
-import { iconHTML } from '../../art/icons.js';
+import { iconHTML, glyphBody } from '../../art/icons.js';
 import { actions } from '../../core/actions.js';
 import { render } from '../../core/bus.js';
 import { alertDlg } from '../dialog.js';
@@ -197,46 +197,43 @@ function starPath(x, y, r) {
          `L${x},${y + r} L${x - r * 0.35},${y + r * 0.35} L${x - r},${y} L${x - r * 0.35},${y - r * 0.35} Z`;
 }
 
-/* Mission type reads from the marker's silhouette, not just its colour.
+/* What a marker means, at a glance.
 
-   One shape per mission type, no sharing — the legend names every symbol on the
-   chart, and it can only do that if no two types wear the same one. */
+   The chart used to carry one silhouette per mission type — eleven of them,
+   each abstract, each needing the key to decode. That is a lot to hold in your
+   head for information the sheet repeats the moment you tap. So markers say
+   the KIND of thing that is there, in five pictures a player already knows:
+
+     scales   a trade run. Never a fight.
+     skull    a fight. Which kind is on the label and on the sheet.
+     bicorne  an admiral.
+     warrant  a bounty hunter — a blade and the price on it.
+     wreck    something on the bottom. Never a fight.
+
+   Charters keep their star: they are one-offs that open a port for good, which
+   is not any of the five.
+
+   The pictures come from the icon set (art/icons.js) rather than being drawn
+   again here, so the marker, the key and any chip wearing the same glyph can
+   never drift apart. */
+const MARKER_GLYPH = {
+  cargo: 'scales',
+  dive: 'wreck',
+  boss: 'bicorne',
+  bounty: 'warrant',
+  charter: 'star'
+};
+const markerGlyph = t => MARKER_GLYPH[t] || 'skull';
+
+/* Place a 24x24 glyph on the chart, centred and scaled to the marker. */
+function glyphMark(x, y, k, name, col) {
+  const span = 21 * k, sc = span / 24;
+  return `<g transform="translate(${x - span / 2} ${y - span / 2}) scale(${sc})">`
+    + glyphBody(name, col) + '</g>';
+}
+
 function nodeShape(r, col, k) {
-  const { x, y } = r, s = 5.5 * k;
-  if (r.type === 'dive')                            // ring: something below
-    return `<circle cx="${x}" cy="${y}" r="${s}" fill="none" stroke="${col}" stroke-width="${2.8 * k}"/>`
-         + `<circle cx="${x}" cy="${y}" r="${s * 0.34}" fill="${col}"/>`;
-  if (r.type === 'patrol')                          // rotated square
-    return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" transform="rotate(45 ${x} ${y})" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'raid')                            // spearhead
-    return `<path d="M${x},${y - s * 1.35} L${x + s * 1.2},${y + s * 0.85} L${x - s * 1.2},${y + s * 0.85} Z" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'blockade')                        // a line held: barred circle
-    return `<circle cx="${x}" cy="${y}" r="${s * 1.1}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
-         + `<rect x="${x - s * 1.7}" y="${y - s * 0.3}" width="${s * 3.4}" height="${s * 0.6}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1"/>`;
-  if (r.type === 'escort')                          // square
-    return `<rect x="${x - s}" y="${y - s}" width="${s * 2}" height="${s * 2}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`;
-  if (r.type === 'convoy')                          // three hulls in a line
-    return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
-         + [-0.62, 0, 0.62].map(o =>
-             `<rect x="${x - s * 0.7}" y="${y + o * s * 0.62 - s * 0.16}" width="${s * 1.4}"`
-             + ` height="${s * 0.32}" rx="${s * 0.16}" fill="#1a0d08"/>`).join('');
-  if (r.type === 'bounty')                          // a ring of spikes: a price on a head
-    return `<circle cx="${x}" cy="${y}" r="${s * 1.15}" fill="${col}" stroke="rgba(0,0,0,.55)" stroke-width="1.3"/>`
-         + [0, 60, 120, 180, 240, 300].map(a => {
-             const rad = a * Math.PI / 180;
-             const x1 = x + Math.cos(rad) * s * 1.15, y1 = y + Math.sin(rad) * s * 1.15;
-             const x2 = x + Math.cos(rad) * s * 1.85, y2 = y + Math.sin(rad) * s * 1.85;
-             return `<path d="M${x1},${y1} L${x2},${y2}" stroke="${col}"`
-               + ` stroke-width="${1.7 * k}" stroke-linecap="round"/>`;
-           }).join('')
-         + `<circle cx="${x}" cy="${y}" r="${s * 0.42}" fill="#2a0a06"/>`;
-  if (r.type === 'hunt')                            // crossed blades: open water
-    return `<circle cx="${x}" cy="${y}" r="${s * 1.25}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/>`
-         + `<path d="M${x - s * 0.62},${y - s * 0.62} L${x + s * 0.62},${y + s * 0.62}`
-         + ` M${x + s * 0.62},${y - s * 0.62} L${x - s * 0.62},${y + s * 0.62}"`
-         + ` stroke="#1a0d08" stroke-width="${1.9 * k}" stroke-linecap="round" fill="none"/>`;
-  /* cargo run: filled disc with a bright centre */
-  return `<circle cx="${x}" cy="${y}" r="${s}" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1.2"/><circle cx="${x}" cy="${y}" r="${2 * k}" fill="#eaf4f4"/>`;
+  return glyphMark(r.x, r.y, k, markerGlyph(r.type), col);
 }
 
 export function renderMap() {
@@ -452,7 +449,7 @@ export function renderMap() {
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
       ${hitShapes(x, y, b.n.toUpperCase(), LBL, 22 * MS)}
       <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#d94a3a"/>
-      <path d="${starPath(x, y, 10 * MS)}" fill="#f0b0a6" stroke="#5e1a1a" stroke-width="1.4"/></g>`;
+      ${glyphMark(x, y, 1.65 * MS, 'bicorne', '#f0b0a6')}</g>`;
     labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#f0b0a6', '#0a0507', 1.2);
   });
 
@@ -526,17 +523,20 @@ export function renderMap() {
    It lists only what is actually drawn right now, which is what keeps it both
    complete and short: the Caribbean alone needs five entries, an admiral adds
    hers the moment she sails, and a shape can never appear unnamed. */
-const KEY_ORDER = ['cargo', 'dive', 'convoy', 'hunt', 'patrol', 'escort', 'raid', 'blockade', 'bounty', 'charter', 'boss', 'beaten'];
+/* The key names what the five pictures mean, not eleven mission types — the
+   chart draws five, so the key that decodes it has five rows. Which flavour of
+   fight a skull is stays on its label and on the sheet behind it. */
+const KEY_ORDER = ['cargo', 'fight', 'dive', 'bounty', 'charter', 'boss', 'beaten'];
 const KEY_WORD = {
-  cargo: 'Cargo', dive: 'Wreck', convoy: 'Convoy', hunt: 'Hunt', patrol: 'Patrol', escort: 'Escort',
-  raid: 'Raid', blockade: 'Blockade', bounty: 'Bounty', charter: 'Charter',
-  boss: 'Admiral', beaten: 'Beaten'
+  cargo: 'Trade Run', fight: 'Battle', dive: 'Wreck', bounty: 'Bounty Hunter',
+  charter: 'Charter', boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
-  cargo: '#63c06a', dive: '#7ab0e0', convoy: '#c9a24e', hunt: '#e0a03a', patrol: '#e0a03a', escort: '#e0a03a',
-  raid: '#e0a03a', blockade: '#e0a03a', bounty: '#e8705c', charter: '#efe3ae',
-  boss: '#f0b0a6', beaten: '#d9c98a'
+  cargo: '#63c06a', fight: '#e0a03a', dive: '#7ab0e0', bounty: '#e8705c',
+  charter: '#efe3ae', boss: '#f0b0a6', beaten: '#d9c98a'
 };
+/* Every fight type answers to one row. */
+const KEY_ROW = t => (KEY_WORD[t] ? t : 'fight');
 
 /* An admiral you have already beaten leaves her struck colours on the chart —
    the one marker that is a record rather than a thing to tap. Same silhouette
@@ -550,14 +550,14 @@ function struckFlag(x, y, k, col) {
 
 function keySwatch(type, col) {
   const inner = type === 'beaten' ? struckFlag(12, 12, 1.1, col)
-    : (type === 'charter' || type === 'boss')
-      ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="${type === 'boss' ? '#5e1a1a' : '#8a793e'}" stroke-width="1.2"/>`
-      : nodeShape({ type, x: 12, y: 12 }, col, 1.5);
+    : type === 'charter'
+      ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
+      : glyphMark(12, 12, 1.14, markerGlyph(type), col);
   return `<svg class="keysh" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">${inner}</svg>`;
 }
 
 function shapeKey(rs, liveBosses, beaten) {
-  const kinds = new Set(rs.map(r => r.type));
+  const kinds = new Set(rs.map(r => KEY_ROW(r.type)));
   if (liveBosses) kinds.add('boss');
   if (beaten) kinds.add('beaten');
   return KEY_ORDER.filter(k => kinds.has(k)).map(k =>

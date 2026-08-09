@@ -8,6 +8,7 @@ const ICON_COLOR = {
   sea: '#7ab0e0', plate: '#9fb8bd', guns: '#d9883a', rig: '#cfe3e4', hold: '#c8a97a',
   relic: '#d9c98a', flag: '#efe3ae', star: '#efe3ae', anchor: '#63c06a',
   figure: '#e0b98a',
+  skull: '#e8a89c', bicorne: '#f0b0a6', warrant: '#e8705c', wreck: '#7ab0e0',
   wheel: '#d9c98a', map: '#7ab0e0', port: '#c8a97a', scales: '#c8a97a',
   /* trade goods */
   rum: '#b5701f', sugar: '#e0d6bd', tobacco: '#8a6a32', wine: '#8f3050', spice: '#c9702a',
@@ -32,6 +33,26 @@ const ICONS = {
   rig: c => `<path d="M11.4 2.6v18.8" stroke="${c}" stroke-width="1.7"/><path d="M12.7 4.4l5.9 6h-5.9zM12.7 12l5.9 6.4h-5.9z" fill="${c}"/><path d="M10.1 5.2l-4.7 5.2h4.7zM10.1 12.6l-4.7 5.8h4.7z" fill="${c}" opacity=".68"/>`,
   hold: c => `<rect x="3.5" y="6.5" width="17" height="12" rx="1.5" fill="${c}"/><path d="M3.5 10.6h17M3.5 14.6h17M8.6 6.5v12M15.4 6.5v12" stroke="#2a1f12" stroke-width="1.2"/>`,
   relic: c => `<path d="M8.2 3h7.6v2h-2.1c2.9 1.5 4.6 4.1 4.6 7.1 0 4.4-3.1 7.9-6.3 7.9s-6.3-3.5-6.3-7.9c0-3 1.7-5.6 4.6-7.1H8.2z" fill="${c}"/><path d="M9 20.6h6" stroke="${c}" stroke-width="1.8"/>`,
+  /* ---- the chart's five ----
+     These are the glyphs the map marks missions with. They are here rather than
+     inline in map.js so the map and the key and any chip that wants one all
+     draw the same picture from the same place. */
+
+  /* A fight. The plain skull is `noto` and means the price on your head; this
+     one wears the bones, because a marker that means "there is a fight here"
+     and a meter that means "they want you" must not be the same picture. */
+  skull: c => `<path d="M12 1.8c4.4 0 7.3 2.9 7.3 6.9 0 2.5-1 3.9-2.3 4.8v2.1a1.5 1.5 0 0 1-1.5 1.5H8.5A1.5 1.5 0 0 1 7 15.6v-2.1C5.7 12.6 4.7 11.2 4.7 8.7c0-4 2.9-6.9 7.3-6.9z" fill="${c}"/><circle cx="9.3" cy="9" r="2" fill="#05161a"/><circle cx="14.7" cy="9" r="2" fill="#05161a"/><path d="M12 11.6l-1.2 2.2h2.4z" fill="#05161a"/><path d="M9 17.9v-1.6M12 17.9v-1.6M15 17.9v-1.6" stroke="#05161a" stroke-width="1.3" stroke-linecap="round"/><path d="M4.6 18.6l14.8 4M19.4 18.6l-14.8 4" stroke="${c}" stroke-width="1.9" stroke-linecap="round"/><circle cx="4.6" cy="18.6" r="1.5" fill="${c}"/><circle cx="19.4" cy="18.6" r="1.5" fill="${c}"/><circle cx="4.6" cy="22.6" r="1.5" fill="${c}"/><circle cx="19.4" cy="22.6" r="1.5" fill="${c}"/>`,
+
+  /* An admiral. A bicorne, worn athwart the way a flag officer wore it. */
+  bicorne: c => `<path d="M2 15.2C4.2 8.4 8.2 5.4 12 9.2c3.8-3.8 7.8-.8 10 6-3.8 4.2-16.2 4.2-20 0z" fill="${c}"/><path d="M2.6 14c3.6 2.2 15.2 2.2 18.8 0" fill="none" stroke="#05161a" stroke-width="1.3" opacity=".5"/><path d="M12 9.4v4.2" stroke="#05161a" stroke-width="1.4" opacity=".45"/><circle cx="12" cy="11.6" r="1.7" fill="#05161a"/><path d="M3.6 17.6c4 2 12.8 2 16.8 0" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/>`,
+
+  /* A bounty. A blade with a price beside it — the sword says how it is
+     collected, the coin says why. */
+  warrant: c => `<path d="M12 1.4l1.5 2.6v9.4h-3V4z" fill="${c}"/><rect x="6.6" y="13.4" width="10.8" height="2.1" rx="1" fill="${c}"/><rect x="10.9" y="15.5" width="2.2" height="5.2" rx=".6" fill="${c}"/><path d="M8.6 20.7h6.8" stroke="${c}" stroke-width="1.9" stroke-linecap="round"/><circle cx="19" cy="6.4" r="4.4" fill="${c}" stroke="#05161a" stroke-width="1"/><path d="M19 3.2v6.4M20.9 4.7h-2.6a1.3 1.3 0 0 0 0 2.6h1.4a1.3 1.3 0 0 1 0 2.6h-2.6" fill="none" stroke="#05161a" stroke-width="1.3" stroke-linecap="round"/>`,
+
+  /* A wreck. Half a hull above the line, the rest of her under it. */
+  wreck: c => `<g transform="rotate(-24 12 13)"><path d="M2.8 11.6h16l-2.4 6.6H5.2z" fill="${c}"/><path d="M7.4 11.6 9 2.4l3.4 9.2z" fill="${c}"/><path d="M9.8 3 16 8.2l-2.4 3.4z" fill="${c}" opacity=".72"/><path d="M9 2.4v9.2" stroke="#05161a" stroke-width="1" opacity=".5"/></g><path d="M1.2 13.6h21.6" stroke="${c}" stroke-width="1.9" stroke-linecap="round"/><path d="M1.4 17.6c2.4 0 2.4-1.5 4.8-1.5s2.4 1.5 4.8 1.5 2.4-1.5 4.8-1.5 2.4 1.5 4.6 1.5" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/><path d="M1.4 21.4c2.4 0 2.4-1.5 4.8-1.5s2.4 1.5 4.8 1.5 2.4-1.5 4.8-1.5 2.4 1.5 4.6 1.5" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>`,
+
   /* A carving under the bowsprit: head thrown back, hair streaming aft, the
      shoulder falling away into the scroll, water beneath. Its own glyph and not
      the relic urn — a figurehead is not a thing in a cabinet, and one glyph
@@ -103,6 +124,17 @@ const ICON_URL = {};
 function svgIcon(name) {
   const c = ICON_COLOR[name] || '#cfe3e4';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="160" height="160">${(ICONS[name] || ICONS.gold)(c)}</svg>`;
+}
+
+/* The glyph's raw markup, for callers that are already inside an SVG.
+
+   The chart draws its markers inline rather than as <img>, and it must not
+   author its own copy of a picture the icon set already has: two hand-drawn
+   skulls drift apart the first time either is touched. Authored in a 24x24
+   box, so a caller places it with its own transform. */
+export function glyphBody(name, colour) {
+  const f = ICONS[name] || ICONS.gold;
+  return f(colour || ICON_COLOR[name] || '#efe3ae');
 }
 
 /* `data-icon` carries the glyph's name into the DOM. Nothing in the game reads

@@ -5,7 +5,8 @@
    swap the object itself (newGame / load). */
 
 import { SAVE_KEY, TUT_KEY, PATROL_MS, GEM_TO_GOLD } from './config.js';
-import { TYPES, NAMES } from '../data/ships.js';
+import { TYPES } from '../data/ships.js';
+import { SHIP_NAMES } from '../data/names.js';
 import { FLAGBASE, FLAGTIERS, BOONS } from '../data/flagship.js';
 import { makeRoutes } from '../data/routes.js';
 import { GOOD_KEYS } from '../data/goods.js';
@@ -23,20 +24,54 @@ const zeroed = keys => keys.reduce((o, k) => { o[k] = 0; return o; }, {});
 
 /* A name nobody in the fleet is already using. Two ships called Petrel is a
    real problem the moment you have to pick one off a list, and captures happen
-   often enough that a straight random pick collides regularly. */
-function freeName() {
-  const taken = new Set([S && S.flag ? S.flag.name : '', ...((S && S.ships) || []).map(s => s.name)]);
-  const free = NAMES.filter(n => !taken.has(n));
-  const pool = free.length ? free : NAMES;
-  return pool[Math.floor(Math.random() * pool.length)];
+   often enough that a straight random pick collides regularly.
+
+   Drawn from the pirate side of her own class, because that is what you are and
+   because a sloop should not be called The Hellbound Colossus. */
+const inFleet = () =>
+  new Set([S && S.flag ? S.flag.name : '', ...((S && S.ships) || []).map(s => s.name)]);
+
+/* A name nobody in the fleet is already using, preferring one that suits her.
+
+   Tried in order: her own class's pirate names, then her class's navy names,
+   then every other class. A fleet big enough to exhaust the first list is rare
+   and a fleet big enough to exhaust all of them is not reachable — but if it
+   were, the last resort is a numeral, because two hulls of a name is worse than
+   an ugly name. */
+function freeName(type) {
+  const taken = inFleet();
+  const own = SHIP_NAMES[type] || SHIP_NAMES.brig;
+  const rest = Object.keys(SHIP_NAMES).filter(k => k !== type);
+  const tiers = [own.pirate, own.navy,
+    ...rest.map(k => SHIP_NAMES[k].pirate), ...rest.map(k => SHIP_NAMES[k].navy)];
+
+  for (const pool of tiers) {
+    const free = pool.filter(n => !taken.has(n));
+    if (free.length) return free[Math.floor(Math.random() * free.length)];
+  }
+  const base = own.pirate[0];
+  for (let i = 2; ; i++) if (!taken.has(base + ' ' + i)) return base + ' ' + i;
 }
 
-export function newShip(type, hullPct) {
+/* `name` is what she was flying when you took her.
+
+   A prize keeps her name. Everything else about her is stripped back to a stock
+   hull of her class — her crew and her guns went with the people who were using
+   them — but the name on the stern is the one thing a capture genuinely brings
+   home, and it turns the fleet list into a record of who you beat. Renaming her
+   to something off your own list threw that away every single time.
+
+   Unless the fleet already has one. Enemy lines draw their names independently,
+   so the same HMS Swift can be beaten twice on two different nights — and two
+   ships of a name in one fleet is the original "two Petrels" problem, which is
+   a real one the moment you have to pick one off a list. Kept when it is free,
+   renamed when it is not. */
+export function newShip(type, hullPct, name) {
   const t = TYPES[type];
   return {
     id: 's' + (shipSeq++) + '_' + (Date.now() % 100000),
     type,
-    name: freeName(),
+    name: (name && !inFleet().has(name)) ? name : freeName(type),
     hull: Math.max(1, Math.round(t.hull * (hullPct ?? 1))),
     max: t.hull, speed: t.speed, guns: t.guns, cargo: t.cargo
   };

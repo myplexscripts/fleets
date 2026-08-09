@@ -19,13 +19,14 @@
      the bottom with the people who were using them. That is what keeps the
      flagship the only ship in the fleet that grows. */
 
-import { TYPES, ENAMES } from '../data/ships.js';
-import { BANDS, LADDER, CHEST_BANDS, HUNTER_NAMES } from '../data/water.js';
+import { TYPES } from '../data/ships.js';
+import { SHIP_NAMES, FACTIONS } from '../data/names.js';
+import { BANDS, LADDER, CHEST_BANDS } from '../data/water.js';
 import { DRAW_TTL_MS } from '../core/config.js';
 import { S } from '../core/state.js';
 import { now } from '../core/dom.js';
 import { routeRating, effDanger, heatStep } from '../core/selectors.js';
-import { shuffled, pick } from '../core/rng.js';
+import { pick } from '../core/rng.js';
 
 /* One ship's contribution, using the same formula the fleet is measured by. */
 const shipRating = s => Math.round(s.guns * 2 + s.speed + s.hull / 5);
@@ -76,7 +77,21 @@ function fillLine(target, band) {
      between a duel and a brawl, and both should happen. */
   const count = target > heaviest * 2.2 ? 3 : (Math.random() < 0.45 ? 3 : 2);
 
-  const names = shuffled(ENAMES);
+  /* One faction per line. "HMS Bulldog and HMS Valiant" reads as the navy
+     coming for you; the same two hulls called "Gallows Wind" and "The Bone
+     Collector" read as pirates working the lane. Mixed, they read as neither —
+     so the whole line is drawn from one side, and names are taken per class so
+     a sloop never ends up called The Hellbound Colossus. */
+  const side = pick(FACTIONS);
+  const used = new Set();
+  const nameFor = ty => {
+    const pool = (SHIP_NAMES[ty] || SHIP_NAMES.brig)[side];
+    const free = pool.filter(n => !used.has(n));
+    const n = pick(free.length ? free : pool);
+    used.add(n);
+    return n;
+  };
+
   const out = [];
   let left = target;
 
@@ -90,7 +105,7 @@ function fillLine(target, band) {
 
     /* Trim the multiplier so a stock hull is never stretched past recognition. */
     const mod = Math.max(0.7, Math.min(1.9, want / Math.max(1, stockRating(best.type))));
-    const name = (band.key === 'hunter' && i === 0) ? pick(HUNTER_NAMES) : (names[i] || TYPES[best.type].n);
+    const name = nameFor(best.type);
     const ship = makeShip(best.type, mod, name);
     if (band.key === 'hunter' && i === 0) ship.named = true;
     if (CHEST_BANDS.includes(band.key) && i === 0) ship.chest = true;
@@ -114,11 +129,12 @@ function drawLine(r) {
     });
   }
 
-  /* A bounty is a person, so the ship at the head of her line is her: she
-     carries the name on the chart and the strongbox that is otherwise a
-     one-in-five roll. The rest are whoever sails with her. */
+  /* A bounty is a person, so the ship at the head of her line is HER SHIP: the
+     chart carries the captain's name, the water carries the hull's. She also
+     has the strongbox that is otherwise a one-in-five roll. The rest are
+     whoever sails with her. */
   if (r.type === 'bounty' && ships.length) {
-    ships[0].name = r.n;
+    ships[0].name = r.ship || r.n;
     ships[0].named = true;
     ships[0].chest = true;
     ships.slice(1).forEach(s => { s.chest = false; });

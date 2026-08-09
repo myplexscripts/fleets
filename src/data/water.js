@@ -82,9 +82,3 @@ export const LADDER = [
   { type: 'frigate',  from: 75 },
   { type: 'manowar',  from: 120 }
 ];
-
-/* Enemy names, by how much they outclass their water. A hunter is somebody. */
-export const HUNTER_NAMES = [
-  'Blackwall', 'The Cormorant', 'Iron Kate', 'Saint Elmo', 'The Reckoning',
-  'Gallows Wind', 'The Pale Horse', 'Marisol', 'Deadman\'s Purse', 'The Verdict'
-];

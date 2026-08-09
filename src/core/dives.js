@@ -39,32 +39,51 @@ export const SITES_PER_REGION = 2;
    would just read as a paywall. */
 export const TEASE_BEYOND = 1;
 
-/* Where a wreck can be. Real spots on the chart, so two sites never land on top
-   of each other and the map keeps its hand-drawn feel. */
+/* Where a wreck can be, and who she was.
+
+   Real spots on the chart, so two sites never land on top of each other and the
+   map keeps its hand-drawn feel. A wreck IS her spot — the name is the identity
+   the charting below dedupes on, because a wreck sits where she sank and must
+   never turn up somewhere else at a different depth.
+
+   Named by region rather than at random, so a region's bottom says what
+   happened in that water: home water is full of small-time pirates who lost,
+   the Gulf is full of traders who were in the wrong place, the Atlantic is
+   where the navy and the people hunting it went down, and the Grand Fleet Route
+   is where whole fleets did. The full pools they are drawn from are in
+   data/names.js. */
 const ANCHORAGES = {
   caribbean: [
-    { n: 'Wreck of the Santa Ana',  x: 132, y: 440 },
-    { n: 'The Tortuga Shallows',    x: 100, y: 402 },
-    { n: 'Cayman Reef',             x: 158, y: 470 },
-    { n: 'The Serpent Bar',         x: 208, y: 470 }
+    { n: 'The Drowned Marauder',    x: 132, y: 440 },
+    { n: 'The Broken Cutlass',      x: 100, y: 402 },
+    { n: "Widow's Ruin",            x: 158, y: 470 },
+    { n: 'The Splintered Skull',    x: 208, y: 470 },
+    { n: "Black Jack's Folly",      x: 64,  y: 452 },
+    { n: 'Gallows Rest',            x: 186, y: 424 }
   ],
   gulf: [
-    { n: 'Graveyard Shoals',        x: 28,  y: 262 },
-    { n: 'The Pelican Bank',        x: 78,  y: 288 },
-    { n: 'Wreck of the Concepción', x: 120, y: 244 },
-    { n: 'Barataria Deep',          x: 56,  y: 322 }
+    { n: 'The Lost Fortune',        x: 28,  y: 262 },
+    { n: 'The Sunken Ledger',       x: 78,  y: 288 },
+    { n: 'The Spice Wreck',         x: 120, y: 244 },
+    { n: 'The Drowned Cargo',       x: 56,  y: 322 },
+    { n: 'The Empty Hold',          x: 152, y: 320 },
+    { n: "The Merchant's Folly",    x: 20,  y: 300 }
   ],
   atlantic: [
-    { n: 'Bermuda Deeps',           x: 308, y: 296 },
-    { n: 'The Azores Trench',       x: 350, y: 268 },
-    { n: 'Sargasso Hollow',         x: 272, y: 320 },
-    { n: 'The Drowned Fleet',       x: 336, y: 156 }
+    { n: 'The Fallen Sovereign',    x: 308, y: 296 },
+    { n: 'The Sunken Lion',         x: 350, y: 268 },
+    { n: 'The Silent Broadside',    x: 272, y: 320 },
+    { n: 'The Lost Indomitable',    x: 336, y: 156 },
+    { n: 'The Drowned Bailiff',     x: 380, y: 232 },
+    { n: 'The Broken Standard',     x: 246, y: 200 }
   ],
   grand: [
-    { n: 'The Abyssal Shelf',       x: 268, y: 78 },
-    { n: 'Finisterre Deep',         x: 300, y: 140 },
-    { n: 'The Black Trench',        x: 88,  y: 34 },
-    { n: 'Wreck of the Invincible', x: 172, y: 62 }
+    { n: "Leviathan's Grave",       x: 268, y: 78 },
+    { n: 'The Graveyard of Kings',  x: 300, y: 140 },
+    { n: 'The Reef of Bones',       x: 88,  y: 34 },
+    { n: 'The Lost Armada',         x: 172, y: 62 },
+    { n: 'The Sea of Masts',        x: 224, y: 24 },
+    { n: 'The Grave of Empires',    x: 120, y: 118 }
   ]
 };
 

@@ -35,6 +35,7 @@ import {
   BOARD_COOLDOWN_MS, VOLLEY_EVERY_MS, VOLLEY_WARN_MS
 } from '../core/config.js';
 import { HIT_P, HIT_E, SINK, CRIP } from '../data/flavour.js';
+import { MERCHANT_NAMES } from '../data/names.js';
 import { action } from '../core/actions.js';
 import { updateRes } from '../ui/hud.js';
 import { refreshTut, tutEvent, tutRewindToCombat } from '../ui/tutorial.js';
@@ -88,7 +89,7 @@ function teardownPhaser() {
 export function startBattle(fleet, enemies, escort, onEnd, boss) {
   BT.b = {
     fleet, enemies, onEnd, target: 0, log: [],
-    merchant: escort ? { type: 'merchant', name: 'Merchant Rose', hull: 40, max: 40, speed: 3, guns: 0 } : null,
+    merchant: escort ? { type: 'merchant', name: pick(MERCHANT_NAMES.brig), hull: 40, max: 40, speed: 3, guns: 0 } : null,
     boss: boss || null,
     reinforce: (boss && boss.reinforce) || 0,
     reinfPool: (boss && boss.reinforcements) ? boss.reinforcements.slice() : [],

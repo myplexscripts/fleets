@@ -31,6 +31,7 @@
 import { S } from './state.js';
 import { now } from './dom.js';
 import { REGIONS } from '../data/world.js';
+import { HUNTERS } from '../data/names.js';
 import { pick } from './rng.js';
 import {
   BOUNTY_LIFE_MS, BOUNTY_GAP_MS, BOUNTY_RATING_MULT, BOUNTY_MAX
@@ -40,12 +41,6 @@ let seq = 1;
 
 /* Who she is. The name is the whole of the flavour — a bounty has no briefing
    screen, just a name on the chart and a clock under it. */
-const CAPTAINS = [
-  'Bloody Anne Vance', 'Silas Kerrigan', 'The Widow Marchetti', 'Ezekiel Crow',
-  'Mad Tom Rourke', 'Ines de la Vega', 'Barnaby Skeffington', 'The Grey Fox',
-  'Hester Wynn', 'One-Eyed Amara', 'Cutlass Jack Doyle', 'Perpetua Vane'
-];
-
 /* Where she can be found. Open water, clear of the lanes and the wrecks, so a
    bounty marker never buries something permanent. */
 const STATIONS = {
@@ -84,13 +79,18 @@ function makeBounty(rk, spot) {
   const life = BOUNTY_LIFE_MS;
   /* Somebody nobody else is currently being hunted for. Two captains of the
      same name on one chart is the same problem as two ships called Petrel, and
-     worse here — the name IS the marker. */
+     worse here — the name IS the marker.
+
+     A hunter comes as a person AND her ship, because she is the only enemy in
+     the game with a name of her own and the pair is what makes her one. */
   const taken = new Set((S.bounties || []).map(b => b.captain));
-  const free = CAPTAINS.filter(c => !taken.has(c));
+  const free = HUNTERS.filter(h => !taken.has(h.captain));
+  const who = pick(free.length ? free : HUNTERS);
   return {
     id: 'b' + (seq++) + '_' + (now() % 100000),
     region: rk,
-    captain: pick(free.length ? free : CAPTAINS),
+    captain: who.captain,
+    ship: who.ship,
     n: spot.n, x: spot.x, y: spot.y,
     endsAt: now() + life,
     life
@@ -150,7 +150,7 @@ export function bountyRoute(b) {
   return {
     id: 'bt_' + b.id,
     region: b.region, type: 'bounty',
-    n: b.captain, station: b.n,
+    n: b.captain, ship: b.ship, station: b.n,
     bountyId: b.id, endsAt: b.endsAt, life: b.life,
     ratingMult: BOUNTY_RATING_MULT,
     /* Bounties are not lanes — nothing drifts here and a patrol does not calm

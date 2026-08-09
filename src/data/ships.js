@@ -11,13 +11,9 @@ export const TYPES = {
   manowar:  { n: "Man o' War",  speed: 2, guns: 12, hull: 90, cargo: 50, cost: 12000, rep: 8, salv: 26, ransom: 1200 }
 };
 
-export const NAMES = ['Adder', 'Tempest', 'Marigold', 'Vixen', 'Corsair', 'Reliant', 'Sea Wolf',
-  'Fortune', 'Kestrel', 'Gallant', 'Widow', 'Petrel', 'Avarice', 'Dauntless', 'Sparrow',
-  'Grim Tide', 'Halcyon', 'Red Wake', 'Serpent', 'Osprey'];
-
-export const ENAMES = ['HMS Fortress', 'San Cristobal', 'San Juan Bautista', 'HMS Defiance',
-  'La Dama Negra', 'HMS Sovereign', 'El Halcón', 'HMS Vigilant', 'Santa Lucía', 'HMS Ardent',
-  'El Conquistador', 'HMS Resolute'];
+/* Ship names live in data/names.js now — sorted by class and by faction, and
+   long enough that a session does not repeat itself. A hull you capture keeps
+   the name she was flying, so the fleet list is a record of who you beat. */
 
 /* Hull length / height / mast positions / rig style for the generated art. */
 export const SHIPCFG = {
