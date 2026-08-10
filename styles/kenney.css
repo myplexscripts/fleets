@@ -1,0 +1,457 @@
+/* ============================================================
+   kenney — the game's surfaces, drawn from the Kenney UI packs
+
+   Loaded last, so it is the layer that decides what a panel, a button, a
+   bar and a plate actually look like. Everything before it still owns
+   layout, type and behaviour; this file only replaces the flat fills and
+   drawn borders with the packs' own art.
+
+   Source (CC0, kenney.nl):
+     assets/kenney-adventure   UI Pack Adventure — panels, buttons, bars, banners
+     assets/kenney-ui          UI Pack           — checkboxes, sliders, icons
+     assets/kenney-borders     Fantasy UI Borders — ornamental frames
+
+   HOW THE ART IS APPLIED
+   ----------------------
+   Every surface is a 9-slice: the SVG's four corners stay their own size,
+   its four edges stretch along the sides, and its centre fills the middle.
+   In CSS that is border-image with a slice inset and a matching
+   border-width. The vectors are used rather than the PNGs so a panel is
+   crisp at any size on any density — a 64px PNG stretched over a phone-wide
+   card is exactly the softness that made earlier passes look cheap.
+
+   The one rule this file adds: NOTHING declares its own border, radius or
+   fill any more. A surface either wears pack art or it is transparent. That
+   is what makes the set consistent — the packs were drawn together, so if
+   every surface comes from them, no two things can disagree.
+   ============================================================ */
+
+:root{
+  /* The packs' own colours, read off the vectors. Text and status colours
+     still come from the harmony palette; these are the surfaces they land on,
+     and every pairing below is checked by tools/check-contrast.js. */
+  --k-wood-dark:#6D4B27;
+  --k-wood:#B47B41;
+  --k-wood-mid:#A3703A;
+  --k-parch:#FFF1D2;
+  --k-beige:#D2C6AC;
+  --k-steel-dark:#515F6B;
+  --k-steel:#778D9F;
+  --k-steel-lit:#94AFC6;
+  --k-red-dark:#8E3F38;
+  --k-red:#CF5E53;
+  --k-green-dark:#528738;
+  --k-green:#72B84E;
+  --k-blue-dark:#3B6891;
+  --k-blue:#5CA2E0;
+
+  /* Ink on parchment. Navy over #FFF1D2 is ~13:1 — the strongest pairing
+     either the packs or the palette can make, and it is the game's body text
+     everywhere a panel is showing. */
+  --k-on-parch:var(--color-navy);
+  --k-on-parch-dim:#6D4B27;      /* wood dark on parchment, ~7.3:1 */
+}
+
+/* ---- panels -------------------------------------------------------------
+   Cards, item cards, dialogs and boxes are all one thing now: a brown frame
+   with a parchment field. The slice is 16 of the 64-unit source, which is the
+   frame plus its corner radius; below about 48px square there is no field
+   left to fill, so nothing smaller than that uses this. */
+.card,.item,.dlg,.pausebox,.railcard{
+  border:16px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 fill / 16px stretch !important;
+  border-radius:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  padding:4px 8px 8px !important;
+  color:var(--k-on-parch);
+}
+/* The drawn corner brackets and inner frames are gone — the art has its own. */
+.card::after,.item::after,.dlg::after,.pausebox::after{content:none !important}
+
+/* Anything that sat on dark navy now sits on parchment, so it flips to ink.
+   This is the whole reason the skin loads last: the colour a label wants
+   depends on the surface under it, and the surface is decided here. */
+.card,.item,.dlg,.pausebox,.railcard,
+.card h3,.item .itemname b,.railname,.dlg-body p,.pausebody,
+.hero .hname,.hero .hstat b,.shipmeta b,.piece,.relic{color:var(--k-on-parch) !important}
+.card .sub,.item .sub,.railcard .sub,.dlg .sub,.pausebox .sub,
+.itemname span,.railsub,.upline,.hero .hsub,.hero .hstat span,
+.card .pickhint,.item .pickhint{color:var(--k-on-parch-dim) !important}
+/* tiles put their glyph on a steel plate and their number on the parchment */
+.tile,.tile b,.tile.ok b,.tile.bad b,.tile.warn b,.tile.gold b,.tile.dim b,
+.hstat b .of{color:var(--k-on-parch) !important}
+.tile .tileic{
+  border:6px solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 6px stretch;
+  background:none !important;border-radius:0 !important;
+}
+
+/* A card's foot was a recessed navy tray. On parchment it is a wooden shelf:
+   the darker panel art, run edge to edge across the bottom of the card. */
+.itemfoot{
+  border:12px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 fill / 12px stretch !important;
+  background:none !important;border-top:12px solid transparent !important;
+  margin:10px -8px 0 !important;padding:2px 6px !important;
+}
+
+/* ---- buttons ------------------------------------------------------------
+   Three faces, and they are the pack's own: grey steel for the ordinary
+   action, brown wood for the one you came here to press, red for the one
+   that destroys something. The press still travels — the art has a lit top
+   edge and a dark base, so dropping it 4px reads as the key going down. */
+.btn{
+  border:8px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/button_grey.svg') 8 fill / 8px stretch !important;
+  border-radius:0 !important;background:none !important;box-shadow:none !important;
+  color:var(--color-navy) !important;
+  margin-bottom:0 !important;
+  padding:6px 14px !important;
+  min-height:clamp(50px,3.6vw,60px);
+  transition:transform .07s ease,filter .15s;
+}
+.btn.gold,.btn.wide{
+  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 fill / 8px stretch !important;
+}
+.btn.red{
+  border-image:url('../assets/kenney-adventure/Vector/button_red.svg') 8 fill / 8px stretch !important;
+  color:var(--color-warm-ivory) !important;
+}
+.btn.grn{
+  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 fill / 8px stretch !important;
+}
+.btn.quiet,.btn.blu{
+  border-image:url('../assets/kenney-adventure/Vector/button_grey.svg') 8 fill / 8px stretch !important;
+}
+.btn:active:not(:disabled){transform:translateY(4px) !important;box-shadow:none !important}
+.btn:disabled{opacity:.55;filter:grayscale(.55);transform:none !important}
+.btn .ic{filter:none}
+
+/* the close key: the pack draws one, with the cross already on it */
+.panelx{
+  border:8px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/button_red_close.svg') 8 fill / 8px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+  width:52px;height:52px;color:var(--color-warm-ivory);margin-bottom:0 !important;
+  font-size:0;                       /* the glyph is in the art */
+}
+.panelx:active{transform:translateY(3px) !important}
+
+/* ---- meters -------------------------------------------------------------
+   A bar is two pieces of pack art: the hollow border, and the fill inside it.
+   The fill is a separate 9-slice so a bar at 8% still shows a rounded cap
+   rather than a sliver, which is how the pack is meant to be used. */
+.bar,.vbar,.secbar,.dbar,.notobar,.setbar{
+  border:8px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/progress_transparent.svg') 8 fill / 8px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+  height:26px !important;padding:0 !important;overflow:visible !important;
+}
+.bar::after,.vbar::after,.secbar::after,.dbar::after,.notobar::after,.setbar::after{content:none !important}
+.bar i,.vbar i,.secbar i,.dbar i,.notobar i,.setbar i{
+  display:block;height:100%;min-width:14px;
+  border:7px solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/progress_green.svg') 7 fill / 7px stretch;
+  background:none !important;border-radius:0 !important;
+}
+.bar i.low,.vbar i.low,.setbar i.low{border-image-source:url('../assets/kenney-adventure/Vector/progress_blue.svg')}
+.bar i.crit,.vbar i.crit,.dbar i,.notobar i{border-image-source:url('../assets/kenney-adventure/Vector/progress_red.svg')}
+
+/* ---- plates and signs ---------------------------------------------------
+   A section heading and a panel's nameplate are the pack's hanging banner.
+   It is a wide piece of art with its own ends, so it is sliced only on the
+   left and right and left to stretch across whatever the label needs. */
+/* A heading is the pack's dark wood plate, full width. The hanging banner was
+   tried first and is the wrong tool: its ends are big sculpted caps, so a
+   heading that also carries a counter and a button gets squeezed into the
+   middle third and truncated. This one stretches. */
+.sect,.dlg-head,.pausehead{
+  border:12px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 fill / 12px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+  color:var(--color-warm-ivory) !important;
+  width:100% !important;max-width:none !important;
+  padding:4px 8px !important;min-height:54px;
+  display:flex !important;align-items:center;gap:10px;
+}
+.dlg-head,.pausehead{justify-content:center}
+.sect .sectlbl{flex:1;min-width:0}
+/* A panel's nameplate keeps the sculpted banner — it carries a word and
+   nothing else, which is exactly what that piece of art is for. */
+.sheet-head h3,#resultScr .sheet-head::before{
+  border:0 solid transparent !important;
+  border-left-width:30px !important;border-right-width:30px !important;
+  border-image:url('../assets/kenney-adventure/Vector/banner_hanging.svg') 0 30 fill / 0 30px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+  color:var(--color-warm-ivory) !important;
+  padding:14px 2px 18px !important;min-height:64px;
+  display:inline-flex !important;align-items:center;justify-content:center;
+}
+.sheet-head{background:none !important;border-bottom:0 !important;box-shadow:none !important}
+
+/* ---- chips, tiles and small plates --------------------------------------
+   Too small to carry a 9-sliced frame with a field in it, so these take the
+   pack's flat steel rather than its wood, and keep ivory on it. */
+.chip,.stepn,.tag,.mtype,.railtag,.crewn,.reqrow,.foestat,.foeodds,.foecard{
+  border:6px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 6px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+  color:var(--color-navy) !important;
+}
+.chip b,.chip i,.reqlbl,.reqvals i,.reqvals i b,.foestat i,.foestat b,.foetype{color:var(--color-navy) !important}
+.tag,.mtype{padding:5px 10px !important}
+
+/* the tick box on a requirement row is a real checkbox from the pack */
+.reqchk{
+  border:0 !important;background:none !important;font-size:0 !important;
+  width:40px !important;height:40px !important;
+  background-image:url('../assets/kenney-adventure/Vector/checkbox_beige_empty.svg') !important;
+  background-size:contain !important;background-repeat:no-repeat !important;
+  background-position:center !important;
+}
+.reqrow.ok .reqchk{background-image:url('../assets/kenney-adventure/Vector/checkbox_beige_checked.svg') !important}
+.reqrow.bad .reqchk{background-image:url('../assets/kenney-adventure/Vector/checkbox_beige_cross.svg') !important}
+
+/* ---- the stepper --------------------------------------------------------
+   Round keys, because the pack draws round keys and they are unmistakably
+   the same family as the square ones. */
+.stepbtn{
+  border:0 !important;background:none !important;box-shadow:none !important;
+  border-radius:0 !important;margin-bottom:0 !important;
+  background-image:url('../assets/kenney-adventure/Vector/round_grey.svg') !important;
+  background-size:contain !important;background-repeat:no-repeat !important;
+  color:var(--color-navy) !important;
+}
+.stepbtn:active:not(:disabled){transform:translateY(3px) !important}
+
+/* ---- the nav rail -------------------------------------------------------
+   Bolted steel, because it is the one piece of furniture that is always on
+   screen and it should read as the frame of the machine rather than as one
+   more panel floating in it. */
+nav{
+  border:14px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts.svg') 16 fill / 14px stretch !important;
+  background:none !important;
+}
+nav button{background:none !important;border:0 !important;box-shadow:none !important}
+nav button.on{
+  border:8px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 fill / 8px stretch !important;
+  color:var(--color-navy) !important;
+}
+
+/* ---- the purse ----------------------------------------------------------
+   The one strip that sits directly on the water rather than on a panel, so
+   it keeps ivory on dark and takes the pack's dark wood behind it. */
+.resitem{
+  border:10px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 fill / 10px stretch !important;
+  background:none !important;box-shadow:none !important;border-radius:0 !important;
+}
+.purse{background:none !important}
+/* the purse rides dark wood, so it keeps ivory */
+.resitem,.resitem b,.resitem span,.purse #wStores span{color:var(--color-warm-ivory) !important}
+.iconbtn{
+  border:0 !important;background:none !important;box-shadow:none !important;border-radius:0 !important;
+  background-image:url('../assets/kenney-adventure/Vector/round_brown.svg') !important;
+  background-size:contain !important;background-repeat:no-repeat !important;
+}
+
+/* ---- overlays -----------------------------------------------------------
+   A full-screen panel is the water with a framed sheet on it, not a wall of
+   navy: the pack's border art wraps the whole sheet so the panel reads as a
+   thing laid on the sea. */
+.overlay,#resultScr{
+  background-color:var(--bg) !important;
+  background-image:var(--water) !important;
+  background-size:420px 420px !important;
+}
+.sheet-body,#rBody{
+  border:16px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 fill / 16px stretch !important;
+  background:none !important;border-radius:0 !important;
+  margin:0 10px 12px !important;padding:6px 8px 10px !important;
+  color:var(--k-on-parch) !important;
+}
+.sheet-body .sub,#rBody .sub,.sheet-body .pickhint,.sheet-body .reqnote,
+#rBody .tallynone,.sheet-body .sheet-sub{color:var(--k-on-parch-dim) !important}
+.sheet-body .rlines p,#rBody .rlines p{color:var(--k-on-parch) !important}
+/* Only the job name is still out on the water; the verdict and the prize
+   counter moved inside the parchment sheet when #rBody became a panel, so
+   they take ink like everything else in there. */
+.sheet-sub{color:var(--ink) !important}
+.rverdict,.rwhere,.prizecount,#rBody .sect{color:var(--k-on-parch) !important}
+.rverdict.good{color:var(--k-green-dark) !important}
+.rverdict.bad{color:var(--k-red-dark) !important}
+.rwhere,.prizecount{color:var(--k-on-parch-dim) !important}
+#rBody .sect,#rBody .sect .sectlbl{color:var(--color-warm-ivory) !important}
+
+/* a prize row is a steel shelf, not a bare grey block */
+.prizeopt{
+  border:10px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 10px stretch !important;
+  background:none !important;box-shadow:none !important;
+  color:var(--color-navy) !important;
+}
+.prizeopt b,.prizeopt span,.prizegets,.prizegets b{color:var(--color-navy) !important}
+
+/* The nameplate was losing its last word to the banner's sculpted end caps.
+   Narrower caps and a smaller minimum give the word the room it needs. */
+.sheet-head h3{
+  border-left-width:22px !important;border-right-width:22px !important;
+  border-image-slice:0 22 fill !important;border-image-width:0 22px !important;
+  font-size:clamp(17px,1.2vw,21px) !important;letter-spacing:1px !important;
+  max-width:calc(100% - 8px) !important;
+}
+.sheet-head h3 > span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+
+/* ---- glyphs on light surfaces -------------------------------------------
+   The nav rail dimmed its inactive glyphs to 55% back when they sat on navy
+   and the dim read as "off". On the pack's pale steel, 55% is invisible —
+   an unselected tab has to be legible, it is how you get anywhere. */
+nav .navic{opacity:.9 !important;filter:none !important}
+nav button.on .navic{opacity:1 !important;filter:none !important}
+
+/* ---- headings that carry a control --------------------------------------
+   The label was being squeezed to "YOUR SH…" by a counter and a buy button
+   sharing its row. It wraps to a second line now instead of truncating: a
+   heading you cannot read is worse than a heading that is two lines tall. */
+.sect{flex-wrap:wrap !important;padding:8px 10px !important}
+.sect .sectlbl{
+  flex:1 1 auto !important;min-width:0;
+  overflow:visible !important;text-overflow:clip !important;white-space:normal !important;
+}
+.sect .secttrail{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+
+/* a ship row's meta column must be allowed to shrink, or its bar runs out
+   past the panel frame that is supposed to contain it */
+.shipmeta,.itembody,.itemname{min-width:0}
+.bar,.vbar,.secbar{max-width:100%}
+
+
+/* ============================================================
+   contrast corrections — every one of these was found by
+   tools/check-contrast.js sampling the rendered pixels
+   ============================================================ */
+
+/* Buttons collapse to two faces. The pack's grey key puts a navy label on
+   mid steel, which measures 4.4:1 and 2.0:1 depending on where the label
+   falls — under the 4.5 a normal-size label needs. The brown key's face is
+   parchment, so a navy label on it is ~13:1 wherever it lands. Two faces is
+   also simply clearer: parchment means "do this", red means "this destroys
+   something". The grey art keeps the nav rail, where it belongs. */
+.btn,.btn.quiet,.btn.blu,.btn.grn,.btn.gold,.btn.wide{
+  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 fill / 8px stretch !important;
+  color:var(--color-navy) !important;
+}
+.btn.red{
+  border-image:url('../assets/kenney-adventure/Vector/button_red.svg') 8 fill / 8px stretch !important;
+  color:var(--color-warm-ivory) !important;
+}
+
+/* The nav rail was light steel with a navy label at 4.38:1. Dark steel with
+   ivory on it is comfortably clear, and it also stops the rail competing
+   with the parchment panels above it. */
+nav{
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts_dark.svg') 16 fill / 14px stretch !important;
+}
+nav button,nav button span,nav .navlbl{color:var(--color-warm-ivory) !important}
+nav button.on,nav button.on span,nav button.on .navlbl{color:var(--color-navy) !important}
+
+/* A rail card is narrow, so its brown frame is a big share of the card and a
+   dim brown label can end up sitting on it. Ink reads on both the frame and
+   the parchment, so the label stops depending on where it falls. */
+.railname,.railsub,.railtag,.railcard .chip b,.railcard .chip i{
+  color:var(--color-navy) !important;
+}
+
+/* The job name sits between the hanging sign and the sheet; it needs to clear
+   the sign's lower edge or it is reading against cream rather than sea. */
+.sheet-sub{margin-top:16px !important;position:relative;z-index:1}
+
+/* The chart's top strip rides the open sea, so it takes dark wood and ivory
+   rather than the parchment ink used inside panels. */
+.mapbar{
+  border:12px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 fill / 12px stretch !important;
+  background:none !important;box-shadow:none !important;
+}
+.mapbar,.mapbar b,.mapbar i,.mapfleet,.seaname,.sea{color:var(--color-warm-ivory) !important}
+.sea{
+  border:8px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 fill / 8px stretch !important;
+  background:none !important;box-shadow:none !important;
+}
+.sea,.sea .seaname,.sea b,.sea i{color:var(--color-navy) !important}
+.sea::before{display:none !important}
+
+
+/* The settings box interior still carried the dark theme's label colours; its
+   box is parchment now, so every row flips to ink. */
+.pausebody,.optrow,.optrow span,.optval,.optsect,.pausefoot{color:var(--k-on-parch) !important}
+.optval.danger{color:var(--k-red-dark) !important}
+.optrow{
+  border:10px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 10px stretch !important;
+  background:none !important;box-shadow:none !important;
+}
+.optsect{color:var(--k-on-parch-dim) !important}
+
+/* A sea plate on the chart strip: the frame needs enough width for the art's
+   corners to resolve, or the fill never paints and the label ends up ink on
+   ink. */
+.sea{
+  border-width:12px !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 fill / 12px stretch !important;
+}
+
+/* The job name under the sign gets its own dark plate rather than floating
+   against whatever the banner leaves behind it. */
+.sheet-sub{
+  display:inline-block;
+  border:10px solid transparent !important;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 fill / 10px stretch !important;
+  background:none !important;color:var(--color-warm-ivory) !important;
+  padding:2px 10px !important;margin-top:14px !important;
+}
+
+/* enemy cards sit on parchment inside the sheet, so their figures are ink */
+.foecard,.foecard b,.foetype,.foestat i,.foestat b,.foeodds i,.foeodds b,
+.foechest{color:var(--color-navy) !important}
+
+/* A small red key cannot carry a normal-size label: the pack's red face is
+   light, so ivory on it is 3.4:1. At 19px/600 the label is LARGE, where 3.0
+   is the bar and 3.4 clears it — which is what the palette rules allow and
+   why the size is pinned here rather than left to the caller. */
+.btn.sm{font-size:19px !important;font-weight:600 !important}
+
+
+/* ---- final colour resolution --------------------------------------------
+   These are last on purpose. Several of the rules above set the same label
+   from different sections as the surfaces moved around underneath them; the
+   pairs below are the ones the pixel sampler actually verified, so they win
+   outright rather than depending on which section was appended last. */
+
+/* the rail is dark steel; only the selected key is parchment */
+#app nav button span.navlbl{color:var(--color-warm-ivory) !important}
+#app nav button.on span.navlbl{color:var(--color-navy) !important}
+
+/* The hanging sign is RED art. Ivory on it is 2.91:1 and navy is 4.10:1 —
+   both under the 4.5 a small label needs, so the sign's word is pinned to
+   19px/600, where LARGE applies and navy's 4.10 clears the 3.0 bar. */
+.sheet-head h3,#resultScr .sheet-head::before{
+  color:var(--color-navy) !important;
+  font-size:19px !important;font-weight:600 !important;
+}
+
+/* The job name's plate was mid wood at 3.7:1 against ivory. Dark steel is
+   the pack's darkest flat surface and takes ivory comfortably. */
+.sheet-sub{
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts_dark.svg') 16 fill / 10px stretch !important;
+  color:var(--color-warm-ivory) !important;
+}
+
+/* the "of" separator inside a chip or tile is still the old dark-panel sage */
+.chip i,.tile i,.item i,.card i,.sheet-body i,#rBody i{color:var(--k-on-parch-dim) !important}

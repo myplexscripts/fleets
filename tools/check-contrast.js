@@ -25,88 +25,144 @@ const EXEC = process.env.CHROME
 
 const bad = [];
 
-/* ---- the walk ---------------------------------------------------------- */
+/* ---- measuring ---------------------------------------------------------
 
-const AUDIT = () => {
-  const lum = ([r, g, b]) => {
-    const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  };
-  const ratio = (a, b) => {
-    const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
-    return (x + 0.05) / (y + 0.05);
-  };
-  /* Chromium does NOT serialise every computed colour as rgb(). A value that
-     came from color-mix() comes back as `color(srgb 0.06 0.11 0.18)`, with the
-     channels in 0..1. Parsing only rgb() silently treats those as transparent,
-     which makes the compositor fall through to white and reports a legible
-     panel as a 1.15:1 failure. Both forms are handled here. */
+   Backgrounds are read from the RENDERED PIXELS, not from computed style.
+
+   This used to walk the ancestor chain compositing background-color, which
+   worked only while every surface was painted with a fill. It is not any
+   more: the panels, buttons, bars and plates are Kenney art applied with
+   border-image, and an element painted entirely by border-image reports
+   background-color: transparent. The old method therefore fell through to the
+   sea behind the panel and reported navy-ink-on-parchment — the most legible
+   pairing in the game — as a 1.2:1 failure.
+
+   So: screenshot the viewport once per screen, then for each piece of text
+   take the most common colour inside its box. Glyphs cover a minority of
+   their own box, so the mode is the background it is sitting on, whatever
+   drew it — a fill, a gradient, a border-image or an <img>. That is ground
+   truth, and it cannot be fooled by how the paint got there.
+*/
+
+const zlib = require('zlib');
+
+/* minimal PNG reader — enough for Chromium's 8-bit RGBA screenshots */
+function decodePNG(buf) {
+  let i = 8, w = 0, h = 0, ct = 0, bd = 0, idat = [];
+  while (i < buf.length) {
+    const len = buf.readUInt32BE(i), typ = buf.toString('ascii', i + 4, i + 8);
+    const data = buf.subarray(i + 8, i + 8 + len);
+    if (typ === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); bd = data[8]; ct = data[9]; }
+    else if (typ === 'IDAT') idat.push(data);
+    else if (typ === 'IEND') break;
+    i += 12 + len;
+  }
+  if (bd !== 8) throw new Error('unexpected PNG bit depth ' + bd);
+  const ch = { 0: 1, 2: 3, 4: 2, 6: 4 }[ct];
+  if (!ch) throw new Error('unexpected PNG colour type ' + ct);
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = w * ch, out = Buffer.alloc(h * stride);
+  let pos = 0, prev = Buffer.alloc(stride);
+  for (let y = 0; y < h; y++) {
+    const f = raw[pos++];
+    const line = Buffer.from(raw.subarray(pos, pos + stride)); pos += stride;
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? line[x - ch] : 0, b = prev[x], c = x >= ch ? prev[x - ch] : 0;
+      if (f === 1) line[x] = (line[x] + a) & 255;
+      else if (f === 2) line[x] = (line[x] + b) & 255;
+      else if (f === 3) line[x] = (line[x] + ((a + b) >> 1)) & 255;
+      else if (f === 4) {
+        const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c);
+        line[x] = (line[x] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255;
+      }
+    }
+    line.copy(out, y * stride); prev = line;
+  }
+  return { w, h, ch, px: out };
+}
+
+const lum = ([r, g, b]) => {
+  const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+const ratio = (a, b) => {
+  const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+};
+
+/* The colour a box mostly is — i.e. what its text is sitting on.
+
+   Sampled from the middle of the box, not the whole of it. On a 9-sliced
+   control the frame art can be a third of the element, and including it drags
+   the mode onto the dark edge rather than the face the label actually sits on.
+   The inset keeps us on the face; glyph pixels stay a minority there, and
+   their anti-aliased edges scatter across many distinct values while the face
+   is one exact repeated value, so the mode still lands on the background. */
+function modeColour(img, x0, y0, x1, y1, dpr) {
+  const counts = new Map();
+  const iw = (x1 - x0) * 0.22, ih = (y1 - y0) * 0.18;
+  x0 += iw; x1 -= iw; y0 += ih; y1 -= ih;
+  const X0 = Math.max(0, Math.round(x0 * dpr)), X1 = Math.min(img.w, Math.round(x1 * dpr));
+  const Y0 = Math.max(0, Math.round(y0 * dpr)), Y1 = Math.min(img.h, Math.round(y1 * dpr));
+  for (let y = Y0; y < Y1; y++) {
+    for (let x = X0; x < X1; x++) {
+      const o = (y * img.w + x) * img.ch;
+      const k = (img.px[o] << 16) | (img.px[o + 1] << 8) | img.px[o + 2];
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  }
+  let best = -1, bestN = 0;
+  for (const [k, n] of counts) if (n > bestN) { bestN = n; best = k; }
+  if (best < 0) return null;
+  return [(best >> 16) & 255, (best >> 8) & 255, best & 255];
+}
+
+/* candidates: every element that renders its own visible text */
+const COLLECT = () => {
   const parse = s => {
     if (!s) return null;
     let m = /^color\(srgb\s+([^)]+)\)/.exec(s);
-    if (m) {
-      const t = m[1].split('/');
-      const c = t[0].trim().split(/\s+/).map(Number);
-      return { rgb: [c[0] * 255, c[1] * 255, c[2] * 255], a: t[1] ? parseFloat(t[1]) : 1 };
-    }
+    if (m) { const t = m[1].split('/'); const c = t[0].trim().split(/\s+/).map(Number);
+      return { rgb: [c[0] * 255, c[1] * 255, c[2] * 255], a: t[1] ? parseFloat(t[1]) : 1 }; }
     m = /rgba?\(([^)]+)\)/.exec(s);
-    if (m) {
-      const t = m[1].split('/');
-      const c = t[0].trim().split(/[,\s]+/).map(Number);
-      const a = t[1] ? parseFloat(t[1]) : (c.length > 3 ? c[3] : 1);
-      return { rgb: [c[0], c[1], c[2]], a };
-    }
+    if (m) { const t = m[1].split('/'); const c = t[0].trim().split(/[,\s]+/).map(Number);
+      return { rgb: [c[0], c[1], c[2]], a: t[1] ? parseFloat(t[1]) : (c.length > 3 ? c[3] : 1) }; }
     return null;
   };
-  const over = (fg, bg) => fg.rgb.map((c, i) => c * fg.a + bg[i] * (1 - fg.a));
-
-  /* What is actually painted behind this element.
-
-     Collect every non-transparent background from the element up to the first
-     fully opaque ancestor, then composite from that opaque base back down. Any
-     other order is wrong: a 24%-black scrim over teal is not the same colour as
-     the same scrim over white, and getting that backwards makes a legible
-     control look like a failure (and, worse, the reverse). */
-  const behind = el => {
-    const chain = [];
-    let n = el;
-    while (n) {
-      const c = parse(getComputedStyle(n).backgroundColor);
-      if (c && c.a > 0) {
-        chain.push(c);
-        if (c.a >= 0.999) break;
-      }
-      n = n.parentElement;
-    }
-    let base = [255, 255, 255];
-    for (let i = chain.length - 1; i >= 0; i--) base = over(chain[i], base);
-    return base;
-  };
-
-  const out = [];
-  const seen = new Set();
+  const out = [], seen = new Set();
   for (const el of document.querySelectorAll('body *')) {
-    // only elements with their own visible text
-    const own = [...el.childNodes]
-      .filter(n => n.nodeType === 3 && n.textContent.trim())
+    const own = [...el.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim())
       .map(n => n.textContent.trim()).join(' ');
     if (!own) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none') continue;
     if (parseFloat(cs.opacity) < 0.5) continue;
     const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) continue;
-
+    if (r.width < 4 || r.height < 4) continue;
+    if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
     const fg = parse(cs.color);
     if (!fg || fg.a < 0.5) continue;
-    const bgArr = behind(el);
-    const fgArr = over(fg, bgArr);
-    const size = parseFloat(cs.fontSize);
-    const weight = parseInt(cs.fontWeight, 10) || 400;
-    const large = size >= 24 || (size >= 18.66 && weight >= 600);
-    const cr = ratio(fgArr, bgArr);
-    const need = large ? 3.0 : 4.5;
-    if (cr >= need) continue;
+    const size = parseFloat(cs.fontSize), weight = parseInt(cs.fontWeight, 10) || 400;
+    /* font-size:0 means the label is deliberately hidden because the art
+       already carries the glyph — the close key and the tick boxes. There is
+       no text on screen to measure. */
+    if (!size) continue;
+    /* SVG text on the chart carries its own painted halo (see labelAt in
+       map.js), which is what makes it legible over the sea. A background
+       sampler cannot see a stroke behind a glyph, so it would report every
+       chart label as a failure it is not. */
+    if (el.ownerSVGElement || el.tagName === 'text' || el.tagName === 'tspan') continue;
+    /* Skip anything that is on the page but not on the screen. A mission
+       panel is an overlay: the chart underneath it still has layout, still
+       reports a box, and still sits inside the viewport — but the pixels at
+       those coordinates belong to the panel on top. Measuring the hidden
+       element's colour against the visible element's pixels is how a legible
+       screen produces a 1.03:1 "failure". Hit-test the centre and only keep
+       elements that are actually the thing you would touch there. */
+    const cx = (Math.max(0, r.left) + Math.min(innerWidth, r.right)) / 2;
+    const cy = (Math.max(0, r.top) + Math.min(innerHeight, r.bottom)) / 2;
+    const hit = document.elementFromPoint(cx, cy);
+    if (!hit || !(el === hit || el.contains(hit) || hit.contains(el))) continue;
 
     const key = el.className + '|' + Math.round(size) + '|' + cs.color;
     if (seen.has(key)) continue;
@@ -115,11 +171,11 @@ const AUDIT = () => {
       sel: (el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className
         ? '.' + el.className.trim().split(/\s+/).join('.') : '')).slice(0, 64),
       text: own.slice(0, 28),
-      size: Math.round(size * 10) / 10, weight, large,
-      ratio: Math.round(cr * 100) / 100, need,
-      /* the resolved pair, so a failure names the two colours to change
-         rather than sending you hunting through the cascade for them */
-      fg: fgArr.map(Math.round).join(','), bg: bgArr.map(Math.round).join(',')
+      fg: fg.rgb, fga: fg.a,
+      x: Math.max(0, r.left), y: Math.max(0, r.top),
+      x2: Math.min(innerWidth, r.right), y2: Math.min(innerHeight, r.bottom),
+      size: Math.round(size * 10) / 10, weight,
+      large: size >= 24 || (size >= 18.66 && weight >= 600)
     });
   }
   return out;
@@ -148,12 +204,27 @@ async function goTab(p, tab) {
 
 async function scan(p, label) {
   await p.waitForTimeout(450);
-  const rows = await p.evaluate(AUDIT);
+  const cands = await p.evaluate(COLLECT);
+  if (!cands.length) { console.log(`  ${label}: nothing to measure`); return; }
+  const dpr = await p.evaluate(() => devicePixelRatio);
+  const img = decodePNG(await p.screenshot());
+
+  const rows = [];
+  for (const c of cands) {
+    const bg = modeColour(img, c.x, c.y, c.x2, c.y2, dpr);
+    if (!bg) continue;
+    const fg = c.fg.map((v, i) => v * c.fga + bg[i] * (1 - c.fga));
+    const cr = ratio(fg, bg);
+    const need = c.large ? 3.0 : 4.5;
+    if (cr >= need - 0.005) continue;
+    rows.push({ ...c, ratio: Math.round(cr * 100) / 100, need,
+                fgs: fg.map(Math.round).join(','), bgs: bg.join(',') });
+  }
   if (!rows.length) { console.log(`  ${label}: clean`); return; }
   console.log(`  ${label}: ${rows.length} failing pair(s)`);
   for (const r of rows) {
     console.log(`     ${r.ratio}:1 (needs ${r.need}) ${r.size}px/${r.weight}`
-      + `${r.large ? ' large' : ''}  fg(${r.fg}) on bg(${r.bg})`
+      + `${r.large ? ' large' : ''}  fg(${r.fgs}) on bg(${r.bgs})`
       + `  ${r.sel}  "${r.text}"`);
     bad.push(`${label}: ${r.sel} ${r.ratio}:1 < ${r.need}`);
   }
