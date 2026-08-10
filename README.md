@@ -78,6 +78,37 @@ are checking off the screen. What a job requires goes in a **requirement bar** i
 the sheet head, where it cannot scroll away — and the button that commits it sits
 in the panel foot, where it also cannot.
 
+**One frame, everywhere.** A wood **scene bar** along the top edge and a wood
+**nav rail** along the bottom, on every screen, drawn by the shell rather than
+by the screens. The bar names the scene you are in and carries the figures that
+scene's decisions are made against; the rail carries five labelled destinations.
+Both bleed to the physical edge of the glass and take the safe-area insets as
+padding *inside* themselves, so the wood runs under the notch and the home
+indicator while the content never does. Five scenes that each drew their own
+chrome — a purse here, nothing there — is most of what made the game read as
+five separate builds.
+
+**One art direction.** Kenney's *UI Pack Adventure*, vectors only, and nothing
+else: the repository carries two other Kenney packs and they are deliberately
+unused, because mixing sets drawn in different styles is exactly what makes an
+interface look assembled rather than art directed. Three materials with three
+jobs — **wood** frames a scene, **parchment** carries what you read, **steel**
+carries a value — and every surface in the game is one of those three.
+
+**A surface paints its own field.** Every panel, plate and button is the pack's
+9-sliced frame art over a background this stylesheet chooses, with no `fill` in
+the slice. With `fill`, the field is whatever pixel happens to sit in the middle
+of the source SVG, and that is not a value anyone can see when they pick a text
+colour against it — it is how a label ended up on the frame's mid-brown at
+2.2:1. Contrast is a decision, so the colour it is made against has to be one
+too.
+
+**Status changes the plate, not the label.** A green numeral on a light steel
+chip measures 2.1:1 and an amber one 3.2:1; a green *plate* with the same ink on
+it measures 6.5:1 — and it is the louder signal besides, because a red plate in
+a row of steel ones is visible before anything has been read. Every status fill
+is a colour the palette documents Navy as safe on, so the ink never changes.
+
 **Panels are full screens, never drawers.** Mission, stores and the after-action
 report all use the same three bands — **head** states what you are looking at
 and what it asks for, **body** scrolls, **foot** holds the button — so nothing
@@ -95,10 +126,22 @@ a style in a screen.
 sharing, and the key lists exactly the shapes currently drawn — so it grows an
 Admiral entry the moment she sails and can never leave a shape unexplained.
 
-**No text below 16px and no icon below 40px, ever.** Screens carry numbers, not
-paragraphs: a mission tip is one clause, an upgrade says `+10` and its price, and
-an empty screen says "No ships at sea." rather than explaining what a ship is
-for.
+**Nothing under 16px, and every glyph at 40.** The type scale in `tokens.css`
+floors there and the tooling holds a lower absolute limit under it. Screens carry
+numbers, not paragraphs: a mission tip is one clause, an upgrade says `+10` and
+its price, and an empty screen is a large faded glyph over one line — the same
+shape on every screen that has one, because a new player sees three of them
+before they see anything else.
+
+**Every bar in the game is one object.** `meter()` in `src/ui/format.js`, and
+there is nothing else. It clamps its percentage in JS *and* clamps it again in
+CSS (`width:clamp(0%, var(--p), 100%)`) inside a track that clips, so a wrong
+number can only ever be a wrong length and never an overflow. Anything patching
+one live — the world ticker, the after-action's wanted bar — sets `--p`, never a
+width: an inline width outranks the clamp and hands the guarantee back to
+arithmetic. This replaced six near-identical bars that were each broken
+differently, all of them because the fill carried a border of its own and came
+out taller than the track it lived in.
 
 Vanilla JavaScript ES modules, no build step, no runtime dependencies beyond a
 vendored copy of [Phaser 3](https://phaser.io/) for the battle renderer.
@@ -134,19 +177,29 @@ Everything is reachable by touch or mouse as well.
 index.html            markup shell only — no logic, no inline handlers
 vendor/phaser.min.js  pinned Phaser 3.90.0 (arcade build, no Matter)
 fonts/                self-hosted woff2 subsets
-styles/
+styles/                 loaded in this order; the cascade runs one way down and
+                        no sheet overrides one before it
   fonts.css           @font-face declarations
-  base.css            reset, design tokens, typography, chips
-  components.css      how the shared vocabulary looks
-  hud.css             top bar, resource plates, nav rail
-  screens.css         port, flagship hero, relics, chart
-  battle.css          battle view
-  overlays.css        sheet, dialogs, pause, title, loading, toasts, tutorial
+  palette.css         the raw harmony palette and its measured contrast map
+  tokens.css          THE DESIGN SYSTEM — the working colour subset and the job
+                      each colour holds, the type scale and the two faces'
+                      roles, space, shape, depth, motion, z-index, touch floors
+  base.css            reset, the app frame, typography roles, the three
+                      surface primitives every panel is built from
+  components.css      buttons, meters, chips, tiles, item cards, steppers,
+                      rails, requirement rows, tabs, panel bands
+  hud.css             the scene bar and the nav rail
+  screens.css         what each scene adds: flagship hero, chart, market, sets
+  overlays.css        panels, dialogs, pause, title, loading, awards, pops
+  battle.css          the engagement view
 tools/
-  check-min-size.js   fails on text under 16px or icons under 40px
+  check-min-size.js   fails on text or icons under the legibility floor
   check-overflow.js   fails on any screen that scrolls sideways
+  check-contrast.js   samples the RENDERED PIXELS behind every label on every
+                      screen and fails anything under the palette's own rules
   check-map-spacing.js  fails if two markers land closer than a thumb apart
-  check-hud.js        the purse, the folding key, the live countdown
+  check-hud.js        the scene bar, the folding key, the live countdown and
+                      the meter's clamp
 src/
   main.js             boot sequence
   core/
@@ -169,11 +222,13 @@ src/
   systems/            voyages (cargo + dives), notoriety, collectibles, loot,
                       enemy generation, battle outcomes
   ui/
-    shell.js          screen router, nav, world ticker
+    shell.js          screen router, nav, scene bar, world ticker
     screens/          one module per screen
-    format.js         the chip vocabulary every screen reads numbers through
+    format.js         the chip vocabulary every screen reads numbers
+                      through, and meter() — the game's only progress bar
     result.js         the after-action screen and the prize decisions
-    hud.js            the purse: gold, and the way into the stores
+    hud.js            the scene bar: what each screen is called, and the
+                      figures its decisions are made against
     components.js     item cards, steppers, rails, requirement bars — and the
                       rules they must not break
     mission.js        mission sheet and launch
@@ -240,11 +295,12 @@ large and a button to take it, because an award that slides past unnoticed is
 the moment the whole loop exists to produce. A purchase is the opposite: the
 `+20` leaps off the button you just pressed and your eye never leaves it.
 
-**The header carries one number.** Gold, and a door to the Ship's Stores with no
-count on it — everything else you own has a screen that says it better, and a row
-of running totals above a chart is a spreadsheet header, not a game. It shows on
-Port and Market, where money is part of the decision in front of you, and nowhere
-else.
+**The scene bar carries one number.** Gold, and — where you deal in goods — a
+door to the Ship's Stores with no count on it. Everything else you own has a
+screen that says it better, and a row of running totals above a chart is a
+spreadsheet header, not a game. The bar itself is on every screen, because
+knowing where you are is worth a strip of a phone and having to work it out from
+the contents is not.
 
 **The chart's key folds away.** It is useful until you know it and then it is
 covering water, so a button in the corner hides it and the chart takes the room

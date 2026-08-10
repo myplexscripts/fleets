@@ -123,3 +123,20 @@ export const sect = (label, i, trail, cls) =>
 
 /* A grid of item cards. Items size themselves; the grid only spaces them. */
 export const itemGrid = (items, cls) => `<div class="itemgrid ${cls || ''}">${items}</div>`;
+
+/* ---- 6. the empty state ----------------------------------------------
+   A screen with nothing on it is a screen the player is looking at for the
+   first time, so it is the worst possible moment for the game to look
+   unfinished. Every "there is nothing here yet" in the game is this one
+   shape: a large faded glyph, the plain fact, and — where there is one — the
+   thing to go and do about it.
+
+   It was five different bare sentences in five different cards before, which
+   is exactly the kind of small inconsistency that adds up to a game feeling
+   assembled rather than designed. */
+export function emptyCard(icon, text, i) {
+  return `<div class="card empty" style="--i:${i || 0}">
+      ${iconHTML(icon, 0, 'emptyic')}
+      <p class="emptytext">${esc(text)}</p>
+    </div>`;
+}

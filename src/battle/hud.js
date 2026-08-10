@@ -114,14 +114,17 @@ export function showBanner(kind) {
     play('victory'); buzz('win');
   } else if (kind === 'loss') { play('defeat'); buzz('lose'); }
 
-  const cols = { win: 'var(--grn)', loss: 'var(--red)', escaped: 'var(--yel)' };
+  /* The verdict's colour is a class, not an inline hex-by-proxy: the three
+     outcomes are the same good / caution / bad the whole game reads in, so
+     they are named that way and the stylesheet decides what they look like. */
+  const tone = { win: 'good', loss: 'bad', escaped: 'warn' };
   const txt = { win: isBoss ? 'Admiral Broken' : 'Victorious', loss: 'Defeated', escaped: 'Escaped' };
 
-  let inner = `<div class="big" style="color:${cols[kind]}">${txt[kind]}</div>`;
+  let inner = `<div class="big ${tone[kind]}">${txt[kind]}</div>`;
   if (kind === 'loss') {
-    inner += `<div class="sub" style="margin-top:10px">What is still afloat turns for home and the surgeons.</div>`;
+    inner += `<div class="sub">What is still afloat turns for home and the surgeons.</div>`;
   }
-  inner += `<button class="btn gold" style="margin-top:22px;min-width:180px" data-act="battle-continue" data-kind="${kind}">Continue</button>`;
+  inner += `<button class="btn gold wide bannerok" data-act="battle-continue" data-kind="${kind}">Continue</button>`;
 
   el.innerHTML = inner;
   el.classList.add('on');

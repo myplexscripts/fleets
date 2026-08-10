@@ -1,159 +1,44 @@
 /* ============================================================
-   base — reset, design tokens, typography, shared components
+   base — reset, the app frame, typography roles, surface primitives
+
+   Everything here is a rule the whole game obeys. If a screen needs
+   something this file does not offer, the fix is to add it here rather than
+   to invent it in that screen — that is the difference between a design
+   system and a folder of stylesheets.
    ============================================================ */
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
-:root{
-  /* ---- semantic tokens ----------------------------------------------
-     Every value here resolves to a colour in styles/palette.css. Nothing in
-     this file or any other stylesheet may name a hex directly; if a shade is
-     needed that the palette does not carry, it is mixed from a palette anchor
-     with black or white so the hue stays inside the family.
-
-     The allocation is driven by ONE contrast map — "BACKGROUND: Navy" — because
-     Navy is the ground under almost every label in the game. That map has
-     exactly eight SAFE foregrounds (Warm Ivory, Sand, Seafoam, Amber, Sage,
-     Gold, Coral, Olive Gold), and they are spent here. Anything the map calls
-     LARGE ONLY is used for fills, borders and glyphs, never for small text. */
-
-  /* The ground is deep water, mixed from the Teal and Navy anchors: Teal alone
-     is far too bright to sit a panel on, Navy alone would make the panels
-     invisible against it. */
-  --bg:color-mix(in srgb, var(--color-teal) 24%, var(--color-navy));
-  --bg2:color-mix(in srgb, var(--color-teal) 12%, var(--color-navy));
-  /* the caustic web on the water — see main{} below for why it is drawn */
-  --water:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.016' numOctaves='4' seed='11' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.85 0 0 0 0 0.88 0 0 0 -1.25 0.52'/%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23c)' opacity='0.35'/%3E%3C/svg%3E");
-  /* Panel surfaces. Navy is the face; the two darker steps are shades of the
-     same anchor, for things a number sits IN rather than ON — bar tracks,
-     requirement rows, the recessed foot of a card. */
-  --navy:var(--color-navy);
-  --navy2:color-mix(in srgb, var(--color-navy) 76%, #000);
-  --navy3:color-mix(in srgb, var(--color-navy) 55%, #000);
-  --panel:color-mix(in srgb, var(--color-navy) 92%, transparent);
-  --panel2:color-mix(in srgb, var(--color-navy) 84%, transparent);
-
-  /* Borders are non-text graphics, so the bar is 3:1, not 4.5:1.
-     Slate clears it against Navy at 3.12; Aegean Blue (2.84) is decorative
-     only and never carries or outlines meaning on its own. */
-  --line:var(--color-slate);
-  --line2:var(--color-aegean-blue);
-
-  /* Text on Navy. Warm Ivory 13.12 and Sage 5.66 are both SAFE, and Sage is
-     far enough down in weight to read as secondary without failing. */
-  --ink:var(--color-warm-ivory);
-  --dim:var(--color-sage);
-
-  /* Metals, all SAFE as text on Navy: Gold 5.23, Amber 6.10, Olive Gold 4.75. */
-  --gold:var(--color-gold);
-  --goldhi:var(--color-amber);
-  --brass:var(--color-olive-gold);
-
-  /* Status. Seafoam 6.51 carries "good", Amber 6.10 "caution", Coral 5.15
-     "bad" — all SAFE on Navy in both directions, since Navy is also the
-     documented foreground for each of them as a fill.
-
-     --org and --purple are the two exceptions and are marked as such:
-     Terracotta is LARGE ONLY on Navy (4.04) so it only ever tints a glyph or
-     draws a border, and Mauve is AVOID as text (2.81) so it is a background
-     only, always with Warm Ivory on it (4.67, SAFE). */
-  --grn:var(--color-seafoam);
-  --yel:var(--color-amber);
-  --org:var(--color-terracotta);      /* graphics only */
-  --red:var(--color-coral);
-  --blu:var(--color-seafoam);
-  --purple:var(--color-mauve);        /* background only */
-
-  /* Teal has NO safe foreground anywhere in the palette — its best partner is
-     Navy at 3.84. It is therefore an accent: panel plaques and large display
-     type (where LARGE ONLY applies and Navy sits on it), fills, and borders.
-     Every button and tab that carries small text uses Ocean Blue or Gold. */
-  --tealhi:var(--color-teal);
-  --oceanb:var(--color-ocean-blue);
-
-  /* Two families, the pairing built for exactly this: a stencilled display
-     face for every header, button and HUD number, and a narrow grotesque for
-     the paragraph text that has to fit a phone-width card. */
-  --ui:'Staatliches',Impact,sans-serif;            /* labels, numbers, buttons */
-  --display:'Staatliches',Impact,sans-serif;       /* wordmark, headings */
-  --prose:'Archivo Narrow',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-
-  /* ---- the flat look -------------------------------------------------
-     Square corners, solid fills, hard borders, and nothing pretending to be
-     lit or moulded. The reference is flat vector UI: shapes cut with a knife
-     and laid on the table. Every radius token is 0 — kept as tokens rather
-     than deleted so a rounded variant is one edit away rather than sixty. */
-  --r:0; --r-sm:0; --r-pill:0;
-
-  /* ---- the chunk ------------------------------------------------------
-     What separates a game control from a div with a border: an ink outline
-     around the whole shape, and a solid slab of colour underneath it that the
-     face drops onto when pressed. Both are flat — one ink, one a darker cut of
-     the control's own fill. There is no gradient, no gloss and no simulated
-     light anywhere in it; the depth is drawn, the way a sticker is drawn.
-
-     --ink-out is that outline. Near-black rather than a palette neutral,
-     because its whole job is to be darker than everything it wraps and to
-     hold the shape together at arm's length. */
-  --ink-out:color-mix(in srgb, var(--color-navy) 34%, #000);
-  --out:3px;          /* outline weight on a control */
-  --out-sm:2px;       /* on the small ones — chips, tags, tiles */
-  --base:6px;         /* how tall the slab under a control stands */
-  --base-sm:4px;
-
-  /* A control's base is a darker cut of its own fill, so a gold button sits on
-     gold shadow and a coral one on coral. Variants set --fill; this follows. */
-  --fill:var(--oceanb);
-  --fill-base:color-mix(in srgb, var(--fill) 52%, #000);
-
-  /* face + slab + one continuous outline around both */
-  --chunk:
-    0 var(--base) 0 0 var(--fill-base),
-    0 var(--base) 0 var(--out) var(--ink-out);
-  --chunk-sm:
-    0 var(--base-sm) 0 0 var(--fill-base),
-    0 var(--base-sm) 0 var(--out) var(--ink-out);
-  /* pressed: the slab is gone and only the outline is left */
-  --chunk-down:0 0 0 var(--out) var(--ink-out);
-
-  /* A panel is double-framed: ink outside, metal inside. The inner stroke is
-     a flat 2px line drawn inside the border — a frame, not a bevel: one
-     colour, no blur, no lighting. */
-  --frame-in:inset 0 0 0 2px var(--brass);
-
-  --lift:var(--base);
-  --edge:var(--ink-out);
-  --slab:0 5px 0 0 var(--ink-out);
-  --slab-sm:0 3px 0 0 var(--ink-out);
-  --slab-down:0 0 0 0 var(--ink-out);
-  --bevel:none;
-  --well:none;
-}
-
 html,body{height:100%}
 
-/* The body colour is what shows through the status bar, and briefly on load
-   before #app/#titleScr paint over it — "black-translucent" in the iOS meta
-   tag means the OS draws no bar of its own and lets THIS colour show through
-   its icons, so if this is a colour nothing else in the game uses, the status
-   bar reads as a separate black slab bolted onto the top of the screen. It
-   matches the water now, which is what actually sits behind it once the app
-   is up, so there is nothing for the status bar to look like a seam against. */
+/* The body colour shows through the iOS status bar, which
+   "black-translucent" leaves undrawn. It is the sea, because the sea is what
+   is actually behind it once the app is up — anything else reads as a black
+   slab bolted to the top of the screen. */
 body{
-  background-color:var(--bg);background-image:var(--water);background-size:420px 420px;
-  color:var(--ink);
-  font-family:var(--prose); font-size:clamp(16px,1.15vw,20px);
-  height:100dvh; display:flex; flex-direction:column; overflow:hidden;
-  touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  background-color:var(--sea);
+  background-image:var(--water);
+  background-size:420px 420px;
+  color:var(--ivory);
+  font-family:var(--font-prose);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  height:100dvh;
+  display:flex;flex-direction:column;overflow:hidden;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
   overscroll-behavior:none;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
 }
 
-/* ---- ambient layers ---- */
+/* ---- ambient layers ---------------------------------------------------- */
 #mist{position:fixed;inset:0;z-index:0}
 
-/* Darkened corners plus a faint grain: reads as a screen, not a document. */
+/* Darkened corners and a faint grain: it reads as a screen rather than a
+   document, and it is the cheapest single thing that stops the game looking
+   like a web page. */
 #vignette{
-  position:fixed;inset:0;z-index:8;pointer-events:none;
+  position:fixed;inset:0;z-index:var(--z-vignette);pointer-events:none;
   background:
     radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(2,18,24,.22) 80%,rgba(1,12,16,.45) 100%),
     repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
@@ -161,265 +46,262 @@ body{
 }
 .calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(2,18,24,.2) 82%,rgba(1,12,16,.4) 100%)}
 
-/* ---- app frame ---- */
+/* ============================================================
+   the app frame — edge to edge
+
+   Three bands and no margins: a wood scene bar clamped to the top edge, the
+   scene itself scrolling between them, a wood nav rail clamped to the
+   bottom edge. Both bars bleed into the safe areas and carry the inset as
+   padding INSIDE themselves, so the wood reaches the physical edge of the
+   glass and the content never sits under the notch or the home indicator.
+
+   Nothing in the game is centred in a column with sea either side of it. A
+   phone screen is the canvas, not a viewport a page happens to be inside.
+   ============================================================ */
 #app{
-  position:relative;z-index:1;flex:1;min-height:0;
+  position:relative;z-index:var(--z-scene);
+  flex:1;min-height:0;
   display:none;flex-direction:column;
 }
 #app.on{display:flex}
-header,main,nav{position:relative;z-index:1}
 
-/* The sea, as the ground under every screen.
-
-   Drawn rather than shipped: an SVG turbulence filter tiled at 420px gives the
-   caustic web of light on deep water, costs no binary asset, and stitches
-   seamlessly so a long scroll never shows a seam. Kept very low contrast on
-   purpose — it has to read as texture at arm's length and as nothing at all
-   behind a panel, because the panels are what the player is looking at. */
+/* The scene. It scrolls; the bars do not. */
 main{
-  --mainpad:14px;
-  flex:1;overflow-y:auto;overflow-x:hidden;
+  flex:1;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-  padding:var(--mainpad) var(--mainpad) 22px;
-  padding-top:calc(env(safe-area-inset-top) + var(--mainpad));
-  background-color:var(--bg);
+  padding:var(--gutter) var(--gutter) var(--s6);
+  background-color:var(--sea);
   background-image:var(--water);
   background-size:420px 420px;
 }
-main.nopad{padding:0;overflow:hidden}
+/* A scene that draws its own full-bleed world — the chart. */
+main.nopad{padding:0;overflow:hidden;position:relative}
 
-/* ---- headings & prose ---- */
-h1,h2,h3{font-weight:500}
-.card h3{
-  font-family:var(--ui);font-size:clamp(19px,1.4vw,25px);font-weight:400;
-  letter-spacing:1.5px;text-transform:uppercase;
+/* ============================================================
+   typography roles
+
+   Display for anything glanced at, prose for anything read. The rule is
+   length: one word or one number is display, a clause is prose.
+   ============================================================ */
+h1,h2,h3,h4{
+  font-family:var(--font-display);font-weight:400;
+  letter-spacing:var(--track);text-transform:uppercase;
+  line-height:var(--lh-tight);
 }
-.sub{font-size:clamp(16px,1.1vw,19px);color:var(--dim);line-height:1.6}
-.sub b{color:var(--ink)}
+
+/* A sentence. Anywhere the game explains rather than states. */
+.sub{
+  font-family:var(--font-prose);
+  font-size:var(--fs-body);line-height:var(--lh-body);
+  color:var(--ink-soft);
+}
+.sub b{color:var(--ink);font-weight:600}
 .sub.quote{font-style:italic}
 .center{text-align:center}
-.warnline{margin-top:10px;color:var(--yel)}
+.warnline{margin-top:var(--s2);color:var(--bad-deep);font-weight:600}
 
-/* A section heading is a nameplate bolted to the page, not a line of small
-   caps over a hairline. It is the first thing the eye lands on when a screen
-   changes, so it gets a face, an edge and a shadow like everything else. */
+/* Prose sitting on the open sea rather than on a panel flips to ivory. */
+main > .sub,.on-sea .sub{color:var(--ivory-soft)}
+
+/* ---- the section heading ----
+   A dark plank across the full column with the label branded into it. Full
+   width rather than hugging its text, because a heading that also carries a
+   counter and a button cannot hug anything without truncating the label —
+   that is what "YOUR SHI…" was. */
+/* A plank across the full column with the label branded into it, and — where
+   a section has one — the counter and the control that belong to it on the
+   same line.
+
+   It does NOT wrap. A heading that breaks onto two lines to fit a button is
+   a heading that changes height depending on how much money you have, which
+   is how the same screen ends up a different shape at two different moments.
+   The label shrinks and truncates instead, and the controls are sized small
+   enough that on a 360px phone it never has to. */
 .sect{
-  font-family:var(--ui);font-size:clamp(24px,1.5vw,28px);font-weight:400;
-  letter-spacing:2px;color:var(--color-warm-ivory);text-transform:uppercase;
-  margin:20px 0 12px;display:flex;align-items:center;gap:10px;
-  width:fit-content;max-width:100%;
-  padding:10px 20px;border-radius:0;
-  background:var(--tealhi);
-  border:var(--out) solid var(--ink-out);
-  box-shadow:var(--frame-in),var(--slab-sm);
-  text-shadow:0 1px 0 rgba(0,0,0,.4);
-  animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
+  display:flex;align-items:center;gap:var(--s2);flex-wrap:nowrap;
+  width:100%;min-height:46px;
+  margin:var(--s5) 0 var(--s3);
+  padding:var(--s1) var(--s3);
+  border:10px solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 / 10px stretch;
+  background:var(--wood-dark);
+  font-family:var(--font-display);font-size:var(--fs-title);
+  letter-spacing:var(--track);text-transform:uppercase;
+  line-height:1.1;color:var(--ivory);
+  animation:riseIn var(--t-enter) var(--ease-out) both;
+  animation-delay:calc(var(--i,0)*60ms);
+}
+/* first heading on a screen does not need a gap above it */
+main > .sect:first-child,.sheet-body > .sect:first-child{margin-top:0}
+/* The label wraps to two lines rather than truncating. It is the one thing on
+   the plank the player cannot reconstruct from context — "CAPTAIN'S QUARTE…"
+   is a heading that has stopped being a heading — so when a counter and a
+   button leave it too little room it takes a second line and the plank grows
+   by exactly that much. The row itself still never wraps: the controls stay
+   on the right where the eye goes for an action. */
+.sect .sectlbl{
+  flex:0 1 auto;min-width:0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:break-word;
+  text-shadow:0 2px 0 rgba(0,0,0,.32);
+}
+.sect .secttrail{
+  flex:0 0 auto;margin-left:auto;
+  display:flex;align-items:center;gap:var(--s1);
+}
+.sect .secttrail .chips{margin-top:0;flex-wrap:nowrap}
+/* The controls riding a heading are the compact cut of themselves: a heading
+   is a label with an affordance on it, not a toolbar. */
+.sect .secttrail .btn.sm{min-height:40px;padding:2px var(--s2);--lift:3px;font-size:var(--fs-micro)}
+.sect .secttrail .chip{font-size:var(--fs-label);padding:1px var(--s1) 1px 1px}
+/* A heading carrying a counter has less room for its own word, so it takes
+   the next step down the scale rather than spending it on an ellipsis. */
+.sect:has(.secttrail) .sectlbl{font-size:var(--fs-head)}
+
+/* ---- the empty state ----
+   The first thing a new player sees on three of the five screens, so it is a
+   composed thing rather than a bare sentence in a box: a large faded glyph
+   over one plain line, centred, with room around it. */
+.card.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--s3);text-align:center;
+  padding:var(--s6) var(--s4);
+}
+.card.empty .emptyic{
+  width:clamp(56px,16vw,80px);height:clamp(56px,16vw,80px);
+  opacity:.32;
+}
+.card.empty .emptytext{
+  font-family:var(--font-prose);font-size:var(--fs-body);
+  line-height:var(--lh-body);color:var(--ink-soft);max-width:34ch;
 }
 
-.ic{display:inline-block;vertical-align:-.25em;image-rendering:auto}
-.btn .ic{margin-right:0;vertical-align:middle}
+/* ---- glyphs ----
+   Every icon in the game is an <img> of an SVG. 40px is the floor, enforced
+   by tools/check-min-size.js: below that a glyph stops being recognisable
+   and starts being a smudge with a colour. */
+.ic{display:inline-block;vertical-align:middle;flex-shrink:0;image-rendering:auto}
+
+/* ============================================================
+   surface primitives
+
+   Three materials, three mixins. Every panel, plank and plate in the game is
+   one of these three lines — which is precisely why they all agree.
+
+   All three are 9-slice border-images: the art's four corners keep their own
+   size, its edges stretch along the sides, its centre fills the middle. The
+   vectors are used rather than the PNGs so a surface is crisp at any size on
+   any density.
+   ============================================================ */
+
+/* PARCHMENT — the field content is printed on. */
+.surface,.card,.item,.dlg,.pausebox,.railcard,.goodcard,.tcard,.awardcard,.foecard,#tutTip{
+  border:var(--slice-panel) solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 / var(--slice-panel) stretch;
+  border-radius:0;
+  background:var(--parch);
+  padding:var(--inset);
+  color:var(--ink);
+}
+/* WOOD — structure. A plank frames, it never carries content. */
+.plank{
+  border:var(--slice-plank) solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 / var(--slice-plank) stretch;
+  background:var(--wood-dark);
+  color:var(--ivory);
+}
+/* STEEL — a readout. Small, inset, and always holding a value. */
+.plate{
+  border:var(--slice-plate) solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;
+  background:var(--steel-lit);
+  color:var(--ink);
+}
+
+/* Anything on parchment takes ink; the ink decision belongs to the surface,
+   not to the component sitting on it. */
+.card,.item,.dlg,.pausebox,.railcard,.goodcard,.tcard,.foecard{color:var(--ink)}
+.card h3,.item h3,.dlg h3,.railcard h3{color:var(--ink)}
 
 /* ---- cards ---- */
-@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
-.calm .card,.calm .sect,.calm .leg,.calm .hero{animation:none!important}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.calm .card,.calm .sect,.calm .item,.calm .hero,.calm .goodcard,
+.calm .railcard,.calm .tcard,.calm .relicgrid{animation:none !important}
 
-/* A card is a moulded panel: lit face, visible edge, shadow underneath. The
-   old engraved corner brackets belonged to a flat page; at this radius the
-   corner is the light catching it instead. */
 .card{
-  position:relative;overflow:hidden;
-  background:var(--navy);
-  border:var(--out) solid var(--ink-out);border-radius:0;
-  padding:clamp(16px,1.1vw,24px) clamp(17px,1.2vw,25px);
-  margin-bottom:clamp(16px,1.1vw,22px);
-  box-shadow:var(--frame-in),var(--slab);
-  animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
+  position:relative;
+  margin-bottom:var(--stack);
+  animation:riseIn var(--t-enter) var(--ease-out) both;
+  animation-delay:calc(var(--i,0)*60ms);
 }
-.card::before{content:none}
-/* ---- corner brackets ----
-   Four gold angle-brackets set in from the corners: two short bars meeting at
-   a right angle, the way a chart is pinned to a board. This is the panel
-   ornament the reference actually uses — not a rivet, which is a moulding
-   detail and belongs to the look we just took out. Painted as eight gradient
-   slices on one pseudo-element so it costs no extra nodes. */
-.card::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:
-    /* top-left: across, then down */
-    linear-gradient(var(--gold),var(--gold)) top 7px left 7px/13px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) top 7px left 7px/2px 13px no-repeat,
-    /* top-right */
-    linear-gradient(var(--gold),var(--gold)) top 7px right 7px/13px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) top 7px right 7px/2px 13px no-repeat,
-    /* bottom-left */
-    linear-gradient(var(--gold),var(--gold)) bottom 7px left 7px/13px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 7px left 7px/2px 13px no-repeat,
-    /* bottom-right */
-    linear-gradient(var(--gold),var(--gold)) bottom 7px right 7px/13px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 7px right 7px/2px 13px no-repeat;
-  opacity:.6;
+.card h3{
+  font-family:var(--font-display);font-size:var(--fs-title);
+  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink);
 }
 
-.card.flagcard{border-color:var(--brass);box-shadow:var(--slab)}
-.card.bosscard{border-color:var(--color-terracotta);box-shadow:var(--slab)}
-.card.chartercard{border-color:var(--brass)}
-.card.owned{border-color:var(--brass)}
-.card.atsea{border-color:var(--color-aegean-blue);opacity:.94}
-.card.ready{border-color:var(--color-sage);box-shadow:var(--slab)}
+/* A card can be flagged by state. The flag is a coloured rule down its left
+   edge rather than a recoloured frame: the frame is the art and the art does
+   not change, so state gets its own channel and every state reads the same
+   way whatever kind of card it is on. */
+.card::before,.item::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
+  border-radius:var(--r-pill);pointer-events:none;
+  background:var(--flagcolor,transparent);
+}
+.card.owned,.item.owned,.card.chartercard,.card.flagcard{--flagcolor:var(--accent)}
+.card.ready,.item.ready{--flagcolor:var(--good)}
+.card.atsea,.item.atsea{--flagcolor:var(--steel-dark)}
+.card.bosscard,.item.dis{--flagcolor:var(--bad-deep)}
+.card.setdone{--flagcolor:var(--accent-lit)}
+.item.dis{opacity:.55}
+.card.decided{opacity:.62}
 
 /* ---- layout helpers ---- */
-.row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
-.btnset{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.btnset{display:flex;gap:var(--s2);flex-wrap:wrap;flex-shrink:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
 
-/* ---- buttons ----
-   A flat plate: one solid fill, one clean border, one crisp shadow underneath
-   it. Pressing drops it onto the surface by --lift and the shadow collapses —
-   that small travel is the whole feel of the game in one interaction, so
-   every button in every screen is this button. No bevel, no gloss band. */
-.btn{
-  font-family:var(--ui);font-weight:400;
-  font-size:clamp(17px,1.15vw,20px);letter-spacing:1.6px;text-transform:uppercase;
-  /* Ocean Blue + Warm Ivory is 7.45:1, SAFE. This button used to be Teal with
-     near-white on it, which is 3.42 — LARGE ONLY, and a 16px label is not
-     large. Teal keeps the plaques and the accents; it does not carry labels. */
-  --fill:var(--oceanb);
-  color:var(--ink);
-  background:var(--fill);
-  border:var(--out) solid var(--ink-out);border-radius:0;
-  padding:clamp(12px,.85vw,17px) clamp(17px,1.25vw,26px);
-  min-height:clamp(52px,3.8vw,62px);
-  margin-bottom:var(--base);
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.15;
-  box-shadow:var(--chunk);
-  transition:transform .07s ease,box-shadow .07s ease,filter .15s;
-  position:relative;
-}
-.btn:hover:not(:disabled){filter:brightness(1.14)}
-/* The press is the whole feel of the game in one interaction: the face travels
-   the exact height of its own slab and lands on the surface. */
-.btn:active:not(:disabled){transform:translateY(var(--base));box-shadow:var(--chunk-down)}
-.btn:disabled{
-  opacity:.5;filter:grayscale(.6);
-  transform:translateY(var(--base));box-shadow:var(--chunk-down);
-}
-/* A variant sets its fill and nothing else — the slab under it is a darker cut
-   of that same fill, and the outline is ink either way. Each takes the
-   foreground the palette names for it, so every label is SAFE at normal size:
-   Gold 5.23, Coral 5.15, Seafoam 6.51, Aegean Blue 4.63, Navy 13.12. */
-.btn.gold{ --fill:var(--color-gold);         color:var(--on-gold) }
-.btn.red{  --fill:var(--color-coral);        color:var(--on-coral) }
-.btn.blu{  --fill:var(--color-aegean-blue);  color:var(--on-aegean-blue) }
-.btn.grn{  --fill:var(--color-seafoam);      color:var(--on-seafoam) }
-/* Cancel, Belay, Not Now — and the mockup's plain "Secondary" button. It is
-   still a plate and still presses, but it does not compete with the button
-   the player came here to hit. */
-.btn.quiet{
-  --fill:var(--navy);
-  color:var(--on-navy);
-}
-.btn.sm{
-  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:0;
-  padding:clamp(10px,.75vw,14px) clamp(14px,.95vw,20px);min-height:clamp(48px,3.3vw,56px);
-  --base:var(--base-sm);
-}
-.btn.wide{
-  width:100%;font-size:clamp(20px,1.5vw,27px);padding:clamp(16px,1.2vw,23px);
-  border-radius:0;--base:8px;
-}
-
-/* a text link that is still a real button */
+/* ---- a text link that is still a real button ---- */
 .linkbtn{
-  background:none;border:none;color:var(--gold);font:inherit;
-  text-decoration:underline;cursor:pointer;padding:0;
+  background:none;border:none;color:var(--ink-soft);font:inherit;font-weight:600;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer;
+  padding:var(--s2) var(--s1);min-height:var(--tap);border-radius:var(--r-sm);
 }
-
-/* ---- meters ----
-   Segmented, not a smooth sweep. A bar cut into ten blocks reads as a quantity
-   you can count at a glance — "seven of ten" — where a continuous fill only
-   ever reads as "most of the way". The notches are an overlay painted in the
-   panel colour over the top of the fill, so one rule gives every meter in the
-   game the same tick spacing whatever its own colour is doing. */
-.bar,.vbar,.secbar,.dbar,.notobar{
-  position:relative;
-  background:var(--navy3);
-  border:var(--out-sm) solid var(--ink-out);border-radius:0;
-  box-shadow:inset 0 0 0 1px var(--brass);
-  overflow:hidden;
-}
-.bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:0}
-/* The dividers are brass, not background-coloured. A gap the colour of the
-   track reads as damage to the fill; a brass rule reads as a gauge that was
-   built with ten marks on it, which is what the reference draws. */
-.bar::after,.vbar::after,.secbar::after,.dbar::after,.notobar::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(90deg,
-    transparent 0 calc(10% - 2px), var(--brass) calc(10% - 2px) 10%);
-  opacity:.85;
-}
-.bar{height:22px;margin-top:11px}
-.bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
-.bar i.low{background:var(--yel)}
-.bar i.crit{background:var(--red)}
-.vbar{height:22px;margin-top:11px}
-.vbar i{display:block;height:100%;background:var(--blu);transition:width 1s linear}
-.vbar.done i{background:var(--grn)}
-.secbar{height:22px;margin-top:10px}
-.secbar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
-.secbar.clear i{background:var(--grn)}
-.dbar{height:20px;margin-top:9px}
-.dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 
 /* ---- small type ---- */
-.pips{color:var(--gold);letter-spacing:2px;font-size:16px}
-
-.tag,.mtype,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
-.tag{
-  padding:5px 12px;border-left:4px solid;border-radius:0;
-  color:var(--ink);background:var(--navy);
-  box-shadow:var(--slab-sm);
+.pips{
+  display:inline-flex;gap:3px;align-items:center;flex-shrink:0;
+  font-size:var(--fs-micro);color:var(--accent-deep);letter-spacing:2px;
 }
-.t0{border-color:var(--grn);color:var(--grn)}
-.t1{border-color:var(--yel);color:var(--yel)}
-.t2{border-color:var(--org);color:var(--org)}
-.t3{border-color:var(--red);color:var(--red)}
-.tag.gold{border-color:var(--gold);color:var(--goldhi)}
-.tag.blu{border-color:var(--blu);color:var(--color-seafoam)}
-.mtype{
-  color:var(--dim);border:2px solid var(--line);border-radius:0;padding:4px 11px;
-  background:rgba(2,14,17,.5);box-shadow:var(--well);
-}
-.mtype.boss{color:var(--color-coral);border-color:var(--color-terracotta)}
-.mtype.gold{color:var(--goldhi);border-color:var(--brass)}
-.statechip{letter-spacing:1.5px}
 
-.clock{font-family:var(--ui);font-size:clamp(18px,1.35vw,25px);letter-spacing:2px;color:var(--color-seafoam)}
-.clock.done{color:var(--grn)}
-.drift{color:var(--org);font-size:16px;font-style:italic;margin-top:5px}
-
-/* flavour blockquotes in sheets and results */
+/* ---- flavour blockquote ---- */
 .evt{
-  border-left:3px solid var(--line2);background:rgba(12,34,40,.6);
-  padding:9px 12px;margin-top:10px;font-size:clamp(16px,1.1vw,19px);
-  font-style:italic;color:var(--color-seafoam);line-height:1.6;
+  border-left:4px solid var(--wood-dark);
+  background:color-mix(in srgb, var(--parch-sunk) 70%, transparent);
+  padding:var(--s2) var(--s3);margin-top:var(--s3);
+  font-family:var(--font-prose);font-size:var(--fs-body);font-style:italic;
+  color:var(--ink-soft);line-height:var(--lh-body);border-radius:var(--r-sm);
 }
-.evt.noto{border-color:var(--gold);color:var(--gold)}
-.evt.prize{border-color:var(--brass);color:var(--goldhi);font-style:normal}
+.evt.noto{border-color:var(--accent);color:var(--ink)}
+.evt.prize{border-color:var(--accent-lit);color:var(--ink);font-style:normal}
 
 /* ---- wipe transition ---- */
-#wipe{position:fixed;inset:0;z-index:40;pointer-events:none;visibility:hidden}
+#wipe{position:fixed;inset:0;z-index:var(--z-wipe);pointer-events:none;visibility:hidden}
 #wipe.go{visibility:visible}
 #wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg);transition:none}
-#wipe .p1{background:var(--bg2)}
-#wipe .p2{background:var(--bg)}
+#wipe .p1{background:var(--wood-dark)}
+#wipe .p2{background:var(--sea-deep)}
 #wipe.go .p1{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1)}
 #wipe.go .p2{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1) .07s}
 
 /* ---- coins ---- */
 .coin{
   position:fixed;z-index:45;width:15px;height:15px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 35% 30%,var(--color-sand),var(--color-gold));
-  box-shadow:none;
+  background:radial-gradient(circle at 35% 30%,var(--ivory-soft),var(--accent));
 }
 
 /* reads safe-area insets into JS via border widths */
@@ -429,63 +311,40 @@ h1,h2,h3{font-weight:500}
   border-bottom:env(safe-area-inset-bottom) solid transparent;
 }
 
-/* ---- wide / landscape ---- */
-@media (min-width:900px) and (orientation:landscape){
-  body{font-size:16px}
-  main:not(.nopad){
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(clamp(340px,26vw,540px),1fr));
-    gap:0 clamp(14px,1.2vw,26px);align-content:start;
-    --mainpad:clamp(18px,1.8vw,44px);
-    padding:clamp(14px,1.3vw,30px) var(--mainpad);
-  }
-  .sect,.hero{grid-column:1/-1}
-}
-@media (min-width:700px) and (orientation:portrait){
-  #app{max-width:660px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:none}
-}
-@media (max-width:400px){
-  main{--mainpad:12px}
-}
-
-/* ---- stat chips: one glyph, one number ----
-   The house unit for anything numeric. Cards are meant to be read at a glance,
-   so these replace prose like "SPD 8 · GUNS 3" wherever a number will do. */
-.chips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:7px}
-.chips.tight{gap:4px;margin-top:5px}
-.chips.big{gap:8px}
-
-/* A chip is a little plate the number is stamped into, not floating text with
-   a picture next to it. The plate is what makes a row of numbers read as a
-   readout rather than as a sentence someone forgot to finish. */
-.chip{
-  display:inline-flex;align-items:center;gap:5px;
-  font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
-  color:var(--ink);line-height:1;white-space:nowrap;
-  padding:3px 12px 3px 3px;border-radius:0;
-  background:var(--navy3);
-  border:var(--out-sm) solid var(--ink-out);
-}
-/* A chip's fill used to be translucent, so its real ground was whatever it
-   happened to be sitting on — a panel, a card foot, or the Teal section plate,
-   which is light enough to sink a label under 4.5:1. It is opaque now, and the
-   darkest step of Navy, so every chip everywhere carries its contents on the
-   one background the whole colour allocation was built against. */
-.chip .chipic{width:max(40px,1.35em);height:max(40px,1.35em);flex-shrink:0;vertical-align:middle}
-.chip b{font-weight:500}
-.chip i{font-style:normal;color:var(--dim);margin:0 .1em}
-.chip.ok b{color:var(--grn)}
-.chip.bad b{color:var(--color-coral)}
-.chip.warn b{color:var(--yel)}
-.chip.dim,.chip.dim b{color:var(--dim)}
-.chip.gold b{color:var(--goldhi)}
-.chips.big .chip{font-size:clamp(17px,1.3vw,22px)}
-.chips.big .chip .chipic{width:max(40px,1.5em);height:max(40px,1.5em)}
-
-
-/* ---- scrollbars ----
-   None of them, anywhere. A scrollbar is browser chrome, and browser chrome is
-   the loudest thing on screen saying "this is a web page". Scrolling still
-   works exactly as before; it just does not draw a track. */
+/* ============================================================
+   scrollbars — none, anywhere.
+   A scrollbar is browser chrome, and browser chrome is the loudest thing on
+   screen saying "this is a web page". Scrolling works exactly as before; it
+   just does not draw a track.
+   ============================================================ */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* ============================================================
+   larger canvases
+
+   The layout is authored for a phone held in one hand. A tablet or a desktop
+   window gets MORE of the game rather than a stretched copy of it: the
+   scene becomes a multi-column board and the nav moves to the side, which is
+   where a thumb is on a landscape device. Nothing is centred in a 660px
+   column with wasted sea either side.
+   ============================================================ */
+@media (min-width:900px) and (orientation:landscape){
+  main:not(.nopad){
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(clamp(330px,26vw,520px),1fr));
+    gap:0 var(--s5);align-content:start;
+    padding:var(--s5) var(--s6) var(--s7);
+  }
+  /* Headings and the hero span the board. So does anything that already
+     manages its own columns — an item grid or a rail lays its own cards out,
+     so handing it one column of a multi-column board strands it in the left
+     third and leaves the rest of the screen as open water. */
+  .sect,.hero,.itemgrid,.rail,.goodsgrid,.tally,.wmeter{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}

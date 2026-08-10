@@ -12,7 +12,7 @@ import { MATERIALS, MAT_KEYS } from '../data/materials.js';
 import { BELL_NAMES, bellMaxDepth } from '../data/salvage.js';
 import { WAREHOUSE, MAX_WAREHOUSE } from '../data/storage.js';
 import { totalGoods, totalMats, storeCap } from '../core/selectors.js';
-import { chip, chipRow, outOf } from './format.js';
+import { chip, chipRow, outOf, meter } from './format.js';
 import { iconHTML } from '../art/icons.js';
 import { itemCard, itemGrid, sect } from './components.js';
 import { setSheet, openSheet } from './sheet.js';
@@ -32,8 +32,10 @@ const row = (key, def, held) => {
     icon: key, name: def.n, sub: def.unit,
     held: chipRow([outOf(key, held, cap, full ? 'warn' : (held ? '' : 'dim'),
       def.n + ' in store, of the room there is')], 'tight'),
-    body: held ? `<div class="bar"><i style="width:${Math.min(100, held / cap * 100)}%"
-      ${full ? 'class="crit"' : (held > cap * 0.8 ? 'class="low"' : '')}></i></div>` : '',
+    /* Full is not a failure — it is the warehouse doing its job — so the top
+       of the sweep is amber rather than red, and only the overflow line in
+       the copy below says anything is being lost. */
+    body: held ? meter(held / cap * 100, full ? 'warn' : 'gold', 'sm') : '',
     cls: held ? (full ? 'owned' : '') : 'dis'
   });
 };

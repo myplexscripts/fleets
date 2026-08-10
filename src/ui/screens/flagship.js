@@ -9,13 +9,13 @@ import { FLAGTIERS, FITTINGS, BOONS, tierCost } from '../../data/flagship.js';
 import { FIGUREHEADS, FIG_KEYS } from '../../data/figureheads.js';
 import { SETS, SET_KEYS } from '../../data/collectibles.js';
 import {
-  cond, condColor, power, repairCost, isBusy, canPay, pay, hasFit, hasFig,
+  cond, power, repairCost, isBusy, canPay, pay, hasFit, hasFig,
   piecesOf, setComplete, totalPieces, completedSets
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar, chip, chipRow, outOf, priceChips } from '../format.js';
-import { itemCard, itemAction, itemGrid, sect } from '../components.js';
+import { hullBar, chip, chipRow, outOf, priceChips, meter } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect, emptyCard } from '../components.js';
 import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { promptDlg } from '../dialog.js';
@@ -46,7 +46,9 @@ export function renderFlagship() {
         f.hull < f.max * 0.6 ? 'warn' : 'ok', 'Hull')], 'tight'),
       body: hullBar(f),
       price: f.hull >= f.max ? '' : priceChips({ gold: repairCost(f) }),
-      action: itemAction('Rename', 'rename-flag', {}, { cls: '' })
+      /* Rename is the lesser of the two, so it takes the secondary face and
+         sits to the left of the action the card is actually for. */
+      action: itemAction('Rename', 'rename-flag', {}, { cls: 'quiet' })
         + itemAction(f.hull >= f.max ? 'No Repairs' : 'Repair', 'repair', { id: 'FLAG' },
             { disabled: f.hull >= f.max || bz }),
       cls: 'owned'
@@ -98,9 +100,9 @@ export function renderFlagship() {
     outOf('figure', owned.length, FIG_KEYS.length, 'gold', 'Carvings owned')], 'tight'));
 
   if (!owned.length) {
-    h += `<div class="card" style="--i:${i++}"><div class="sub center">
-      Her bowsprit is bare. The chandler at the Market carves plain ones; an
-      admiral's is taken off her stern.</div></div>`;
+    h += emptyCard('figure',
+      "Her bowsprit is bare. The chandler at the Market carves plain ones; an admiral's is taken off her stern.",
+      i++);
   } else {
     h += itemGrid([
       /* Sailing without one is a real choice, so it is a card like the rest
@@ -136,9 +138,9 @@ export function renderFlagship() {
     const have = piecesOf(key);
     const done = setComplete(key);
     h += `<div class="card ${done ? 'setdone' : ''}" style="--i:${i++}">
-      <div class="row"><h3${done ? ' style="color:var(--goldhi)"' : ''}>${esc(set.n)}</h3>
+      <div class="row"><h3>${esc(set.n)}</h3>
         <span class="tag ${done ? 'gold' : ''}">${have.length}/${set.pieces.length}</span></div>
-      <div class="setbar ${done ? 'full' : ''}"><i style="width:${have.length / set.pieces.length * 100}%"></i></div>
+      ${meter(have.length / set.pieces.length * 100, done ? 'full' : 'gold', 'sm')}
       <div class="pieces">${set.pieces.map(pc => {
         const got = have.includes(pc);
         return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 40)}<span>${got ? esc(pc) : '???'}</span></div>`;

@@ -136,8 +136,37 @@ export function goodsLine(good, qty) {
 export const goodIcon = (good, size) => iconHTML(good, size || 19);
 export const matName = m => (MATERIALS[m] ? MATERIALS[m].n : m);
 
+/* ---- meters ----------------------------------------------------------
+   Every bar in the game comes from here, and there is only one of them.
+
+   There used to be six — hull, voyage, security, danger, notoriety, set
+   completion — each with its own class, its own height and its own idea of
+   what its fill was. They all shared one bug: the fill carried a border of
+   its own, so at any height it was taller than the track it lived in and
+   hung out of both ends. Chasing that in CSS six times is how you end up
+   with six bars that are broken in six different ways.
+
+   So the geometry is the fix, and it is enforced in both directions. Here:
+   the percentage is coerced to a number, NaN and Infinity are floored to
+   zero, and the result is clamped to 0–100 before it can reach the DOM. In
+   CSS: the track clips and the fill's width is clamp(0%, --p, 100%), so a
+   bad number can only ever be a wrong length, never an overflow.
+
+   `pct` is 0–100. `tone` is one of good / warn / bad / gold / info, or a
+   state word the stylesheet knows (done, full, alert). `cls` is for size
+   (sm / lg) and for anything a caller needs to find it by later. */
+export function meter(pct, tone, cls) {
+  const n = Number(pct);
+  const p = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0;
+  return `<div class="meter ${tone || ''} ${cls || ''}"`
+    + ` role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"`
+    + ` style="--p:${p.toFixed(1)}%"><i></i></div>`;
+}
+
+/* Hull, as a fraction of what she was built with. The tone is the reading:
+   sound, hurt, or about to go down. */
 export function hullBar(s) {
-  const p = Math.max(0, s.hull / s.max * 100);
-  const c = p < 26 ? 'crit' : (p < 60 ? 'low' : '');
-  return `<div class="bar"><i class="${c}" style="width:${p}%"></i></div>`;
+  const max = s.max > 0 ? s.max : 1;
+  const p = s.hull / max * 100;
+  return meter(p, p < 26 ? 'bad' : p < 60 ? 'warn' : 'good');
 }

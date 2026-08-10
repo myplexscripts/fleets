@@ -171,13 +171,18 @@ function drawTally(title, sub, lines) {
 
   /* And then the bar moves, last, after the money has finished counting — it is
      the consequence of the haul rather than part of it. */
-  const fill = $('rWanted');
-  if (fill) {
+  const bar = $('rWanted');
+  if (bar) {
     setTimeout(() => {
-      fill.style.width = fill.dataset.to;
-      if (fill.dataset.ready) {
+      /* Drive --p, not width: the meter's promise that it stays inside its
+         own track is a CSS clamp on that one property, and an inline width
+         would step straight past it. */
+      bar.style.setProperty('--p', bar.dataset.to);
+      bar.setAttribute('aria-valuenow', String(parseFloat(bar.dataset.to) || 0));
+      if (bar.dataset.ready) {
         setTimeout(() => {
-          const w = fill.closest('.wmeter');
+          bar.classList.add('alert');
+          const w = bar.closest('.wmeter');
           if (w) w.classList.add('ready');
           play('boss_horn');
         }, 900);
@@ -200,17 +205,20 @@ function wantedMeter() {
   const was = Math.min(wantedWas, need);
   if (now_ === was) return '';
 
-  const pct = n => Math.round(n / need * 100) + '%';
+  const pct = n => Math.round(Math.max(0, Math.min(1, n / need)) * 100) + '%';
   const up = now_ > was;
   const ready = now_ >= need;
 
+  /* Drawn at where it WAS, then told where it is once the haul has finished
+     counting — the movement is the point, so it must not be pre-applied. */
   return `<div class="wmeter" style="--i:0">
     <div class="wmlbl">
       <span>${esc(REGIONS[wantedRegion].n)} — wanted</span>
       <b class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(now_ - was)}</b>
     </div>
-    <div class="wmbar"><i id="rWanted" style="width:${pct(was)}"
-      data-to="${pct(now_)}"${ready ? ' data-ready="1"' : ''}></i></div>
+    <div class="meter gold" id="rWanted" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+      aria-valuenow="${parseInt(pct(was), 10)}" style="--p:${pct(was)}"
+      data-to="${pct(now_)}"${ready ? ' data-ready="1"' : ''}><i></i></div>
     <div class="wmfoot">${ready
       ? `${esc(b.n)} has had enough of you. She is out there now.`
       : `${need - now_} more and ${esc(b.n)} comes looking for you.`}</div>

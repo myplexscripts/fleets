@@ -1,3 +1,8 @@
+/* The game's display face, spelled out for Phaser: canvas text cannot
+   inherit a CSS custom property, and the fallback chain matters because a
+   missing family here is a serif in the middle of the fight. */
+const BATTLE_FONT = "Staatliches, 'Arial Narrow', Impact, sans-serif";
+
 /* The Phaser battle scene: ships, cannon fire, smoke, sinking.
 
    All of it is drawn from two generated textures ('px' a white square, 'soft' a
@@ -144,7 +149,7 @@ export class BattleScene extends SceneBase {
     const plate = this.add.rectangle(0, dim.h * scale * 0.75 + 16, pw, 28, 0x07161b, 0.92)
       .setStrokeStyle(1, data.isBoss ? 0x8a463e : 0x164a52);
     const nm = this.add.text(0, dim.h * scale * 0.75 + 9, data.name.toUpperCase(),
-      { fontFamily: 'Oswald', fontSize: '14px', color: data.isBoss ? '#E07A6A' : '#6CB7B2' }).setOrigin(0.5, 0.5);
+      { fontFamily: BATTLE_FONT, fontSize: '14px', color: data.isBoss ? '#E07A6A' : '#6CB7B2' }).setOrigin(0.5, 0.5);
     const hp = this.add.graphics();
     /* Her reload, under her hull bar. This is the clock the whole fight runs
        on, so it belongs on the ship rather than in a panel somewhere. */
@@ -267,7 +272,7 @@ export class BattleScene extends SceneBase {
 
   floatText(x, y, txt, color, size) {
     const t = this.add.text(x, y, txt, {
-      fontFamily: 'Oswald', fontSize: (size || 20) + 'px', color, stroke: '#000', strokeThickness: 4
+      fontFamily: BATTLE_FONT, fontSize: (size || 20) + 'px', color, stroke: '#000', strokeThickness: 4
     }).setOrigin(0.5).setDepth(7);
     this.tweens.add({ targets: t, y: y - 46, alpha: 0, duration: 900, ease: 'Cubic.out', onComplete: () => t.destroy() });
   }

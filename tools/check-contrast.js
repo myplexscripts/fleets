@@ -181,6 +181,31 @@ const COLLECT = () => {
     const hit = document.elementFromPoint(cx, cy);
     if (!hit || !(el === hit || el.contains(hit) || hit.contains(el))) continue;
 
+    /* And skip anything CLIPPED AWAY by a scrolling ancestor. A panel body
+       scrolls, so the card half a screen below its bottom edge still has
+       layout, still reports a box inside the viewport, and still satisfies
+       the hit test above — `hit.contains(el)` is true because what is painted
+       at those coordinates is the scroller itself. The pixels there belong to
+       the panel's frame, so measuring the hidden label against them reported
+       ink-on-wood at 2.2:1 for a label that is, in fact, ink on parchment.
+
+       Walk the offset ancestors, intersect with every scroll container on the
+       way up, and require that most of the box survives. This is the same
+       class of bug as the two already fixed in this file: the sampler must
+       measure what is on the glass, not what is in the layout tree. */
+    let vis = { l: r.left, t: r.top, rt: r.right, b: r.bottom };
+    for (let a = el.parentElement; a; a = a.parentElement) {
+      const acs = getComputedStyle(a);
+      if (!/auto|scroll|hidden/.test(acs.overflowY + acs.overflowX)) continue;
+      const ar = a.getBoundingClientRect();
+      vis = {
+        l: Math.max(vis.l, ar.left), t: Math.max(vis.t, ar.top),
+        rt: Math.min(vis.rt, ar.right), b: Math.min(vis.b, ar.bottom)
+      };
+    }
+    const shown = Math.max(0, vis.rt - vis.l) * Math.max(0, vis.b - vis.t);
+    if (shown < r.width * r.height * 0.85) continue;
+
     const key = el.className + '|' + Math.round(size) + '|' + cs.color;
     if (seen.has(key)) continue;
     seen.add(key);

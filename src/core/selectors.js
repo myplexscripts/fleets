@@ -39,8 +39,11 @@ export function cond(s) {
   if (s.hull <= 0) return 'CRIPPLED';
   return s.hull < s.max * 0.6 ? 'DAMAGED' : 'SEAWORTHY';
 }
-export function condColor(c) {
-  return c === 'CRIPPLED' ? 'var(--red)' : (c === 'DAMAGED' ? 'var(--yel)' : 'var(--grn)');
+/* A hull's condition as one of the design system's status tones, so anything
+   showing it reaches for the same three words every other reading in the
+   game does rather than for a colour of its own. */
+export function condTone(c) {
+  return c === 'CRIPPLED' ? 'bad' : (c === 'DAMAGED' ? 'warn' : 'ok');
 }
 
 /* ---- wallet ----

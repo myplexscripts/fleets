@@ -7,8 +7,8 @@ import { actions, actionSource } from '../../core/actions.js';
 import { VOY_MAX_ACTIVE } from '../../core/config.js';
 import { GOODS } from '../../data/goods.js';
 import { findShip, voyReady, rushCost, fmtDur } from '../../core/selectors.js';
-import { chip, chipRow, outOf, bagChips, priceChips } from '../format.js';
-import { itemCard, itemAction, itemGrid, sect } from '../components.js';
+import { chip, chipRow, outOf, bagChips, priceChips, meter } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect, emptyCard } from '../components.js';
 import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -20,7 +20,7 @@ export function renderSea() {
     outOf('sea', S.voyages.length, VOY_MAX_ACTIVE, '', 'Fleets at sea')], 'tight'));
 
   if (!S.voyages.length) {
-    h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships at sea.</div></div>`;
+    h += emptyCard('sea', 'No ships at sea. Take a run or a dive from the chart.', i++);
     $('main').innerHTML = h;
     return;
   }
@@ -40,7 +40,7 @@ export function renderSea() {
       held: chipRow([chip(rdy ? 'anchor' : 'sea', rdy ? 'IN PORT' : 'AT SEA',
         rdy ? 'ok' : 'dim')], 'tight'),
       body: `${manifest(v)}
-        <div class="vbar ${rdy ? 'done' : ''}"><i style="width:${rdy ? 100 : pct}%"></i></div>
+        ${meter(rdy ? 100 : pct, rdy ? 'done' : 'info', 'voybar')}
         ${chipRow([
           v.type === 'dive'
             ? chip('target', '100%', 'ok', 'A dive is never a fight')

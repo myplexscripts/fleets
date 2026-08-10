@@ -33,7 +33,7 @@ import { $, esc } from '../core/dom.js';
 import { S } from '../core/state.js';
 import { actions } from '../core/actions.js';
 import { VOY_MAX_ACTIVE, VOY_SHIPS, BATTLE_SHIPS, CARGO_PER_CHEST } from '../core/config.js';
-import { DNAMES, DCOLORS, MTYPE, REGIONS } from '../data/world.js';
+import { DNAMES, DTONES, MTYPE, REGIONS } from '../data/world.js';
 import { PORTS } from '../data/ports.js';
 import { GOODS } from '../data/goods.js';
 import { BELL_NAMES, DEPTH_NAMES } from '../data/salvage.js';
@@ -52,7 +52,7 @@ import { BOUNTY_GOLD_PER_RATING } from '../core/config.js';
 import { reloadMs } from '../battle/state.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
-import { chip, have, reqRow, chipRow, bagChips, shipTiles } from './format.js';
+import { chip, have, reqRow, chipRow, bagChips, shipTiles, meter } from './format.js';
 import { rail, railCard, reqBar } from './components.js';
 import { openSheet, closeSheet, setSheetFoot } from './sheet.js';
 import { deny } from '../fx/pop.js';
@@ -256,7 +256,11 @@ function drawMission() {
 
   let sub = '';
   if (showDanger) {
-    sub += `<div class="dbar"><i style="width:${(d + 1) / DNAMES.length * 100}%;background:${DCOLORS[d]}"></i></div>`;
+    /* Danger is three named steps, so the meter is three steps of its own
+       sweep and takes the tone that step is called — it used to paint itself
+       with a colour handed in from the data layer, which is the one way a
+       bar could disagree with every other bar in the game. */
+    sub += meter((d + 1) / DNAMES.length * 100, DTONES[d] || 'warn', 'sm');
   }
 
   /* A lane that has gone bad is two jobs, and both are offered up front. Neither

@@ -719,10 +719,14 @@ function relaxed(pts) {
    because horizontal movement breaks the one thing a label has to do — say
    which dot it belongs to.
 
-   Oswald is condensed; 0.52em a character plus the tracking is close enough for
-   a box that only has to be right to a few pixels. */
+   Staatliches is condensed caps; 0.52em a character plus the tracking is close
+   enough for a box that only has to be right to a few pixels. */
 const LABEL_PAD_Y = 3;
 const LINE_GAP = 1.15;          // a second line, in multiples of the font size
+
+/* The display face, spelled out for SVG. Kept beside the label code that
+   uses it so the two cannot drift apart. */
+const LABEL_FONT = "Staatliches, 'Arial Narrow', Impact, sans-serif";
 
 function labelWidth(text, size, spacing) {
   return text.length * (size * 0.52 + (spacing || 0)) + 10;
@@ -793,9 +797,16 @@ function placeLabels(specs, base) {
     if (worst < 0.4) break;
   }
 
+  /* The chart's labels are the game's display face like every other label in
+     it. They used to ask for "Oswald", which this game has never shipped —
+     so every port and every wreck on the chart fell back to the browser's
+     default serif, which is the one thing on screen that could not possibly
+     belong to the same design as the rest. SVG cannot read a CSS custom
+     property from a stylesheet, so the family is named here, with the same
+     fallback chain the token uses. */
   return put.map(({ s }) =>
     `<text x="${s.x.toFixed(1)}" y="${s.y.toFixed(1)}" text-anchor="middle" fill="${s.fill}"`
-    + ` font-size="${s.size}" font-family="Oswald" letter-spacing="${s.spacing}"`
+    + ` font-size="${s.size}" font-family="${LABEL_FONT}" letter-spacing="${s.spacing}"`
     + ` style="paint-order:stroke" stroke="${s.stroke}" stroke-width="3">${esc(s.text)}`
     + (s.second
       ? `<tspan x="${s.x.toFixed(1)}" dy="${(s.size * LINE_GAP).toFixed(1)}" fill="${s.second.fill}"`

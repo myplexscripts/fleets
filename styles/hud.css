@@ -1,150 +1,268 @@
 /* ============================================================
-   hud — top bar, resource plates, bottom nav rail
+   hud — the scene bar and the nav rail
+
+   These two are the game's frame. They are the same on every screen, they
+   bleed to the physical edges of the glass, and they are the reason five
+   very different scenes read as one product. Everything between them is the
+   scene; everything in them is the game.
    ============================================================ */
 
-/* One row, as short as its tallest child. The game's name is on the title
-   screen and in the browser tab; repeating it above every screen cost a whole
-   line of a phone and told nobody anything. */
-/* ---- the purse ----
-   Drawn by Port and Market inside their own scroller rather than by a global
-   header, and stuck to the top of it so it stays put while the screen moves. */
-.purse{
-  display:flex;align-items:center;gap:10px;
-  position:sticky;top:calc(var(--mainpad, 14px) * -1);z-index:6;
-  padding:calc(var(--mainpad, 14px)) 0 12px;
-  margin:calc(var(--mainpad, 14px) * -1) 0 4px;
-  background:var(--bg);
-}
-.purse .resitem{flex:0 1 auto;padding:5px 20px 5px 5px;flex-direction:row;gap:11px;align-items:center}
-.purse #wStores{margin-left:auto}
-.purse .resitem b{font-size:clamp(24px,1.9vw,34px);line-height:1}
-.purse .resitem span{font-size:clamp(16px,1.2vw,19px);letter-spacing:1.6px;line-height:1}
-.purse #wStores span{color:var(--gold)}
+/* ============================================================
+   THE SCENE BAR
 
-/* ship's wheel — the way into settings, on Port and nowhere else */
+   Edge to edge along the top: the name of the scene you are in, and the one
+   or two figures that scene needs you to be able to see while you act. It
+   carries the top safe-area inset as padding INSIDE itself, so the wood runs
+   under the notch and the content never does.
+
+   It is not a resource dashboard. A row of running totals above a chart is a
+   spreadsheet header, not a game, so a scene bar shows what THIS scene's
+   decisions are made against — gold at the counter, hulls on the chart — and
+   nothing else.
+   ============================================================ */
+#topbar{
+  flex:0 0 auto;position:relative;z-index:var(--z-chrome);
+  border:0;border-bottom:3px solid var(--wood-dark);
+  background:var(--wood-dark);
+  padding-top:env(safe-area-inset-top);
+  box-shadow:0 3px 0 rgba(0,0,0,.28);
+}
+#topbar:empty{display:none}
+
+.scenebar{
+  display:flex;align-items:center;gap:var(--s2);
+  min-height:var(--tap-nav);
+  padding:var(--s1) var(--gutter);
+}
+.scenetitle{
+  flex:1 1 auto;min-width:0;
+  font-family:var(--font-display);font-size:var(--fs-title);
+  letter-spacing:var(--track-wide);text-transform:uppercase;
+  color:var(--ivory);line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 2px 0 rgba(0,0,0,.34);
+}
+.scenetools{
+  flex:0 1 auto;min-width:0;display:flex;align-items:center;gap:var(--s2);
+}
+/* On a narrow phone the gold, the stores door and the wheel together leave
+   the scene's own name about twenty pixels, and "MARKET" becomes "MARK…".
+   The stores door drops its word there and keeps its glyph — a labelled door
+   is a nicety, a screen that cannot say what it is is not. The name stays in
+   the accessibility tree either way. */
+@media (max-width:430px){
+  .scenetools .resitem.tappable span{
+    position:absolute;width:1px;height:1px;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap;
+  }
+  .scenetools .resitem.tappable{padding-right:2px}
+}
+
+/* ---- a figure on the bar ----
+   A steel plate with a glyph and a number. This is the same plate a chip
+   uses, one size up, so the gold on the scene bar and the gold in a price
+   are recognisably the same object. */
+.resitem{
+  display:inline-flex;align-items:center;gap:var(--s1);min-width:0;
+  padding:2px var(--s2) 2px 2px;
+  border:var(--slice-plate) solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;background:var(--steel-lit);
+  color:var(--ink);
+  transition:transform var(--t-state) var(--ease-pop);
+}
+.resitem .ic{width:var(--icon);height:var(--icon)}
+.resitem b{
+  font-family:var(--font-display);font-weight:400;font-size:var(--fs-num);
+  color:var(--ink);line-height:1;
+}
+.resitem span{
+  font-family:var(--font-display);font-size:var(--fs-label);
+  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink);
+  line-height:1;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+}
+.resitem span.tight{letter-spacing:0}
+/* Money changing is the one thing on this bar allowed to move. */
+.resitem.bump{transform:scale(1.12)}
+.calm .resitem.bump{transform:none}
+
+/* a plate that is also a door */
+.resitem.tappable{cursor:pointer;border-width:var(--slice-plate)}
+.resitem.tappable:active{transform:translateY(2px)}
+.resitem.tappable:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+
+/* ---- the ship's wheel: the way into settings ---- */
 .iconbtn{
-  width:clamp(44px,3vw,52px);height:clamp(44px,3vw,52px);flex-shrink:0;
-  border:2px solid var(--color-teal);border-radius:50%;
-  background:var(--tealhi);
-  box-shadow:var(--slab-sm);
-  cursor:pointer;position:relative;
-  transition:transform .1s ease,box-shadow .1s ease,filter .2s;
+  width:var(--tap);height:var(--tap);flex-shrink:0;
+  background:url('../assets/kenney-adventure/Vector/round_brown.svg') center/contain no-repeat;
+  border:0;border-radius:50%;cursor:pointer;position:relative;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,.3));
+  transition:transform var(--t-press) var(--ease-out),filter var(--t-state);
 }
 .iconbtn::before{
-  content:'';position:absolute;inset:14%;
-  background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23d9c98a' stroke-width='1.7'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.2v4.4M12 17.4v4.4M2.2 12h4.4M17.4 12h4.4M5.1 5.1l3.1 3.1M15.8 15.8l3.1 3.1M18.9 5.1l-3.1 3.1M8.2 15.8l-3.1 3.1'/></g><circle cx='12' cy='12' r='1.6' fill='%23d9c98a'/></svg>");
+  content:'';position:absolute;inset:22%;
+  background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%2315273E' stroke-width='2'><circle cx='12' cy='12' r='4.2'/><path d='M12 2.2v4.4M12 17.4v4.4M2.2 12h4.4M17.4 12h4.4M5.1 5.1l3.1 3.1M15.8 15.8l3.1 3.1M18.9 5.1l-3.1 3.1M8.2 15.8l-3.1 3.1'/></g><circle cx='12' cy='12' r='1.8' fill='%2315273E'/></svg>");
 }
-.iconbtn:hover{filter:brightness(1.2)}
-.iconbtn:active{transform:translateY(3px) rotate(-18deg);box-shadow:var(--slab-down)}
+@media (hover:hover) and (pointer:fine){
+  .iconbtn:hover{filter:drop-shadow(0 4px 0 rgba(0,0,0,.3)) brightness(1.08)}
+}
+.iconbtn:active{transform:translateY(3px) rotate(-16deg);filter:none}
+.iconbtn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 
-.resitem{
-  min-width:0;display:flex;align-items:center;gap:2px;
-  background:var(--navy);
-  border:2px solid var(--line2);border-radius:0;padding:6px 12px;
-  box-shadow:var(--slab-sm);
-  transition:transform .16s cubic-bezier(.2,2,.4,1),border-color .16s,box-shadow .16s;
-}
-/* the glyph sits in its own recessed disc at the end of the pill */
-.resitem .ic{
-  width:clamp(40px,11vw,54px);height:clamp(40px,11vw,54px);flex-shrink:0;
-  padding:4px;border-radius:50%;
-  background:var(--navy3);
-  box-shadow:var(--well);
-}
-.resitem b{font-family:var(--ui);font-weight:400;color:var(--ink);line-height:1.15;font-size:clamp(24px,1.7vw,30px)}
-.resitem span{
-  font-family:var(--ui);color:var(--dim);letter-spacing:1px;text-transform:uppercase;
-  line-height:1.15;white-space:nowrap;font-size:clamp(16px,2.8vw,18px);
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;
-}
-.resitem.bump{
-  transform:scale(1.1) translateY(-2px);border-color:var(--goldhi);
-  box-shadow:var(--slab-sm);
-}
+/* ============================================================
+   THE NAV RAIL
 
-/* ---- nav rail ----
-   The rail runs to the physical bottom of the screen. The home-indicator inset
-   is carried *inside* the buttons rather than as padding under them, so the tab
-   faces reach the edge instead of floating above a strip of dead gradient — on
-   a phone that strip is a third of an inch of nothing at the bottom of every
-   screen in the game.
+   Five destinations along the bottom edge. This is the control the player
+   touches more than any other in the game, so it gets the most careful
+   treatment in the system.
 
-   Tabs are slabs sunk into the rail; the one you are on comes forward. */
-/* ---- the nav rail ----------------------------------------------------
-   A row of floating circular icon buttons, not a docked steel bar. The bar
-   itself carries no fill or panel of its own — only the circles are visible,
-   sitting directly on whatever screen is under them — which is both what
-   "gamified" HUD navigation usually looks like and the reason the rail takes
-   noticeably less vertical space than the labelled version it replaces.
+   WHAT WAS WRONG, and what each fix is for:
 
-   Every button's own hit box still reaches the bottom of the screen: the
-   safe-area inset is padding INSIDE the button, under the visible circle,
-   rather than dead space below it, so a thumb resting near the home
-   indicator is still on the tab. The circle itself floors at 44px — above
-   the 40px HIG minimum for a touch target — regardless of how small other
-   icons in the game are now allowed to run. */
+     · A 44px circle with no label was the whole target. Five icon-only
+       circles float on the water with nothing to say which is which and
+       nothing to say which one you are on except a swap from grey art to
+       brown art — a hue change of two similar-value browns. That is a
+       colour-only state cue on the primary navigation of the game.
+     · The bar carried no surface, so tabs sat directly on whatever the
+       scene happened to be. Contrast was therefore whatever the scene felt
+       like that day.
+     · There was no focus state at all, and no hover distinct from active.
+
+   WHAT IT IS NOW. The rail is a wood plank clamped to the bottom edge, and
+   every tab is a real, labelled target of at least 56x60 with the home
+   indicator inset carried INSIDE its own hit box — so a thumb resting near
+   the bottom of the glass is still on the tab rather than in dead space
+   under it.
+
+   The six states, and the cues each one uses. No state anywhere in this
+   list is distinguishable by colour alone:
+
+     DEFAULT   dark steel key, white glyph, sand label
+     HOVER     the key brightens and rises 2px — pointer devices only
+     CURRENT   FOUR simultaneous changes: the key becomes the brown/parchment
+               art (a different MATERIAL, not a different tint), a gold marker
+               bar appears above the tab, the label brightens to full ivory,
+               and the whole tab lifts 3px. Also aria-current="page" for
+               anyone not reading it by eye.
+     PRESSED   the key travels 2px down and the marker dims
+     FOCUS     a two-tone ring around the whole tab, drawn outside it
+     DISABLED  desaturated, faded, and pointer-events off
+   ============================================================ */
 nav{
-  display:flex;justify-content:center;align-items:flex-start;gap:clamp(10px,4vw,28px);
-  background:none;border:0;box-shadow:none;
-  padding:8px 10px 0;
+  flex:0 0 auto;position:relative;z-index:var(--z-chrome);
+  display:flex;justify-content:space-around;align-items:stretch;
+  gap:var(--s1);
+  padding:0 var(--s1);
+  border-top:3px solid var(--wood-dark);
+  background:var(--wood-dark);
+  box-shadow:0 -3px 0 rgba(0,0,0,.28);
 }
+
 nav button{
-  background:none;border:0;color:inherit;
-  padding:0 4px calc(env(safe-area-inset-bottom) + 6px);
-  min-height:calc(44px + env(safe-area-inset-bottom));min-width:44px;
+  flex:1 1 0;min-width:var(--tap-nav);
   position:relative;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:3px;
+  background:none;border:0;color:inherit;
+  /* The home-indicator inset lives inside the button, not under it. */
+  padding:var(--s2) 2px calc(env(safe-area-inset-bottom) + var(--s2));
+  min-height:calc(var(--tap-nav) + env(safe-area-inset-bottom));
+  transition:transform var(--t-press) var(--ease-out);
 }
 
-/* the circle: dark steel by default, filled with the pack's own round key art
-   so it reads as a real button rather than a flat coloured disc */
+/* the key */
 nav .navcircle{
-  width:44px;height:44px;flex-shrink:0;border-radius:50%;
+  width:var(--tap);height:var(--tap);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background-image:url('../assets/kenney-adventure/Vector/round_grey_dark.svg');
-  background-size:contain;background-repeat:no-repeat;
-  transition:transform .1s ease,filter .15s;
+  background:url('../assets/kenney-adventure/Vector/round_grey_dark.svg') center/contain no-repeat;
+  border-radius:50%;
+  transition:transform var(--t-press) var(--ease-out),filter var(--t-state);
 }
-nav button:active .navcircle{transform:translateY(2px)}
+/* The glyph inside keeps its shape but not its hue: brightness(0) flattens
+   every pixel to black whatever the icon's usual tint, invert(1) turns that
+   to white. One rule, every icon, guaranteed contrast on the dark key. */
+nav .navic{width:24px;height:24px;filter:brightness(0) invert(1)}
 
-/* The icon inside keeps its shape but not its own hue — brightness(0) flattens
-   every pixel to black regardless of the glyph's usual tint, invert(1) turns
-   that black to white. "Icons should be white" applies everywhere in the
-   rail; only the circle behind them changes to say which one is current. */
-nav .navic{
-  width:24px;height:24px;
-  filter:brightness(0) invert(1);
+/* Ivory-soft resting, full ivory when current. Gold was tried here and does
+   not survive its own ground: Amber on the dark plank measures 3.7:1, and a
+   16px label needs 4.5. The tab you are on is already saying so with a
+   different key material, a marker bar and 3px of lift — the label only has
+   to get BRIGHTER, which it does, and which costs nothing in legibility.
+
+   No text-shadow either. It darkened the wood immediately around each glyph,
+   so the label's real background depended on which pixel you looked at. */
+nav .navlbl{
+  font-family:var(--font-display);font-size:var(--fs-micro);
+  letter-spacing:var(--track-tight);text-transform:uppercase;
+  color:var(--ivory-soft);line-height:1;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  transition:color var(--t-state);
 }
 
-/* Active: the pack's brown key face instead of the resting steel, with a
-   bright ring so it still reads as "selected" even to someone not tracking
-   colour. Warm Ivory on Teal-family fills clears the 3:1 bar every non-text
-   graphic needs; this uses the pack's own wood tone, which clears it by a
-   wider margin still. */
+/* the marker above a tab — drawn for every tab, shown only for the current
+   one, so nothing shifts by a pixel when the selection moves */
+nav button::before{
+  content:'';position:absolute;top:0;left:22%;right:22%;height:4px;
+  border-radius:0 0 var(--r-pill) var(--r-pill);
+  background:transparent;
+  transition:background var(--t-state);
+}
+
+@media (hover:hover) and (pointer:fine){
+  nav button:hover .navcircle{transform:translateY(-2px);filter:brightness(1.14)}
+  nav button:hover .navlbl{color:var(--ivory)}
+}
+
+/* CURRENT — material, marker, label colour and elevation, all at once */
 nav button.on .navcircle{
   background-image:url('../assets/kenney-adventure/Vector/round_brown.svg');
-  box-shadow:0 0 0 2px var(--color-warm-ivory);
+  transform:translateY(-3px);
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,.3));
+}
+nav button.on .navic{filter:none}
+nav button.on .navlbl{color:var(--ivory)}
+nav button.on::before{background:var(--accent-lit)}
+
+nav button:active .navcircle{transform:translateY(2px);filter:none}
+nav button:focus-visible{outline:none;box-shadow:var(--focus-ring);border-radius:var(--r-sm)}
+nav button:disabled,nav button[aria-disabled="true"]{
+  opacity:var(--disabled-fade);filter:var(--disabled-desat);pointer-events:none;
 }
 
+/* Something is waiting on a tab you are not looking at. A ring plus a
+   badge — never the ring alone. */
 nav button.alert .navcircle{animation:navpulse 1.4s ease-in-out infinite}
-@keyframes navpulse{50%{box-shadow:0 0 0 3px var(--color-coral)}}
-.calm nav button.alert .navcircle{animation:none;box-shadow:0 0 0 2px var(--color-coral)}
+@keyframes navpulse{50%{box-shadow:0 0 0 3px var(--bad)}}
+.calm nav button.alert .navcircle{animation:none;box-shadow:0 0 0 3px var(--bad)}
 
 nav .badge{
-  position:absolute;top:-2px;right:-2px;background:var(--gold);color:var(--navy3);
-  border:2px solid var(--ink-out);border-radius:50%;
-  font-family:var(--ui);font-size:14px;min-width:22px;height:22px;
-  display:flex;align-items:center;justify-content:center;font-weight:400;
+  position:absolute;top:var(--s1);right:18%;
+  min-width:22px;height:22px;padding:0 4px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--r-pill);
+  background:var(--accent-lit);color:var(--ink);
+  border:2px solid var(--wood-dark);
+  font-family:var(--font-display);font-size:14px;line-height:1;
 }
-nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinite}
+nav .badge.rdy{background:var(--good);animation:navpulse 1.2s ease-in-out infinite}
+.calm nav .badge.rdy{animation:none}
 
+/* ---- landscape: the rail moves to the side, where the thumb is ---- */
 @media (min-width:900px) and (orientation:landscape){
+  #app{flex-direction:row;flex-wrap:wrap}
+  #topbar{flex:1 0 100%;order:0}
   nav{
-    order:1;flex-direction:column;justify-content:flex-start;
-    padding:18px 8px;gap:16px;
+    order:1;flex:0 0 auto;flex-direction:column;justify-content:flex-start;
+    gap:var(--s2);padding:var(--s3) var(--s2);
+    border-top:0;border-right:3px solid var(--wood-dark);
+    box-shadow:3px 0 0 rgba(0,0,0,.28);
   }
-  nav button{padding:0 0 6px;min-height:44px}
-  main{order:2}
+  nav button{
+    flex:0 0 auto;width:76px;
+    padding:var(--s2) 2px;min-height:auto;
+  }
+  nav button::before{
+    top:50%;left:0;right:auto;transform:translateY(-50%);
+    width:4px;height:60%;border-radius:0 var(--r-pill) var(--r-pill) 0;
+  }
+  main{order:2;flex:1 1 0;min-width:0}
 }
-/* "MATERIALS" is wider than a sixth of a phone screen with normal tracking. */
-.resitem span.tight{letter-spacing:0}

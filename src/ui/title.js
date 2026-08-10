@@ -49,10 +49,14 @@ export function showTitle() {
       <div class="tline">${pick(TITLE_LINES)}</div>
       <div class="tship">${shipHTML('flagship', 'flag', 3.1)}</div>
       ${progress}
+      <!-- The same buttons the game uses, not a set of their own. A title
+           screen with bespoke controls is the player's first evidence that
+           the screens were built separately; this one is a promise the rest
+           of the interface keeps. -->
       <div class="tmenu">
-        ${saved ? '<button class="menubtn primary" data-act="title-continue">Continue Voyage</button>' : ''}
-        <button class="menubtn ${saved ? '' : 'primary'}" data-act="title-new">New Game</button>
-        <button class="menubtn small" data-act="pause-open">Options</button>
+        ${saved ? '<button class="btn gold wide" data-act="title-continue">Continue Voyage</button>' : ''}
+        <button class="btn ${saved ? 'quiet' : 'gold'} wide" data-act="title-new">New Game</button>
+        <button class="btn quiet wide" data-act="pause-open">Options</button>
       </div>
       <div class="tfoot">Build the most feared fleet in the Caribbean</div>
     </div>`;

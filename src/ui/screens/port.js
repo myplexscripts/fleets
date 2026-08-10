@@ -6,7 +6,7 @@ import { render } from '../../core/bus.js';
 import { actions, actionSource } from '../../core/actions.js';
 import { SCRAP_YIELD } from '../../data/materials.js';
 import {
-  cond, condColor, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant,
+  cond, tname, power, repairCost, isBusy, voyageOf, findShip, fmtDur, grant,
   freeRepairOffered, canPay, pay
 } from '../../core/selectors.js';
 import { dockCost } from '../../core/economy.js';
@@ -14,8 +14,7 @@ import { FREE_REPAIR_TO } from '../../core/config.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
 import { hullBar, shipTiles, chip, chipRow, outOf, bagChips, priceChips, bag } from '../format.js';
-import { itemCard, itemAction, itemGrid, sect } from '../components.js';
-import { purseHTML } from '../hud.js';
+import { itemCard, itemAction, itemGrid, sect, emptyCard } from '../components.js';
 import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { confirmDlg } from '../dialog.js';
@@ -33,9 +32,9 @@ export function renderPort() {
     ? itemAction('Free Repair', 'free-repair', {}, { cls: 'grn' })
     : '';
 
-  let h = purseHTML({ settings: true });
-
-  h += itemCard({
+  /* No purse of its own any more: gold, the stores and the settings wheel
+     are on the scene bar, which every screen has and which does not scroll. */
+  let h = itemCard({
     icon: 'flag', name: f.name, sub: 'Flagship',
     held: chipRow([chip('hull', fBusy ? 'AT SEA' : fc, fBusy ? 'dim' : (fc === 'CRIPPLED' ? 'bad' : fc === 'DAMAGED' ? 'warn' : 'ok'))], 'tight'),
     body: shipTiles(f, power(f)) + hullBar(f),
@@ -63,7 +62,7 @@ export function renderPort() {
         <span class="dockprice">${dc.gold}</span></button>`, 'sectctl');
 
   if (!S.ships.length) {
-    h += `<div class="card" style="--i:${i++}"><div class="sub center">No ships in port. Take one off an enemy.</div></div>`;
+    h += emptyCard('anchor', 'No ships in port. A hull joins your fleet only by being taken off an enemy.', i++);
   }
 
   h += itemGrid(S.ships.map(s => {

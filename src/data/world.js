@@ -10,7 +10,15 @@ export const REGIONS = {
 /* Three levels, and only three. A scale a player has to squint at to rank is a
    scale that is not telling them anything. */
 export const DNAMES  = ['SAFE', 'RISKY', 'HAZARDOUS'];
-export const DCOLORS = ['var(--grn)', 'var(--yel)', 'var(--red)'];
+/* Which of the design system's status tones each step wears. Names, not
+   colours: data says what a thing IS and the stylesheet decides what that
+   looks like, so a danger bar cannot drift away from every other bar in the
+   game the way it did while this list held raw CSS values. */
+export const DTONES  = ['good', 'warn', 'bad'];
+/* The chart draws into SVG, which cannot read a CSS custom property from a
+   stylesheet, so these are the same three tones as literals for the markers.
+   They are the only hex values outside styles/palette.css, and they exist
+   for that one reason. */
 export const DHEX    = ['#8DA58A', '#D49A3A', '#C86A4A'];
 export const MAX_DANGER = DNAMES.length - 1;
 

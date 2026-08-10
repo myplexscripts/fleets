@@ -31,8 +31,8 @@ import { FIGUREHEADS, SHOP_FIGS } from '../../data/figureheads.js';
 import { canPay, pay, storeCap, hasFig } from '../../core/selectors.js';
 import { rechartDives } from '../../core/dives.js';
 import { chip, chipRow, outOf, priceChips } from '../format.js';
-import { itemCard, itemAction, itemGrid, stepper, sect } from '../components.js';
-import { updateRes, purseHTML } from '../hud.js';
+import { itemCard, itemAction, itemGrid, stepper, sect, emptyCard } from '../components.js';
+import { updateRes } from '../hud.js';
 import { pop, deny } from '../../fx/pop.js';
 import { award } from '../../fx/award.js';
 import { play } from '../../fx/sound.js';
@@ -74,8 +74,7 @@ export function renderMarket() {
   const held = GOOD_KEYS.filter(k => S.goods[k] > 0);
   let i = 0;
 
-  let h = purseHTML();
-  h += `<div class="mtabs sticky">
+  let h = `<div class="mtabs sticky">
       <button class="mtab ${tab === 'sell' ? 'on' : ''}" data-act="mkt-tab" data-tab="sell">Sell</button>
       <button class="mtab ${tab === 'buy' ? 'on' : ''}" data-act="mkt-tab" data-tab="buy">Shipwright</button>
     </div>`;
@@ -84,7 +83,7 @@ export function renderMarket() {
     h += sect('Trade Goods', i++);
     h += held.length
       ? itemGrid(held.map(goodCard).join(''), 'rail')
-      : `<div class="card" style="--i:${i++}"><div class="sub center">Nothing in the hold to sell. Run a contract, or take some off an enemy.</div></div>`;
+      : emptyCard('cargo', 'Nothing in the hold to sell. Run a contract, or take some off an enemy.', i++);
   } else {
     const maxed = S.bell >= MAX_BELL;
     const bc = bellCost(S.bell);

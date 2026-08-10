@@ -6,7 +6,7 @@ import { on } from '../core/bus.js';
 import { action } from '../core/actions.js';
 import { anyBossReady, readyCount, fmtDur } from '../core/selectors.js';
 import { iconHTML } from '../art/icons.js';
-import { updateRes } from './hud.js';
+import { updateRes, renderTopbar } from './hud.js';
 import { wipe } from '../fx/wipe.js';
 import { deny, pop } from '../fx/pop.js';
 import { play } from '../fx/sound.js';
@@ -30,14 +30,25 @@ export const SCREENS = [
 let tab = 'fleet';
 export const currentTab = () => tab;
 
-/* Icon-only circular buttons, no labels underneath — the label used to be
-   what made a tab identifiable, so the icon alone now has to carry that on
-   its own; aria-label keeps the name for anyone not reading it by eye. */
+/* The nav rail.
+
+   Icon AND label, on every tab, always. The labels were taken out at some
+   point to save vertical space, which left five circles that differ only by
+   a small monochrome glyph and left "which one am I on" resting entirely on
+   a swap between two similar-value browns. A word is the cheapest, clearest
+   state and identity cue there is, and the rail is still shorter than the
+   labelled bar most games ship.
+
+   `aria-current="page"` is set alongside the `on` class rather than instead
+   of it: the class drives the four visual cues (material, marker, label
+   colour, elevation) and the attribute is the same fact for anyone using a
+   screen reader. Neither is a substitute for the other. */
 export function buildNav() {
   $('nav').innerHTML = SCREENS.map(s =>
-    `<button id="${s.id}" data-act="goto" data-tab="${s.key}" aria-label="${s.label}">
+    `<button id="${s.id}" data-act="goto" data-tab="${s.key}" type="button">
        <span class="navcircle">${iconHTML(s.icon, 0, 'navic')}</span>
-       ${s.key === 'voy' ? '<span class="badge" id="voyBadge" style="display:none">0</span>' : ''}
+       <span class="navlbl">${s.label}</span>
+       ${s.key === 'voy' ? '<span class="badge" id="voyBadge" style="display:none" aria-hidden="true">0</span>' : ''}
      </button>`).join('');
 }
 
@@ -60,14 +71,22 @@ let paintedTab = null;
 
 export function render() {
   if (!S) return;
-  updateRes();
 
-  qsa('nav button').forEach(b => b.classList.remove('on', 'alert'));
+  qsa('nav button').forEach(b => {
+    b.classList.remove('on', 'alert');
+    b.removeAttribute('aria-current');
+  });
   const cur = SCREENS.find(s => s.key === tab) || SCREENS[0];
   const btn = $(cur.id);
-  if (btn) btn.classList.add('on');
-  /* Nudge the player toward the map when an admiral is waiting. */
+  if (btn) { btn.classList.add('on'); btn.setAttribute('aria-current', 'page'); }
+  /* Nudge the player toward the chart when an admiral is waiting. */
   if (anyBossReady() && tab !== 'routes') $('tabRoutes').classList.add('alert');
+
+  /* The bar is drawn before the scene, so the scene's own render can find it
+     already in the document, and after the tab has been decided, so it is
+     naming the screen the player is about to be looking at. */
+  renderTopbar(tab);
+  updateRes();
 
   $('main').className = tab === 'routes' ? 'nopad' : '';
   cur.render();
@@ -108,12 +127,20 @@ export function startTicker() {
       if (host) host.remove();
       else { el.textContent = 'READY'; el.classList.add('done'); }
     });
-    qsa('[data-voy] .vbar i').forEach(i => {
-      const card = i.closest('[data-voy]');
+    /* A voyage meter is patched in place too, and it is patched the same way
+       the markup built it: by setting --p, never by writing a width. An
+       inline width would beat the stylesheet's clamp and put the bar's one
+       guarantee — that it cannot leave its track — back in the hands of
+       whatever this arithmetic happens to produce. */
+    qsa('[data-voy] .voybar').forEach(bar => {
+      const card = bar.closest('[data-voy]');
       const v = S.voyages.find(x => x.id === card.dataset.voy);
       if (!v) return;
-      const tot = (v.endsAt - v.startedAt) / 1000, left = (v.endsAt - now()) / 1000;
-      i.style.width = Math.max(0, Math.min(100, (1 - left / tot) * 100)) + '%';
+      const tot = (v.endsAt - v.startedAt) / 1000;
+      const left = (v.endsAt - now()) / 1000;
+      const p = tot > 0 ? Math.max(0, Math.min(100, (1 - left / tot) * 100)) : 100;
+      bar.style.setProperty('--p', p.toFixed(1) + '%');
+      bar.setAttribute('aria-valuenow', String(Math.round(p)));
     });
 
     /* Render exactly once, on the transition to "a fleet has docked".
