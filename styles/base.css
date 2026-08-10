@@ -18,37 +18,32 @@
   --grn:#4c8049; --yel:#d9b94a; --org:#d9883a; --red:#d3543f; --blu:#7ab0e0;
   --purple:#6a4482; --tealhi:#1c8f8a;
 
+  /* One family, no serifs. Oswald carries every label, number, heading and
+     button; running prose falls through to the device grotesque. A serif face
+     reads as a printed document, and none of the reference sheets have one. */
   --ui:'Oswald',Impact,sans-serif;            /* labels, numbers, buttons */
-  --display:'Cinzel','Oswald',serif;          /* wordmark, headings */
-  --prose:'Crimson Pro',Georgia,serif;        /* flavour text, briefings */
-
-  --bevel:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.45);
+  --display:'Oswald',Impact,sans-serif;       /* wordmark, headings */
+  --prose:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
 
   /* ---- the flat look -------------------------------------------------
-     A graphic plate, not a moulded slab: solid fill, a clean 2-3px border,
-     one crisp offset shadow underneath it. No gloss, no bevel, no multi-tone
-     gradient pretending to be plastic. The reference is flat vector UI —
-     everything reads as cut card stock laid on the table, not injection-
-     moulded. --r / --r-sm / --r-pill still say how round a thing is; --lift
-     is now a small, honest press-travel rather than a thick physical edge. */
-  --r:16px; --r-sm:12px; --r-pill:999px;
+     Square corners, solid fills, hard borders, and nothing pretending to be
+     lit or moulded. The reference is flat vector UI: shapes cut with a knife
+     and laid on the table. Every radius token is 0 — they are kept as tokens
+     rather than deleted so the intent stays legible and so a rounded variant
+     is one edit away rather than sixty. --lift is the press-travel, and the
+     only shadow left in the system is the hard offset that travel needs to be
+     visible; there is no gloss, no bevel and no recessed well anywhere. */
+  --r:0; --r-sm:0; --r-pill:0;
   --lift:3px;
-  --edge:rgba(2,10,12,.6);
+  --edge:rgba(2,10,12,.75);
 
-  --slab:
-    0 var(--lift) 0 var(--edge),
-    0 calc(var(--lift) + 3px) 8px rgba(0,0,0,.3);
-  --slab-sm:
-    0 2px 0 var(--edge),
-    0 4px 7px rgba(0,0,0,.28);
+  --slab:0 var(--lift) 0 var(--edge);
+  --slab-sm:0 2px 0 var(--edge);
   /* what a pressed thing looks like: flat on the surface, no edge left */
-  --slab-down:
-    0 0 0 var(--edge),
-    0 1px 2px rgba(0,0,0,.35);
-  /* a recessed well — for anything a number sits *in* rather than *on* */
-  --well:
-    inset 0 2px 5px rgba(0,0,0,.55),
-    inset 0 -1px 0 rgba(255,255,255,.06);
+  --slab-down:0 0 0 var(--edge);
+  /* kept so nothing referencing it breaks — a well is now simply flat */
+  --bevel:none;
+  --well:none;
 }
 
 html,body{height:100%}
@@ -112,7 +107,7 @@ h1,h2,h3{font-weight:500}
   letter-spacing:2px;color:#f4fbfa;text-transform:uppercase;
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
-  padding:8px 18px;border-radius:var(--r-sm);
+  padding:8px 18px;border-radius:0;
   background:var(--tealhi);
   border:2px solid var(--brass);
   box-shadow:var(--slab-sm);
@@ -133,7 +128,7 @@ h1,h2,h3{font-weight:500}
 .card{
   position:relative;overflow:hidden;
   background:var(--navy);
-  border:2px solid var(--line);border-radius:var(--r);
+  border:2px solid var(--line);border-radius:0;
   padding:clamp(14px,1vw,22px) clamp(15px,1.15vw,23px);
   margin-bottom:clamp(13px,.9vw,19px);
   box-shadow:var(--slab);
@@ -144,20 +139,20 @@ h1,h2,h3{font-weight:500}
 .card::after{
   content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   background:
-    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) top 9px left 9px/7px 7px no-repeat,
-    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) top 9px right 9px/7px 7px no-repeat,
-    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) bottom 9px left 9px/7px 7px no-repeat,
-    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) bottom 9px right 9px/7px 7px no-repeat;
+    linear-gradient(var(--brass),var(--brass)) top 9px left 9px/7px 7px no-repeat,
+    linear-gradient(var(--brass),var(--brass)) top 9px right 9px/7px 7px no-repeat,
+    linear-gradient(var(--brass),var(--brass)) bottom 9px left 9px/7px 7px no-repeat,
+    linear-gradient(var(--brass),var(--brass)) bottom 9px right 9px/7px 7px no-repeat;
   box-shadow:0 1px 0 rgba(0,0,0,.5);
   opacity:.85;
 }
 
-.card.flagcard{border-color:var(--brass);box-shadow:var(--slab),inset 0 0 28px rgba(217,201,138,.09)}
-.card.bosscard{border-color:#a05a4e;box-shadow:var(--slab),inset 0 0 28px rgba(217,74,58,.10)}
+.card.flagcard{border-color:var(--brass);box-shadow:var(--slab)}
+.card.bosscard{border-color:#a05a4e;box-shadow:var(--slab)}
 .card.chartercard{border-color:var(--brass)}
 .card.owned{border-color:var(--brass)}
 .card.atsea{border-color:#3d78ad;opacity:.94}
-.card.ready{border-color:#4f9a56;box-shadow:var(--slab),inset 0 0 28px rgba(99,192,106,.11)}
+.card.ready{border-color:#4f9a56;box-shadow:var(--slab)}
 
 /* ---- layout helpers ---- */
 .row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
@@ -174,7 +169,7 @@ h1,h2,h3{font-weight:500}
   font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
   color:#f2fbf9;
   background:var(--tealhi);
-  border:2px solid #2aa39c;border-radius:var(--r-sm);
+  border:2px solid #2aa39c;border-radius:0;
   padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
   min-height:clamp(48px,3.6vw,58px);
   display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
@@ -212,12 +207,12 @@ h1,h2,h3{font-weight:500}
   border-color:var(--line2);color:#c8d8e6;
 }
 .btn.sm{
-  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:10px;
+  font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:0;
   padding:clamp(9px,.7vw,13px) clamp(13px,.9vw,19px);min-height:clamp(46px,3.2vw,54px);
 }
 .btn.wide{
   width:100%;font-size:clamp(19px,1.4vw,25px);padding:clamp(15px,1.1vw,21px);
-  border-radius:var(--r);box-shadow:var(--slab);
+  border-radius:0;box-shadow:var(--slab);
 }
 .btn.wide:active:not(:disabled){transform:translateY(var(--lift));box-shadow:var(--slab-down)}
 .btn.wide:disabled{transform:translateY(var(--lift));box-shadow:var(--slab-down)}
@@ -236,7 +231,7 @@ h1,h2,h3{font-weight:500}
    game the same tick spacing whatever its own colour is doing. */
 .bar,.vbar,.secbar,.dbar,.notobar{
   position:relative;
-  background:var(--navy3);border:2px solid var(--line);border-radius:4px;
+  background:var(--navy3);border:2px solid var(--line);border-radius:0;
   overflow:hidden;
 }
 .bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:0}
@@ -263,8 +258,8 @@ h1,h2,h3{font-weight:500}
 
 .tag,.mtype,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
 .tag{
-  padding:5px 12px;border-left:4px solid;border-radius:0 8px 8px 0;
-  color:var(--ink);background:linear-gradient(180deg,#182c44,#0a1626);
+  padding:5px 12px;border-left:4px solid;border-radius:0;
+  color:var(--ink);background:var(--navy);
   box-shadow:var(--slab-sm);
 }
 .t0{border-color:var(--grn);color:var(--grn)}
@@ -274,7 +269,7 @@ h1,h2,h3{font-weight:500}
 .tag.gold{border-color:var(--gold);color:var(--goldhi)}
 .tag.blu{border-color:var(--blu);color:#bcd8f0}
 .mtype{
-  color:var(--dim);border:2px solid var(--line);border-radius:8px;padding:4px 11px;
+  color:var(--dim);border:2px solid var(--line);border-radius:0;padding:4px 11px;
   background:rgba(2,14,17,.5);box-shadow:var(--well);
 }
 .mtype.boss{color:#f0b0a6;border-color:#8a463e}
@@ -298,8 +293,8 @@ h1,h2,h3{font-weight:500}
 #wipe{position:fixed;inset:0;z-index:40;pointer-events:none;visibility:hidden}
 #wipe.go{visibility:visible}
 #wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg);transition:none}
-#wipe .p1{background:linear-gradient(90deg,#0d3138,#0a2328)}
-#wipe .p2{background:linear-gradient(90deg,#164a52,#0d3138)}
+#wipe .p1{background:#0b2a30}
+#wipe .p2{background:#124048}
 #wipe.go .p1{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1)}
 #wipe.go .p2{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1) .07s}
 
@@ -307,7 +302,7 @@ h1,h2,h3{font-weight:500}
 .coin{
   position:fixed;z-index:45;width:15px;height:15px;border-radius:50%;pointer-events:none;
   background:radial-gradient(circle at 35% 30%,#f5e2a0,#b8863b);
-  box-shadow:0 0 6px rgba(240,200,100,.8);
+  box-shadow:none;
 }
 
 /* reads safe-area insets into JS via border widths */
@@ -330,7 +325,7 @@ h1,h2,h3{font-weight:500}
   .sect,.hero{grid-column:1/-1}
 }
 @media (min-width:700px) and (orientation:portrait){
-  #app{max-width:660px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:0 0 60px rgba(0,0,0,.8)}
+  #app{max-width:660px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);box-shadow:none}
 }
 @media (max-width:400px){
   main{--mainpad:12px}
@@ -350,7 +345,7 @@ h1,h2,h3{font-weight:500}
   display:inline-flex;align-items:center;gap:5px;
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
-  padding:2px 10px 2px 2px;border-radius:var(--r-pill);
+  padding:2px 10px 2px 2px;border-radius:0;
   background:rgba(2,14,17,.5);box-shadow:var(--well);
 }
 .chip .chipic{width:max(40px,1.35em);height:max(40px,1.35em);flex-shrink:0;vertical-align:middle}

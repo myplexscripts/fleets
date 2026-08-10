@@ -40,7 +40,7 @@
 .resitem{
   min-width:0;display:flex;align-items:center;gap:2px;
   background:var(--navy);
-  border:2px solid var(--line2);border-radius:var(--r-pill);padding:6px 12px;
+  border:2px solid var(--line2);border-radius:0;padding:6px 12px;
   box-shadow:var(--slab-sm);
   transition:transform .16s cubic-bezier(.2,2,.4,1),border-color .16s,box-shadow .16s;
 }
@@ -59,7 +59,7 @@
 }
 .resitem.bump{
   transform:scale(1.1) translateY(-2px);border-color:var(--goldhi);
-  box-shadow:var(--slab-sm),0 0 20px rgba(217,201,138,.4);
+  box-shadow:var(--slab-sm);
 }
 
 /* ---- nav rail ----
@@ -81,7 +81,7 @@ nav button{
   font-family:var(--ui);font-weight:500;letter-spacing:.5px;text-transform:uppercase;
   background:var(--navy2);
   border:2px solid transparent;border-bottom:none;color:var(--dim);
-  border-radius:var(--r-sm) var(--r-sm) 0 0;
+  border-radius:0;
   padding:8px 2px calc(env(safe-area-inset-bottom) + 8px);
   flex:1;min-height:calc(60px + env(safe-area-inset-bottom));
   position:relative;cursor:pointer;
@@ -99,12 +99,12 @@ nav button.on{
 nav button.on .navic{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(217,201,138,.6))}
 
 nav button.alert{color:var(--red);animation:navpulse 1.4s ease-in-out infinite}
-@keyframes navpulse{50%{color:#ff9080;text-shadow:0 0 10px rgba(217,74,58,.8)}}
+@keyframes navpulse{50%{color:#ff9080;text-shadow:none}}
 .calm nav button.alert{animation:none;color:#ff9080}
 
 nav .badge{
   position:absolute;top:2px;right:5px;background:var(--gold);color:#0b1a1e;
-  border:2px solid #0a1526;border-radius:var(--r-pill);
+  border:2px solid #0a1526;border-radius:0;
   font-family:var(--ui);font-size:16px;padding:0 7px;line-height:22px;font-weight:600;
   box-shadow:0 2px 5px rgba(0,0,0,.6);
 }
@@ -115,7 +115,7 @@ nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinit
   nav button{
     max-width:clamp(150px,14vw,260px);flex-direction:row;gap:8px;
     min-height:54px;padding:8px 2px;align-items:center;justify-content:center;
-    border-radius:var(--r-sm);border-bottom:2px solid transparent;
+    border-radius:0;border-bottom:2px solid transparent;
   }
   nav .navlbl{font-size:clamp(16px,1.1vw,18px);letter-spacing:2px}
   main{order:2}

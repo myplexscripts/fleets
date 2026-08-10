@@ -4,20 +4,18 @@
    Vendored rather than pulled from Google Fonts so the game has no external
    dependencies: it loads identically offline, on a locked-down network, or
    from a CDN outage, and there is no third-party request on boot.
-   Source: @fontsource/{cinzel,oswald,crimson-pro}
+   Source: @fontsource/oswald
+
+   One family, and it is a grotesque. The game used to run three — Cinzel for
+   headings, Crimson Pro for flavour text, Oswald for labels — and two of those
+   three were serifs. A serif is a book face: it says "period document", which
+   is the opposite of what a game panel says. Everything with a face of its own
+   is now Oswald, and running prose falls back to whatever grotesque the device
+   already has, which costs nothing to load and is the face the reference sheets
+   are set in.
    ============================================================ */
 
-/* Cinzel — wordmark and headings */
-@font-face{
-  font-family:'Cinzel';font-style:normal;font-weight:600;font-display:swap;
-  src:url('../fonts/cinzel-latin-600-normal.woff2') format('woff2');
-}
-@font-face{
-  font-family:'Cinzel';font-style:normal;font-weight:700;font-display:swap;
-  src:url('../fonts/cinzel-latin-700-normal.woff2') format('woff2');
-}
-
-/* Oswald — UI labels, numbers, buttons */
+/* Oswald — the whole interface: headings, labels, numbers, buttons */
 @font-face{
   font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
   src:url('../fonts/oswald-latin-400-normal.woff2') format('woff2');
@@ -29,18 +27,4 @@
 @font-face{
   font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
   src:url('../fonts/oswald-latin-600-normal.woff2') format('woff2');
-}
-
-/* Crimson Pro — flavour text and briefings */
-@font-face{
-  font-family:'Crimson Pro';font-style:normal;font-weight:400;font-display:swap;
-  src:url('../fonts/crimson-pro-latin-400-normal.woff2') format('woff2');
-}
-@font-face{
-  font-family:'Crimson Pro';font-style:normal;font-weight:600;font-display:swap;
-  src:url('../fonts/crimson-pro-latin-600-normal.woff2') format('woff2');
-}
-@font-face{
-  font-family:'Crimson Pro';font-style:italic;font-weight:400;font-display:swap;
-  src:url('../fonts/crimson-pro-latin-400-italic.woff2') format('woff2');
 }
