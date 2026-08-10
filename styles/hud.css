@@ -17,7 +17,7 @@
 }
 .purse .resitem{flex:0 1 auto;padding:5px 20px 5px 5px;flex-direction:row;gap:11px;align-items:center}
 .purse #wStores{margin-left:auto}
-.purse .resitem b{font-size:clamp(22px,1.9vw,34px);line-height:1}
+.purse .resitem b{font-size:clamp(24px,1.9vw,34px);line-height:1}
 .purse .resitem span{font-size:clamp(16px,1.2vw,19px);letter-spacing:1.6px;line-height:1}
 .purse #wStores span{color:var(--gold)}
 
@@ -51,7 +51,7 @@
   background:var(--navy3);
   box-shadow:var(--well);
 }
-.resitem b{font-family:var(--ui);font-weight:500;color:var(--ink);line-height:1.15;font-size:clamp(20px,1.7vw,30px)}
+.resitem b{font-family:var(--ui);font-weight:400;color:var(--ink);line-height:1.15;font-size:clamp(24px,1.7vw,30px)}
 .resitem span{
   font-family:var(--ui);color:var(--dim);letter-spacing:1px;text-transform:uppercase;
   line-height:1.15;white-space:nowrap;font-size:clamp(16px,2.8vw,18px);
@@ -70,62 +70,80 @@
    screen in the game.
 
    Tabs are slabs sunk into the rail; the one you are on comes forward. */
+/* ---- the nav rail ----------------------------------------------------
+   A row of floating circular icon buttons, not a docked steel bar. The bar
+   itself carries no fill or panel of its own — only the circles are visible,
+   sitting directly on whatever screen is under them — which is both what
+   "gamified" HUD navigation usually looks like and the reason the rail takes
+   noticeably less vertical space than the labelled version it replaces.
+
+   Every button's own hit box still reaches the bottom of the screen: the
+   safe-area inset is padding INSIDE the button, under the visible circle,
+   rather than dead space below it, so a thumb resting near the home
+   indicator is still on the tab. The circle itself floors at 44px — above
+   the 40px HIG minimum for a touch target — regardless of how small other
+   icons in the game are now allowed to run. */
 nav{
-  display:flex;justify-content:center;gap:3px;
-  background:var(--navy3);
-  border-top:2px solid var(--line);
-  padding:6px 6px 0;
-  box-shadow:0 -3px 16px rgba(0,0,0,.6);
+  display:flex;justify-content:center;align-items:flex-start;gap:clamp(10px,4vw,28px);
+  background:none;border:0;box-shadow:none;
+  padding:8px 10px 0;
 }
 nav button{
-  font-family:var(--ui);font-weight:500;letter-spacing:.5px;text-transform:uppercase;
-  background:var(--navy2);
-  border:2px solid transparent;border-bottom:none;color:var(--dim);
-  border-radius:0;
-  padding:8px 2px calc(env(safe-area-inset-bottom) + 8px);
-  flex:1;min-height:calc(60px + env(safe-area-inset-bottom));
+  background:none;border:0;color:inherit;
+  padding:0 4px calc(env(safe-area-inset-bottom) + 6px);
+  min-height:calc(44px + env(safe-area-inset-bottom));min-width:44px;
   position:relative;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;
-  transition:color .2s,background .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
 }
 
-nav .navic{width:clamp(40px,3vw,48px);height:auto;opacity:.55;transition:opacity .2s,filter .2s,transform .2s}
-nav .navlbl{font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;line-height:1}
-
-/* The selected tab was Teal with an ivory label: 3.42:1, and a 16px label is
-   not large text. Gold with Navy on it is 5.23:1 and SAFE — and a gold tab
-   reads as "you are here" at least as loudly as the teal one did. */
-/* The selected tab was Teal with an ivory label: 3.42:1, and a 16px label is
-   not large text. Gold with Navy on it is 5.23:1 and SAFE — and a gold tab
-   reads as "you are here" at least as loudly as the teal one did. It also
-   stands proud of the rail, so the rail reads as a row of keys. */
-nav button.on{
-  background:var(--color-gold);
-  color:var(--on-gold);border-color:var(--ink-out);
-  box-shadow:inset 0 0 0 2px var(--ink-out);
+/* the circle: dark steel by default, filled with the pack's own round key art
+   so it reads as a real button rather than a flat coloured disc */
+nav .navcircle{
+  width:44px;height:44px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background-image:url('../assets/kenney-adventure/Vector/round_grey_dark.svg');
+  background-size:contain;background-repeat:no-repeat;
+  transition:transform .1s ease,filter .15s;
 }
-nav button.on .navic{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(217,201,138,.6))}
+nav button:active .navcircle{transform:translateY(2px)}
 
-nav button.alert{color:var(--red);animation:navpulse 1.4s ease-in-out infinite}
-@keyframes navpulse{50%{color:var(--color-coral);text-shadow:none}}
-.calm nav button.alert{animation:none;color:var(--color-coral)}
+/* The icon inside keeps its shape but not its own hue — brightness(0) flattens
+   every pixel to black regardless of the glyph's usual tint, invert(1) turns
+   that black to white. "Icons should be white" applies everywhere in the
+   rail; only the circle behind them changes to say which one is current. */
+nav .navic{
+  width:24px;height:24px;
+  filter:brightness(0) invert(1);
+}
+
+/* Active: the pack's brown key face instead of the resting steel, with a
+   bright ring so it still reads as "selected" even to someone not tracking
+   colour. Warm Ivory on Teal-family fills clears the 3:1 bar every non-text
+   graphic needs; this uses the pack's own wood tone, which clears it by a
+   wider margin still. */
+nav button.on .navcircle{
+  background-image:url('../assets/kenney-adventure/Vector/round_brown.svg');
+  box-shadow:0 0 0 2px var(--color-warm-ivory);
+}
+
+nav button.alert .navcircle{animation:navpulse 1.4s ease-in-out infinite}
+@keyframes navpulse{50%{box-shadow:0 0 0 3px var(--color-coral)}}
+.calm nav button.alert .navcircle{animation:none;box-shadow:0 0 0 2px var(--color-coral)}
 
 nav .badge{
-  position:absolute;top:2px;right:5px;background:var(--gold);color:var(--navy3);
-  border:2px solid var(--navy3);border-radius:0;
-  font-family:var(--ui);font-size:16px;padding:0 7px;line-height:22px;font-weight:600;
-  box-shadow:0 2px 5px rgba(0,0,0,.6);
+  position:absolute;top:-2px;right:-2px;background:var(--gold);color:var(--navy3);
+  border:2px solid var(--ink-out);border-radius:50%;
+  font-family:var(--ui);font-size:14px;min-width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;font-weight:400;
 }
 nav .badge.rdy{background:var(--grn);animation:navpulse 1.2s ease-in-out infinite}
 
 @media (min-width:900px) and (orientation:landscape){
-  nav{order:1;border-top:none;border-bottom:2px solid var(--line);padding:7px 18px 7px;gap:5px}
-  nav button{
-    max-width:clamp(150px,14vw,260px);flex-direction:row;gap:8px;
-    min-height:54px;padding:8px 2px;align-items:center;justify-content:center;
-    border-radius:0;border-bottom:2px solid transparent;
+  nav{
+    order:1;flex-direction:column;justify-content:flex-start;
+    padding:18px 8px;gap:16px;
   }
-  nav .navlbl{font-size:clamp(16px,1.1vw,18px);letter-spacing:2px}
+  nav button{padding:0 0 6px;min-height:44px}
   main{order:2}
 }
 /* "MATERIALS" is wider than a sixth of a phone screen with normal tracking. */

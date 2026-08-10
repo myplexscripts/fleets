@@ -29,6 +29,11 @@
   --color-aegean-blue: #4C6F8A;
   --color-teal: #1C8F8A;
   --color-seafoam: #6CB7B2;
+  --color-seafoam-lit: #78C4BE;              /* Seafoam, stepped up for --bg2 (title
+                                                 screen): 5.14:1 there vs the 4.46:1
+                                                 plain Seafoam measures against that
+                                                 particular teal-navy blend, which sits
+                                                 outside the Navy row above */
   --color-sage: #8DA58A;
   --color-moss: #627A5A;
   --color-olive: #7A8A4E;

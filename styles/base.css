@@ -71,12 +71,12 @@
   --tealhi:var(--color-teal);
   --oceanb:var(--color-ocean-blue);
 
-  /* One family, no serifs. Oswald carries every label, number, heading and
-     button; running prose falls through to the device grotesque. A serif face
-     reads as a printed document, and none of the reference sheets have one. */
-  --ui:'Oswald',Impact,sans-serif;            /* labels, numbers, buttons */
-  --display:'Oswald',Impact,sans-serif;       /* wordmark, headings */
-  --prose:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  /* Two families, the pairing built for exactly this: a stencilled display
+     face for every header, button and HUD number, and a narrow grotesque for
+     the paragraph text that has to fit a phone-width card. */
+  --ui:'Staatliches',Impact,sans-serif;            /* labels, numbers, buttons */
+  --display:'Staatliches',Impact,sans-serif;       /* wordmark, headings */
+  --prose:'Archivo Narrow',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
 
   /* ---- the flat look -------------------------------------------------
      Square corners, solid fills, hard borders, and nothing pretending to be
@@ -132,8 +132,16 @@
 
 html,body{height:100%}
 
+/* The body colour is what shows through the status bar, and briefly on load
+   before #app/#titleScr paint over it — "black-translucent" in the iOS meta
+   tag means the OS draws no bar of its own and lets THIS colour show through
+   its icons, so if this is a colour nothing else in the game uses, the status
+   bar reads as a separate black slab bolted onto the top of the screen. It
+   matches the water now, which is what actually sits behind it once the app
+   is up, so there is nothing for the status bar to look like a seam against. */
 body{
-  background:var(--navy3); color:var(--ink);
+  background-color:var(--bg);background-image:var(--water);background-size:420px 420px;
+  color:var(--ink);
   font-family:var(--prose); font-size:clamp(16px,1.15vw,20px);
   height:100dvh; display:flex; flex-direction:column; overflow:hidden;
   touch-action:manipulation; user-select:none; -webkit-user-select:none;
@@ -183,7 +191,7 @@ main.nopad{padding:0;overflow:hidden}
 /* ---- headings & prose ---- */
 h1,h2,h3{font-weight:500}
 .card h3{
-  font-family:var(--ui);font-size:clamp(19px,1.4vw,25px);font-weight:500;
+  font-family:var(--ui);font-size:clamp(19px,1.4vw,25px);font-weight:400;
   letter-spacing:1.5px;text-transform:uppercase;
 }
 .sub{font-size:clamp(16px,1.1vw,19px);color:var(--dim);line-height:1.6}
@@ -196,7 +204,7 @@ h1,h2,h3{font-weight:500}
    caps over a hairline. It is the first thing the eye lands on when a screen
    changes, so it gets a face, an edge and a shadow like everything else. */
 .sect{
-  font-family:var(--ui);font-size:clamp(19px,1.3vw,23px);font-weight:600;
+  font-family:var(--ui);font-size:clamp(24px,1.5vw,28px);font-weight:400;
   letter-spacing:2px;color:var(--color-warm-ivory);text-transform:uppercase;
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
@@ -270,7 +278,7 @@ h1,h2,h3{font-weight:500}
    that small travel is the whole feel of the game in one interaction, so
    every button in every screen is this button. No bevel, no gloss band. */
 .btn{
-  font-family:var(--ui);font-weight:600;
+  font-family:var(--ui);font-weight:400;
   font-size:clamp(17px,1.15vw,20px);letter-spacing:1.6px;text-transform:uppercase;
   /* Ocean Blue + Warm Ivory is 7.45:1, SAFE. This button used to be Teal with
      near-white on it, which is 3.42 — LARGE ONLY, and a 16px label is not

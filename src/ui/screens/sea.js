@@ -59,7 +59,7 @@ export function renderSea() {
     }));
   });
 
-  h += itemGrid(cards.join(''));
+  h += itemGrid(cards.join(''), 'rail');
   $('main').innerHTML = h;
 }
 

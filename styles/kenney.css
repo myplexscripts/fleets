@@ -72,15 +72,26 @@
 /* Anything that sat on dark navy now sits on parchment, so it flips to ink.
    This is the whole reason the skin loads last: the colour a label wants
    depends on the surface under it, and the surface is decided here. */
+/* .hero is deliberately excluded here — it never became a parchment panel
+   (its dramatic gold name and teal glow over navy are their own thing, kept
+   on purpose) and forcing ink onto it the way every other card gets ink was
+   navy text on its own navy background: a 1:1 sampler bug turned out to be
+   real once the checker's OWN false positives — see check-contrast.js — were
+   fixed and it could be trusted. Its original navy-panel colours were already
+   compliant, so the fix is leaving it out, not converting it. */
 .card,.item,.dlg,.pausebox,.railcard,
 .card h3,.item .itemname b,.railname,.dlg-body p,.pausebody,
-.hero .hname,.hero .hstat b,.shipmeta b,.piece,.relic{color:var(--k-on-parch) !important}
+.shipmeta b,.piece,.relic{color:var(--k-on-parch) !important}
 .card .sub,.item .sub,.railcard .sub,.dlg .sub,.pausebox .sub,
-.itemname span,.railsub,.upline,.hero .hsub,.hero .hstat span,
+.itemname span,.railsub,.upline,
 .card .pickhint,.item .pickhint{color:var(--k-on-parch-dim) !important}
 /* tiles put their glyph on a steel plate and their number on the parchment */
 .tile,.tile b,.tile.ok b,.tile.bad b,.tile.warn b,.tile.gold b,.tile.dim b,
 .hstat b .of{color:var(--k-on-parch) !important}
+/* .hero's own "/60" suffix is the same .hero exclusion as above: that card
+   never became parchment, so the ink this rule hands out everywhere else is
+   navy on its own navy background here. Restore the sage it already had. */
+.hero .hstat b .of{color:var(--dim) !important}
 .tile .tileic{
   border:6px solid transparent;
   border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 6px stretch;
@@ -140,23 +151,33 @@
 
 /* ---- meters -------------------------------------------------------------
    A bar is two pieces of pack art: the hollow border, and the fill inside it.
+
+   The pack's progress pill ships as a VERTICAL asset (16 wide, 32 tall) —
+   Kenney draws it as a vertical health bar and expects it to be rotated for
+   horizontal use. Stretching it sideways as-is (what shipped here first) rams
+   a tall capsule into a short wide box and produces exactly the mismatched,
+   uncapped smear the pill looked like before this fix. assets/kenney-adventure/
+   Vector-h/ holds true horizontal exports — the same art, rotated 90° once at
+   the file level with the SVG's own transform, not with a runtime CSS hack —
+   so a bar is crisp and correctly capped at any width.
+
    The fill is a separate 9-slice so a bar at 8% still shows a rounded cap
    rather than a sliver, which is how the pack is meant to be used. */
 .bar,.vbar,.secbar,.dbar,.notobar,.setbar{
   border:8px solid transparent !important;
-  border-image:url('../assets/kenney-adventure/Vector/progress_transparent.svg') 8 fill / 8px stretch !important;
+  border-image:url('../assets/kenney-adventure/Vector-h/progress_transparent.svg') 8 fill / 8px stretch !important;
   background:none !important;box-shadow:none !important;border-radius:0 !important;
   height:26px !important;padding:0 !important;overflow:visible !important;
 }
 .bar::after,.vbar::after,.secbar::after,.dbar::after,.notobar::after,.setbar::after{content:none !important}
 .bar i,.vbar i,.secbar i,.dbar i,.notobar i,.setbar i{
-  display:block;height:100%;min-width:14px;
-  border:7px solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/progress_green.svg') 7 fill / 7px stretch;
+  display:block;height:100%;min-width:16px;
+  border:8px solid transparent;
+  border-image:url('../assets/kenney-adventure/Vector-h/progress_green.svg') 8 fill / 8px stretch;
   background:none !important;border-radius:0 !important;
 }
-.bar i.low,.vbar i.low,.setbar i.low{border-image-source:url('../assets/kenney-adventure/Vector/progress_blue.svg')}
-.bar i.crit,.vbar i.crit,.dbar i,.notobar i{border-image-source:url('../assets/kenney-adventure/Vector/progress_red.svg')}
+.bar i.low,.vbar i.low,.setbar i.low{border-image-source:url('../assets/kenney-adventure/Vector-h/progress_blue.svg')}
+.bar i.crit,.vbar i.crit,.dbar i,.notobar i{border-image-source:url('../assets/kenney-adventure/Vector-h/progress_red.svg')}
 
 /* ---- plates and signs ---------------------------------------------------
    A section heading and a panel's nameplate are the pack's hanging banner.
@@ -225,21 +246,9 @@
 }
 .stepbtn:active:not(:disabled){transform:translateY(3px) !important}
 
-/* ---- the nav rail -------------------------------------------------------
-   Bolted steel, because it is the one piece of furniture that is always on
-   screen and it should read as the frame of the machine rather than as one
-   more panel floating in it. */
-nav{
-  border:14px solid transparent !important;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts.svg') 16 fill / 14px stretch !important;
-  background:none !important;
-}
-nav button{background:none !important;border:0 !important;box-shadow:none !important}
-nav button.on{
-  border:8px solid transparent !important;
-  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 fill / 8px stretch !important;
-  color:var(--color-navy) !important;
-}
+/* ---- the nav rail --------------------------------------------------------
+   Rebuilt as floating circular icon buttons — see styles/hud.css. Nothing to
+   override here any more: the rail carries no panel of its own. */
 
 /* ---- the purse ----------------------------------------------------------
    The one strip that sits directly on the water rather than on a panel, so
@@ -307,13 +316,6 @@ nav button.on{
 .sheet-head h3 > span{overflow:hidden;text-overflow:ellipsis;min-width:0}
 
 
-/* ---- glyphs on light surfaces -------------------------------------------
-   The nav rail dimmed its inactive glyphs to 55% back when they sat on navy
-   and the dim read as "off". On the pack's pale steel, 55% is invisible —
-   an unselected tab has to be legible, it is how you get anywhere. */
-nav .navic{opacity:.9 !important;filter:none !important}
-nav button.on .navic{opacity:1 !important;filter:none !important}
-
 /* ---- headings that carry a control --------------------------------------
    The label was being squeezed to "YOUR SH…" by a counter and a buy button
    sharing its row. It wraps to a second line now instead of truncating: a
@@ -351,15 +353,6 @@ nav button.on .navic{opacity:1 !important;filter:none !important}
   color:var(--color-warm-ivory) !important;
 }
 
-/* The nav rail was light steel with a navy label at 4.38:1. Dark steel with
-   ivory on it is comfortably clear, and it also stops the rail competing
-   with the parchment panels above it. */
-nav{
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts_dark.svg') 16 fill / 14px stretch !important;
-}
-nav button,nav button span,nav .navlbl{color:var(--color-warm-ivory) !important}
-nav button.on,nav button.on span,nav button.on .navlbl{color:var(--color-navy) !important}
-
 /* A rail card is narrow, so its brown frame is a big share of the card and a
    dim brown label can end up sitting on it. Ink reads on both the frame and
    the parchment, so the label stops depending on where it falls. */
@@ -391,7 +384,11 @@ nav button.on,nav button.on span,nav button.on .navlbl{color:var(--color-navy) !
 /* The settings box interior still carried the dark theme's label colours; its
    box is parchment now, so every row flips to ink. */
 .pausebody,.optrow,.optrow span,.optval,.optsect,.pausefoot{color:var(--k-on-parch) !important}
-.optval.danger{color:var(--k-red-dark) !important}
+/* Dark red on the row's light steel plate measured 3.15:1 — under the 4.5 a
+   16px chevron needs. It is a decoration on a row whose own label already
+   says "Abandon", so losing the colour costs nothing the text was not saying
+   twice; ink matches every other chevron on this list. */
+.optval.danger{color:var(--k-on-parch) !important}
 .optrow{
   border:10px solid transparent !important;
   border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 fill / 10px stretch !important;
@@ -446,12 +443,30 @@ nav button.on,nav button.on span,nav button.on .navlbl{color:var(--color-navy) !
   font-size:19px !important;font-weight:600 !important;
 }
 
-/* The job name's plate was mid wood at 3.7:1 against ivory. Dark steel is
-   the pack's darkest flat surface and takes ivory comfortably. */
+/* The job name's plate was wood, then the pack's darkest steel — both still
+   measured under 4.5 against ivory once the contrast checker's own sampling
+   bug (see tools/check-contrast.js) was fixed and it could be trusted. A flat
+   ink fill is not a Kenney plate any more, but it is the one surface that
+   guarantees the ivory sitting on it, and this is a strip of text, not a
+   button — it does not need to prove it belongs to the set the way a control
+   does. */
 .sheet-sub{
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey_bolts_dark.svg') 16 fill / 10px stretch !important;
+  border-image:none !important;background:var(--ink-out) !important;
   color:var(--color-warm-ivory) !important;
 }
 
-/* the "of" separator inside a chip or tile is still the old dark-panel sage */
-.chip i,.tile i,.item i,.card i,.sheet-body i,#rBody i{color:var(--k-on-parch-dim) !important}
+/* the "of" separator inside a tile or card is still the old dark-panel sage.
+   .chip is left out of this list — unlike .tile/.item/.card/.sheet-body it
+   never sits on parchment (line 217 gives it its own steel plate), so wood-
+   dark read as a near-miss wherever a chip's steel is lighter than the
+   parchment this colour was measured against; navy from line 223 already
+   fits and this rule only needs to not clobber it. */
+.tile i,.item i,.card i,.sheet-body i,#rBody i{color:var(--k-on-parch-dim) !important}
+/* .reqrow and .foestat/.foeodds are their own steel islands inside the
+   parchment .sheet-body (both #rBody and #sheetBody carry that class) — the
+   parchment-dim rule above matches their "i" children too and, at equal
+   specificity, wins by coming later in the file. Same mismatched-surface bug
+   as .chip above and .hero further up: restore the navy that already fits
+   their actual steel background. */
+.sheet-body .reqvals i,.sheet-body .reqvals i b,
+.sheet-body .foestat i,.sheet-body .foeodds i{color:var(--color-navy) !important}

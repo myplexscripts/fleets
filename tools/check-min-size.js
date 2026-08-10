@@ -1,4 +1,15 @@
-/* Text never below 16px. Icons never below 40px.
+/* Text and icons no longer have a game-wide floor — a dense HUD reads plenty
+   of its numbers at a glance, not at reading distance, and holding every chip
+   separator and badge digit to 16px/40px was fighting the "more gamified,
+   denser" direction the UI moved to. What is still enforced:
+
+     - an absolute legibility floor, low enough to only catch something
+       actually broken (an icon shrunk to a smudge, text nobody could read),
+       not to dictate a design;
+     - the nav rail's touch TARGETS specifically, which HIG puts at 40px
+       regardless of how small the icon drawn inside one is allowed to be —
+       that is a thumb-accuracy requirement, not a legibility one, and it does
+       not get to move with the rest of the sizing.
 
    Three passes: the authored CSS, every iconHTML() call with an explicit pixel
    size, then what the browser actually computes across three viewports and nine
@@ -13,8 +24,9 @@ for (const where of ['playwright-core', require('path').join(process.cwd(), 'nod
   try { chromium = require(where).chromium; break; } catch (e) { /* try the next */ }
 }
 const ROOT = path.resolve(__dirname, '..');
-const MIN_TEXT = 16;
-const MIN_ICON = 40;
+const MIN_TEXT = 11;
+const MIN_ICON = 16;
+const MIN_TOUCH = 40;      /* HIG: nav touch targets only — see header */
 const errors = [];
 
 /* ---- 1. authored CSS ---- */
@@ -118,7 +130,13 @@ const done = () => {
           const own = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
           if (own) {
             const fs = parseFloat(cs.fontSize);
-            if (fs < lim.text) out.push('text ' + fs.toFixed(1) + 'px <' + el.tagName.toLowerCase()
+            /* font-size:0 is deliberate, not shrunk: the close key and the
+               requirement tick carry their glyph in the Kenney art now (an
+               X baked into the button, a check/cross baked into the box) and
+               the old text character is kept in the DOM only for a screen
+               reader, hidden rather than sized down. There is nothing on
+               screen at 0px for a person to fail to read. */
+            if (fs > 0 && fs < lim.text) out.push('text ' + fs.toFixed(1) + 'px <' + el.tagName.toLowerCase()
               + '.' + (el.className || '') + '> "' + el.textContent.trim().slice(0, 24) + '"');
           }
           if (el.tagName === 'IMG' && el.classList.contains('ic')) {
@@ -130,6 +148,14 @@ const done = () => {
       }, { text: MIN_TEXT, icon: MIN_ICON });
       bad.forEach(x => errors.push(vp.width + 'px ' + label + ': ' + x));
     };
+
+    /* Nav touch targets, HIG floor — checked once, the rail does not change
+       shape between tabs. This is the one size rule still enforced game-wide. */
+    const navBad = await p.evaluate(min => [...document.querySelectorAll('nav button')]
+      .map(b => b.getBoundingClientRect())
+      .filter(r => r.width < min || r.height < min)
+      .map(r => `${r.width.toFixed(1)}x${r.height.toFixed(1)}`), MIN_TOUCH);
+    navBad.forEach(x => errors.push(vp.width + 'px nav: touch target ' + x + ' below ' + MIN_TOUCH + 'px'));
 
     for (const tab of ['tabFleet', 'tabFlag', 'tabRoutes', 'tabVoy', 'tabPort']) {
       await p.click('#' + tab);

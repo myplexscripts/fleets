@@ -30,10 +30,13 @@ export const SCREENS = [
 let tab = 'fleet';
 export const currentTab = () => tab;
 
+/* Icon-only circular buttons, no labels underneath — the label used to be
+   what made a tab identifiable, so the icon alone now has to carry that on
+   its own; aria-label keeps the name for anyone not reading it by eye. */
 export function buildNav() {
   $('nav').innerHTML = SCREENS.map(s =>
-    `<button id="${s.id}" data-act="goto" data-tab="${s.key}">
-       ${iconHTML(s.icon, 0, 'navic')}<span class="navlbl">${s.label}</span>
+    `<button id="${s.id}" data-act="goto" data-tab="${s.key}" aria-label="${s.label}">
+       <span class="navcircle">${iconHTML(s.icon, 0, 'navic')}</span>
        ${s.key === 'voy' ? '<span class="badge" id="voyBadge" style="display:none">0</span>' : ''}
      </button>`).join('');
 }

@@ -88,7 +88,7 @@ export function renderPort() {
           + itemAction(whole ? 'No Repairs' : 'Repair', 'repair', { id: s.id }, { disabled: whole }),
       cls: bz ? 'atsea' : ''
     });
-  }).join(''));
+  }).join(''), 'rail');
 
   $('main').innerHTML = h;
 }

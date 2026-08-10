@@ -56,7 +56,7 @@ export function renderFlagship() {
     h += sect('Legendary Refits', i++);
     h += itemGrid(S.flagBoons.map(b => itemCard({
       icon: 'relic', name: BOONS[b].n, sub: BOONS[b].desc, cls: 'owned'
-    })).join(''));
+    })).join(''), 'rail');
   }
 
   /* ---- upgrades: name, level, what one more gives, price, button ---- */
@@ -72,7 +72,7 @@ export function renderFlagship() {
         { disabled: maxed || !canPay(cost) }),
       cls: maxed ? 'owned' : ''
     });
-  }).join(''));
+  }).join(''), 'rail');
 
   h += sect('Fittings', i++);
   h += itemGrid(Object.entries(FITTINGS).map(([k, d]) => {
@@ -85,7 +85,7 @@ export function renderFlagship() {
         { disabled: owned || !canPay(d.cost) }),
       cls: owned ? 'owned' : ''
     });
-  }).join(''));
+  }).join(''), 'rail');
 
   /* ---- Figureheads ----
 
@@ -123,7 +123,7 @@ export function renderFlagship() {
           cls: on ? 'owned' : ''
         });
       })
-    ].join(''));
+    ].join(''), 'rail');
   }
 
   /* ---- Captain's Quarters: the collection ---- */

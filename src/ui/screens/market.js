@@ -83,7 +83,7 @@ export function renderMarket() {
   if (tab === 'sell') {
     h += sect('Trade Goods', i++);
     h += held.length
-      ? itemGrid(held.map(goodCard).join(''))
+      ? itemGrid(held.map(goodCard).join(''), 'rail')
       : `<div class="card" style="--i:${i++}"><div class="sub center">Nothing in the hold to sell. Run a contract, or take some off an enemy.</div></div>`;
   } else {
     const maxed = S.bell >= MAX_BELL;
@@ -138,7 +138,7 @@ export function renderMarket() {
           { disabled: owned || !canPay(d.cost) }),
         cls: owned ? 'owned' : ''
       });
-    }).join(''));
+    }).join(''), 'rail');
 
     h += sect('Harbour', i++);
     h += itemCard({

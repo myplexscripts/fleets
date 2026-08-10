@@ -49,9 +49,9 @@ function drawStores() {
 
     `<div class="sub quote">Won off the routes you run and the ships you beat. Sell what you cannot place at the Market.</div>
      ${sect('Trade Goods', 0)}
-     ${itemGrid(GOOD_KEYS.map(k => row(k, GOODS[k], S.goods[k])).join(''))}
+     ${itemGrid(GOOD_KEYS.map(k => row(k, GOODS[k], S.goods[k])).join(''), 'rail')}
      ${sect('Materials', 1)}
-     ${itemGrid(MAT_KEYS.map(k => row(k, MATERIALS[k], S.mats[k])).join(''))}
+     ${itemGrid(MAT_KEYS.map(k => row(k, MATERIALS[k], S.mats[k])).join(''), 'rail')}
      ${sect('Storage', 2)}
      ${itemCard({
        icon: 'cargo', name: WAREHOUSE[S.wh].n, sub: WAREHOUSE[S.wh].sub,

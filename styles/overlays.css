@@ -37,7 +37,7 @@
 .sheet-head .row{flex-wrap:wrap;justify-content:center}
 .sheet-head h3{
   display:inline-flex;align-items:center;gap:9px;
-  font-family:var(--display);font-size:clamp(19px,1.35vw,24px);font-weight:600;
+  font-family:var(--display);font-size:clamp(19px,1.35vw,24px);font-weight:400;
   letter-spacing:1.6px;text-transform:uppercase;color:var(--color-warm-ivory);line-height:1.15;
   white-space:nowrap;padding:9px 20px;margin:0 auto 6px;max-width:100%;
   background:var(--tealhi);border:var(--out) solid var(--ink-out);
@@ -68,7 +68,7 @@
   --fill:var(--color-coral);
   background:var(--fill);border:var(--out) solid var(--ink-out);
   box-shadow:var(--chunk-sm);margin-bottom:var(--base-sm);
-  color:var(--on-coral);font-family:var(--ui);font-size:20px;font-weight:600;line-height:1;
+  color:var(--on-coral);font-family:var(--ui);font-size:20px;font-weight:400;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:background .15s,transform .1s;
 }
@@ -84,7 +84,7 @@
 }
 
 .resulthead{
-  font-family:var(--display);font-weight:600;font-size:clamp(17px,1.3vw,23px);
+  font-family:var(--display);font-weight:400;font-size:clamp(17px,1.3vw,23px);
   letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:10px;
 }
 .resulthead.good{color:var(--grn);text-shadow:none}
@@ -131,7 +131,7 @@
 
 .dlg-head{
   display:block;
-  font-family:var(--display);font-weight:600;font-size:clamp(19px,1.3vw,23px);
+  font-family:var(--display);font-weight:400;font-size:clamp(24px,1.4vw,27px);
   letter-spacing:1.5px;text-transform:uppercase;color:var(--color-warm-ivory);
   padding:12px 46px 12px 16px;
   background:var(--tealhi);border-bottom:3px solid var(--brass);
@@ -188,7 +188,7 @@
   display:flex;align-items:center;gap:10px;
   padding:14px 46px 14px 18px;
   background:var(--tealhi);border-bottom:3px solid var(--brass);
-  font-family:var(--display);font-weight:600;font-size:clamp(19px,1.35vw,24px);
+  font-family:var(--display);font-weight:400;font-size:clamp(24px,1.5vw,28px);
   letter-spacing:1.5px;text-transform:uppercase;color:var(--color-warm-ivory);
   text-shadow:0 1px 3px rgba(0,0,0,.4);
 }
@@ -211,7 +211,7 @@
 .optrow:hover{border-color:var(--line2);filter:brightness(1.12)}
 .optrow:active{transform:scale(.99)}
 .optval{color:var(--dim);letter-spacing:1.5px}
-.optval.danger{color:var(--color-coral)}
+.optval.danger{color:inherit}
 
 /* toggle switch */
 .sw{
@@ -263,7 +263,7 @@
 }
 
 .twordmark{
-  font-family:var(--display);font-weight:600;line-height:1;
+  font-family:var(--display);font-weight:400;line-height:1;
   font-size:clamp(34px,8.2vw,86px);letter-spacing:clamp(2px,.9vw,12px);
   text-transform:uppercase;
   background:linear-gradient(180deg,var(--color-sand) 0%,var(--color-gold) 45%,var(--color-olive-gold) 100%);
@@ -279,8 +279,8 @@
   box-shadow:none;
 }
 .tline{
-  font-family:var(--prose);font-style:italic;color:var(--color-seafoam);
-  font-size:clamp(16px,1.6vh,20px);max-width:34ch;line-height:1.5;
+  font-family:var(--prose);font-style:italic;color:var(--color-seafoam-lit);
+  font-size:clamp(17px,1.6vh,20px);max-width:34ch;line-height:1.5;
 }
 
 /* The ship reads as a silhouette against the glow rather than as a diagram —
@@ -335,7 +335,7 @@
 #loadScr.out{opacity:0}
 .loadinner{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;text-align:center}
 .loadmark{
-  font-family:var(--display);font-weight:600;font-size:clamp(24px,5vw,44px);
+  font-family:var(--display);font-weight:400;font-size:clamp(24px,5vw,44px);
   letter-spacing:clamp(3px,.7vw,9px);text-transform:uppercase;color:var(--gold);
 }
 .loadmark span{color:var(--brass)}
@@ -374,7 +374,7 @@
   padding:10px 14px;border-top:1px solid rgba(138,121,62,.4);background:rgba(4,14,17,.75);
 }
 #tutTip .tt{
-  font-family:var(--display);font-weight:600;font-size:clamp(17px,1.2vw,22px);
+  font-family:var(--display);font-weight:400;font-size:clamp(17px,1.2vw,22px);
   letter-spacing:2px;text-transform:uppercase;color:var(--goldhi);margin-bottom:6px;
 }
 #tutTip .tx{font-size:clamp(16px,1.1vw,19px);color:var(--ink);line-height:1.6}
@@ -458,7 +458,7 @@
 .foeart{height:42px;display:flex;align-items:center;justify-content:center}
 .foeart .shipsvg{max-width:100%;height:auto}
 .foecard b{
-  font-family:var(--ui);font-weight:500;font-size:16px;line-height:1.1;
+  font-family:var(--ui);font-weight:400;font-size:16px;line-height:1.1;
   letter-spacing:.6px;text-transform:uppercase;color:var(--color-coral);
   overflow-wrap:anywhere;
 }
@@ -483,7 +483,7 @@
   text-transform:uppercase;color:var(--dim);
 }
 .foestat b{
-  font-family:var(--ui);font-weight:500;font-size:clamp(18px,1.4vw,23px);color:var(--ink);
+  font-family:var(--ui);font-weight:400;font-size:clamp(18px,1.4vw,23px);color:var(--ink);
 }
 .foeodds{
   width:100%;display:flex;align-items:stretch;line-height:1;
@@ -497,7 +497,7 @@
 .foeodds b{
   flex-shrink:0;display:flex;align-items:center;justify-content:center;
   min-width:46px;padding:3px 5px;
-  font-family:var(--ui);font-weight:500;font-size:clamp(17px,1.3vw,21px);
+  font-family:var(--ui);font-weight:400;font-size:clamp(17px,1.3vw,21px);
 }
 .foeodds.dim b{background:var(--navy2);color:var(--dim)}
 .foeodds.ok{border-color:var(--tealhi)}
@@ -576,7 +576,7 @@
    whose name never changes, so the plaque is drawn in CSS rather than markup. */
 #resultScr .sheet-head::before{
   content:'After Action';display:inline-block;
-  font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:600;
+  font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:400;
   letter-spacing:2px;text-transform:uppercase;color:var(--color-warm-ivory);line-height:1.15;
   padding:9px 20px;margin-bottom:6px;
   background:var(--tealhi);border:var(--out) solid var(--ink-out);
@@ -584,7 +584,7 @@
 }
 
 .rverdict{
-  font-family:var(--display);font-weight:600;text-align:center;
+  font-family:var(--display);font-weight:400;text-align:center;
   font-size:clamp(28px,3vw,52px);letter-spacing:4px;text-transform:uppercase;
   line-height:1.1;
 }
@@ -662,7 +662,7 @@
   text-transform:uppercase;color:var(--gold);
 }
 .awardname{
-  position:relative;font-family:var(--display);font-weight:600;
+  position:relative;font-family:var(--display);font-weight:400;
   font-size:clamp(24px,2.6vw,40px);letter-spacing:2px;text-transform:uppercase;
   color:var(--goldhi);line-height:1.15;margin-top:4px;
   text-shadow:0 2px 14px rgba(0,0,0,.8);
@@ -685,7 +685,7 @@
 .pop{
   position:absolute;transform:translate(-50%,-100%);
   display:flex;align-items:center;gap:6px;white-space:nowrap;
-  font-family:var(--ui);font-weight:500;
+  font-family:var(--ui);font-weight:400;
   font-size:clamp(19px,1.5vw,26px);letter-spacing:1px;line-height:1;
   padding:8px 14px 8px 10px;border-radius:0;
   color:var(--goldhi);
@@ -782,7 +782,7 @@
   padding:5px 4px;overflow-wrap:anywhere;
 }
 .tcard .tn{
-  font-family:var(--ui);font-weight:500;color:var(--goldhi);
+  font-family:var(--ui);font-weight:400;color:var(--goldhi);
   font-size:clamp(24px,2.2vw,34px);line-height:1;
 }
 /* A name or a set count where a quantity would be — it has to fit the same box

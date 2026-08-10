@@ -92,29 +92,46 @@ const ratio = (a, b) => {
 
 /* The colour a box mostly is — i.e. what its text is sitting on.
 
-   Sampled from the middle of the box, not the whole of it. On a 9-sliced
-   control the frame art can be a third of the element, and including it drags
-   the mode onto the dark edge rather than the face the label actually sits on.
-   The inset keeps us on the face; glyph pixels stay a minority there, and
-   their anti-aliased edges scatter across many distinct values while the face
-   is one exact repeated value, so the mode still lands on the background. */
-function modeColour(img, x0, y0, x1, y1, dpr) {
-  const counts = new Map();
-  const iw = (x1 - x0) * 0.22, ih = (y1 - y0) * 0.18;
+   This used to be "the single most common pixel colour in the middle of the
+   box," which is right as long as the background is one flat fill. It is not,
+   any more: a Kenney plate is a beveled steel plaque painted as three or four
+   discrete flat bands (a light top edge, a mid face, a dark underside), so no
+   single one of those bands is the majority — but the TEXT sitting on it is one
+   exactly-repeated colour front to back. Bold caps on a narrow label can cover
+   more pixels than any ONE of those bands does, and the old code would call
+   that "the background" and report a control failing against itself.
+
+   The fix: since the text colour is already known — it is the very thing being
+   tested — exclude pixels that match it (closely, not just exactly, so anti-
+   aliased glyph edges do not leak into the count either) and take the mode of
+   what is left. That is background by construction, however many flat bands it
+   is actually painted in. Sampled from the middle of the box, still, so a
+   9-sliced control's own dark ink-outline never enters the count either. */
+function modeColour(img, x0, y0, x1, y1, dpr, fg) {
+  const iw = (x1 - x0) * 0.12, ih = (y1 - y0) * 0.12;
   x0 += iw; x1 -= iw; y0 += ih; y1 -= ih;
   const X0 = Math.max(0, Math.round(x0 * dpr)), X1 = Math.min(img.w, Math.round(x1 * dpr));
   const Y0 = Math.max(0, Math.round(y0 * dpr)), Y1 = Math.min(img.h, Math.round(y1 * dpr));
-  for (let y = Y0; y < Y1; y++) {
-    for (let x = X0; x < X1; x++) {
-      const o = (y * img.w + x) * img.ch;
-      const k = (img.px[o] << 16) | (img.px[o + 1] << 8) | img.px[o + 2];
-      counts.set(k, (counts.get(k) || 0) + 1);
+  const dist2 = (a, b) => { const dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2]; return dr * dr + dg * dg + db * db; };
+  const sample = exclude => {
+    const counts = new Map();
+    for (let y = Y0; y < Y1; y++) {
+      for (let x = X0; x < X1; x++) {
+        const o = (y * img.w + x) * img.ch;
+        const px = [img.px[o], img.px[o + 1], img.px[o + 2]];
+        if (exclude && dist2(px, exclude) < 2200) continue;   /* ~47 per channel */
+        const k = (px[0] << 16) | (px[1] << 8) | px[2];
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
     }
-  }
-  let best = -1, bestN = 0;
-  for (const [k, n] of counts) if (n > bestN) { bestN = n; best = k; }
-  if (best < 0) return null;
-  return [(best >> 16) & 255, (best >> 8) & 255, best & 255];
+    let best = -1, bestN = 0;
+    for (const [k, n] of counts) if (n > bestN) { bestN = n; best = k; }
+    return best < 0 ? null : [(best >> 16) & 255, (best >> 8) & 255, best & 255];
+  };
+  /* Excluding the foreground can legitimately empty the sample — a solid
+     square swatch drawn in exactly its own "text" colour, say. Fall back to
+     the unfiltered mode rather than reporting nothing. */
+  return sample(fg) || sample(null);
 }
 
 /* candidates: every element that renders its own visible text */
@@ -211,7 +228,7 @@ async function scan(p, label) {
 
   const rows = [];
   for (const c of cands) {
-    const bg = modeColour(img, c.x, c.y, c.x2, c.y2, dpr);
+    const bg = modeColour(img, c.x, c.y, c.x2, c.y2, dpr, c.fg);
     if (!bg) continue;
     const fg = c.fg.map((v, i) => v * c.fga + bg[i] * (1 - c.fga));
     const cr = ratio(fg, bg);

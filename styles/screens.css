@@ -38,7 +38,7 @@
 .calm .heroStage img{animation:none}
 
 .hero .hname{
-  position:relative;font-family:var(--display);font-weight:600;
+  position:relative;font-family:var(--display);font-weight:400;
   font-size:clamp(26px,2.6vw,48px);letter-spacing:4px;text-transform:uppercase;
   color:var(--goldhi);text-shadow:0 2px 10px rgba(0,0,0,.8);margin-top:6px;
 }
@@ -125,7 +125,7 @@
 .calm .sea.alert::before{animation:none}
 
 .seaname{
-  font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.1vw,19px);
+  font-family:var(--ui);font-weight:400;font-size:clamp(16px,1.1vw,19px);
   letter-spacing:.9px;text-transform:uppercase;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:96px;
 }
@@ -145,7 +145,7 @@
    as a floor, but nothing normal should reach it. */
 .sect.sectctl .sectlbl{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1;
-  letter-spacing:1.2px;font-size:clamp(19px,1.3vw,22px);
+  letter-spacing:1.2px;font-size:clamp(24px,1.5vw,27px);
 }
 .sect.sectctl .secttrail{flex-shrink:0}
 .dockbuy{display:inline-flex;align-items:center;gap:4px;padding:5px 9px}
@@ -203,10 +203,11 @@
 .voyline{stroke-dasharray:6 5;animation:sailmove 1.1s linear infinite;fill:none}
 @keyframes pulse{0%,100%{opacity:.25}50%{opacity:.7}}
 .nodeglow{animation:pulse 2.4s ease-in-out infinite}
+/* the uniform disc every marker sits in — see map.js for why this replaced a
+   per-type glow fill and a separate star-shaped charter marker */
+.nodering{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 @keyframes bosspulse{0%,100%{opacity:.3}50%{opacity:.85}}
 .bossglow{animation:bosspulse 1.3s ease-in-out infinite}
-@keyframes starpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
-.charterstar{animation:starpulse 1.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
 
 /* A bounty is the one marker on the chart that will not be there tomorrow, so
    she is the one marker that beats faster than the rest. The ring around her is
@@ -216,7 +217,7 @@
 .bountynode .nodeglow{animation:btpulse 1s ease-in-out infinite}
 .btring{filter:drop-shadow(0 0 4px rgba(232,112,92,.7))}
 
-.calm .routeline,.calm .voyline,.calm .nodeglow,.calm .bossglow,.calm .charterstar{animation:none}
+.calm .routeline,.calm .voyline,.calm .nodeglow,.calm .bossglow{animation:none}
 .calm .bountynode .nodeglow{animation:none;opacity:.7}
 .calm .nodeglow{opacity:.45}
 .calm .bossglow{opacity:.6}

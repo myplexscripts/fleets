@@ -19,7 +19,7 @@
 
 .bhead{position:relative;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 14px 4px;z-index:2}
 .bhead .h{
-  font-family:var(--display);font-weight:600;text-transform:uppercase;
+  font-family:var(--display);font-weight:400;text-transform:uppercase;
   font-size:clamp(19px,1.55vw,27px);color:var(--goldhi);letter-spacing:3px;
   text-shadow:0 2px 8px #000;
 }
@@ -78,7 +78,7 @@
 .banner.on{display:flex}
 @keyframes bigIn{0%{transform:scale(2.4);opacity:0}60%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
 .banner .big{
-  font-family:var(--display);font-size:clamp(36px,3.5vw,66px);font-weight:600;
+  font-family:var(--display);font-size:clamp(36px,3.5vw,66px);font-weight:400;
   letter-spacing:5px;text-transform:uppercase;text-shadow:none;
   animation:bigIn .55s cubic-bezier(.2,.9,.3,1.2) both;
 }

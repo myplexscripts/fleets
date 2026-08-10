@@ -4,27 +4,41 @@
    Vendored rather than pulled from Google Fonts so the game has no external
    dependencies: it loads identically offline, on a locked-down network, or
    from a CDN outage, and there is no third-party request on boot.
-   Source: @fontsource/oswald
+   Source: @fontsource/{staatliches,archivo-narrow}
 
-   One family, and it is a grotesque. The game used to run three — Cinzel for
-   headings, Crimson Pro for flavour text, Oswald for labels — and two of those
-   three were serifs. A serif is a book face: it says "period document", which
-   is the opposite of what a game panel says. Everything with a face of its own
-   is now Oswald, and running prose falls back to whatever grotesque the device
-   already has, which costs nothing to load and is the face the reference sheets
-   are set in.
+   Staatliches — headers, plaques, buttons, numbers. A single-weight display
+   face with the stencilled, condensed-caps look of a stamped game sign; it
+   carries every heading in the UI.
+
+   Archivo Narrow — body copy, descriptions, flavour text. A grotesque built
+   to run narrow at small sizes without going illegible, which is what a
+   phone-width card needs from its paragraph text.
    ============================================================ */
 
-/* Oswald — the whole interface: headings, labels, numbers, buttons */
+/* Staatliches — one weight, it only ever comes in 400 */
 @font-face{
-  font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
-  src:url('../fonts/oswald-latin-400-normal.woff2') format('woff2');
+  font-family:'Staatliches';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/staatliches-latin-400-normal.woff2') format('woff2');
+}
+
+/* Archivo Narrow — body text and its bold/italic variants */
+@font-face{
+  font-family:'Archivo Narrow';font-style:normal;font-weight:400;font-display:swap;
+  src:url('../fonts/archivo-narrow-latin-400-normal.woff2') format('woff2');
 }
 @font-face{
-  font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;
-  src:url('../fonts/oswald-latin-500-normal.woff2') format('woff2');
+  font-family:'Archivo Narrow';font-style:normal;font-weight:500;font-display:swap;
+  src:url('../fonts/archivo-narrow-latin-500-normal.woff2') format('woff2');
 }
 @font-face{
-  font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
-  src:url('../fonts/oswald-latin-600-normal.woff2') format('woff2');
+  font-family:'Archivo Narrow';font-style:normal;font-weight:600;font-display:swap;
+  src:url('../fonts/archivo-narrow-latin-600-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Archivo Narrow';font-style:normal;font-weight:700;font-display:swap;
+  src:url('../fonts/archivo-narrow-latin-700-normal.woff2') format('woff2');
+}
+@font-face{
+  font-family:'Archivo Narrow';font-style:italic;font-weight:400;font-display:swap;
+  src:url('../fonts/archivo-narrow-latin-400-italic.woff2') format('woff2');
 }

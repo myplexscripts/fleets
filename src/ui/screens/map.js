@@ -384,8 +384,10 @@ export function renderMap() {
     const isCh = r.type === 'charter', isDive = r.type === 'dive';
     const d = effDanger(r);
     /* Dives carry no danger rating, so they are tinted by whether the bell can
-       reach them rather than by how dangerous the water is. */
-    const col = isDive ? (diveReachable(r) ? '#6CB7B2' : '#6B7280') : DHEX[d];
+       reach them rather than by how dangerous the water is. Charters carry no
+       danger rating either — they are tiered, not dangerous — so they keep the
+       gold the rest of the game already uses for a charter tag. */
+    const col = isCh ? '#BD913B' : isDive ? (diveReachable(r) ? '#6CB7B2' : '#6B7280') : DHEX[d];
     const open = canVoyage(r) && voyageOpen(r);
     const rp = at(r); const x = MX(rp.x), y = MY(rp.y);
 
@@ -417,12 +419,20 @@ export function renderMap() {
         + ` transform="rotate(-90 ${x} ${y})"/>`;
     }
 
+    /* Every marker — cargo, dive, bounty, charter alike — sits in the same
+       navy disc with the same brass ring, the way the game's circular icon
+       buttons everywhere else are drawn. A charter used to be its own star-
+       shaped marker, which made "what kind of job is this" a shape question
+       on top of a colour one; now the shape never changes and only the glow
+       behind the disc, the ring around it, and the glyph inside it carry the
+       colour that says what this is. */
     nodes += `<g id="node_${r.id}" data-act="mission" data-id="${r.id}"
       class="mapnode${isBt ? ' bountynode' : ''}">
       ${hitShapes(x, y, label, LBL, 18 * MS)}
-      ${isCh
-        ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#E2D6B6" stroke="#A68F3A" stroke-width="1.4"/>`
-        : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${clockRing}${nodeShape({ ...r, x, y }, col, MS)}`}
+      <circle class="nodeglow" cx="${x}" cy="${y}" r="${15 * MS}" fill="${col}"/>
+      <circle class="nodering" cx="${x}" cy="${y}" r="${13 * MS}" fill="#15273E" stroke="${col}" stroke-width="${1.6 * MS}"/>
+      ${clockRing}
+      ${nodeShape({ ...r, x, y }, col, MS)}
       ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#8DA58A" stroke="#0B1622" stroke-width="1.3"/>` : ''}
       ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#6CB7B2" stroke="#0B1622" stroke-width="1.3"/>` : ''}
     </g>`;
@@ -446,9 +456,13 @@ export function renderMap() {
     }
 
     lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#C86A4A" stroke-width="${2 * MS}" opacity="0.9"/>`;
+    /* Bigger than a job marker, for the hierarchy, but the same disc-and-ring
+       construction — an admiral is not a different KIND of thing on this
+       chart, she is the biggest one. */
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
       ${hitShapes(x, y, b.n.toUpperCase(), LBL, 22 * MS)}
       <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#C86A4A"/>
+      <circle class="nodering" cx="${x}" cy="${y}" r="${16 * MS}" fill="#15273E" stroke="#C86A4A" stroke-width="${1.8 * MS}"/>
       ${glyphMark(x, y, 1.65 * MS, 'bicorne', '#E07A6A')}</g>`;
     labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#E07A6A', '#15273E', 1.2);
   });

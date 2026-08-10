@@ -42,7 +42,7 @@
 .itemhead .itemic{width:clamp(40px,3.2vw,54px);height:clamp(40px,3.2vw,54px);flex-shrink:0}
 .itemname{flex:1;min-width:0}
 .itemname b{
-  display:block;font-family:var(--ui);font-weight:500;
+  display:block;font-family:var(--ui);font-weight:400;
   font-size:clamp(17px,1.25vw,23px);letter-spacing:1.4px;text-transform:uppercase;
   color:var(--ink);line-height:1.2;
 }
@@ -88,6 +88,27 @@
   .itemgrid{grid-template-columns:repeat(auto-fill,minmax(clamp(300px,23vw,460px),1fr))}
 }
 
+/* ---- itemgrid, as a horizontal rail ----
+   The same item cards — full detail, same footer, same buttons — laid out as
+   a single scrolling row instead of a column. A fleet of ships or a shelf of
+   goods used to mean a page-length scroll to see the last one; here the whole
+   set is one thumb-swipe wide and the card in front of you is never competing
+   with the six above it for space. Snap-scrolled so a swipe lands on a card,
+   not between two of them. */
+.itemgrid.rail{
+  display:flex;grid-template-columns:none;flex-wrap:nowrap;
+  overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+  gap:clamp(9px,.9vw,15px);
+  padding:2px 2px 12px;margin:0 -2px;
+}
+.itemgrid.rail > .item{
+  flex:0 0 clamp(240px,72vw,300px);scroll-snap-align:start;
+}
+@media (min-width:900px) and (orientation:landscape){
+  .itemgrid.rail > .item{flex-basis:clamp(260px,24vw,340px)}
+}
+
 /* ---- stepper ----
    Two round keys and a counter sunk between them. The keys are slabs like every
    other button, so − and + press the same way Buy does. */
@@ -97,7 +118,7 @@
   --fill:var(--oceanb);
   border:var(--out) solid var(--ink-out);
   background:var(--fill);margin-bottom:var(--base-sm);
-  color:var(--color-warm-ivory);font-family:var(--ui);font-size:30px;font-weight:600;line-height:1;
+  color:var(--color-warm-ivory);font-family:var(--ui);font-size:30px;font-weight:400;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   box-shadow:var(--chunk-sm);
   transition:transform .1s ease,box-shadow .1s ease,filter .15s;
@@ -106,7 +127,7 @@
 .stepbtn:active:not(:disabled){transform:translateY(var(--base-sm));box-shadow:var(--chunk-down)}
 .stepbtn:disabled{opacity:.5;filter:grayscale(.6);transform:translateY(var(--base-sm));box-shadow:var(--chunk-down);cursor:default}
 .stepn{
-  min-width:72px;text-align:center;font-family:var(--ui);font-weight:500;
+  min-width:72px;text-align:center;font-family:var(--ui);font-weight:400;
   font-size:clamp(22px,1.6vw,28px);color:var(--goldhi);letter-spacing:1px;
   padding:10px 13px;border-radius:0;line-height:1.2;
   background:var(--navy3);border:var(--out-sm) solid var(--ink-out);
@@ -143,7 +164,7 @@
 .railname{
   position:relative;
   display:flex;align-items:center;justify-content:space-between;gap:6px;
-  font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.15vw,20px);
+  font-family:var(--ui);font-weight:400;font-size:clamp(16px,1.15vw,20px);
   letter-spacing:1.1px;text-transform:uppercase;color:var(--ink);line-height:1.2;
 }
 .railtag{
@@ -181,7 +202,7 @@
 }
 .reqrow .reqic{width:40px;height:40px;flex-shrink:0}
 .reqlbl{
-  flex:1;min-width:0;font-family:var(--ui);font-weight:500;
+  flex:1;min-width:0;font-family:var(--ui);font-weight:400;
   font-size:clamp(17px,1.2vw,21px);letter-spacing:1.4px;text-transform:uppercase;
   color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
@@ -255,7 +276,7 @@
   flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
   background:var(--navy2);
   border:none;border-right:2px solid var(--line2);
-  color:var(--dim);font-family:var(--ui);font-weight:500;font-size:clamp(16px,1.15vw,20px);
+  color:var(--dim);font-family:var(--ui);font-weight:400;font-size:clamp(16px,1.15vw,20px);
   letter-spacing:1.6px;text-transform:uppercase;padding:5px 8px;cursor:pointer;
   transition:background .2s,color .2s;min-height:50px;
 }
@@ -322,5 +343,7 @@
 .tiles.grid5 .tile{width:100%;font-size:clamp(16px,1.15vw,20px)}
 .tiles.grid5 .tile .tileic{width:clamp(40px,9vw,48px);height:clamp(40px,9vw,48px)}
 .tile i{font-style:normal;color:var(--dim);margin:0 .04em}
-/* A rail card is a third of a phone wide — the same five wrap onto two rows. */
-.railcard .tiles.grid5{grid-template-columns:repeat(3,1fr);row-gap:9px}
+/* A rail card is a third of a phone wide — the same five wrap onto two rows.
+   An itemgrid card in its .rail form is narrower than its full-width self for
+   the same reason, so it gets the same two-row treatment. */
+.railcard .tiles.grid5,.itemgrid.rail .tiles.grid5{grid-template-columns:repeat(3,1fr);row-gap:9px}
