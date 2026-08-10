@@ -5,11 +5,18 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 :root{
-  --bg:#05161a; --panel:rgba(7,22,27,.88); --panel2:rgba(12,34,40,.9);
-  --line:#164a52; --line2:#2a6b70;
-  --ink:#cfe3e4; --dim:#8fb0b3;
-  --gold:#d9c98a; --goldhi:#efe3ae; --brass:#8a793e;
-  --grn:#63c06a; --yel:#d9c34a; --org:#d9883a; --red:#d94a3a; --blu:#7ab0e0;
+  /* The world is a chart on a table now, not a night sea: a warm parchment
+     ground carries dark-navy panels, the way every reference in the mockup
+     draws it. --bg is that parchment; the panels get their own --navy family
+     so "the page" and "a thing sitting on the page" never share a value. */
+  --bg:#e7cea0; --bg2:#dcbd85;
+  --navy:#182b44; --navy2:#101f34; --navy3:#0a1526;
+  --panel:rgba(10,21,38,.92); --panel2:rgba(16,31,52,.92);
+  --line:#3a5670; --line2:#5a86a4;
+  --ink:#f3ede0; --dim:#a7b8c9;
+  --gold:#dfc48c; --goldhi:#f4e3ae; --brass:#a9803e;
+  --grn:#4c8049; --yel:#d9b94a; --org:#d9883a; --red:#d3543f; --blu:#7ab0e0;
+  --purple:#6a4482; --tealhi:#1c8f8a;
 
   --ui:'Oswald',Impact,sans-serif;            /* labels, numbers, buttons */
   --display:'Cinzel','Oswald',serif;          /* wordmark, headings */
@@ -57,7 +64,7 @@
 html,body{height:100%}
 
 body{
-  background:#020a0c; color:var(--ink);
+  background:var(--navy3); color:var(--ink);
   font-family:var(--prose); font-size:clamp(16px,1.15vw,20px);
   height:100dvh; display:flex; flex-direction:column; overflow:hidden;
   touch-action:manipulation; user-select:none; -webkit-user-select:none;
@@ -71,11 +78,11 @@ body{
 #vignette{
   position:fixed;inset:0;z-index:8;pointer-events:none;
   background:
-    radial-gradient(ellipse at 50% 45%,transparent 42%,rgba(0,0,0,.30) 78%,rgba(0,0,0,.55) 100%),
+    radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(40,26,8,.16) 80%,rgba(30,18,6,.34) 100%),
     repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
   mix-blend-mode:multiply;
 }
-.calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.28) 80%,rgba(0,0,0,.5) 100%)}
+.calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(40,26,8,.15) 82%,rgba(30,18,6,.3) 100%)}
 
 /* ---- app frame ---- */
 #app{
@@ -111,15 +118,15 @@ h1,h2,h3{font-weight:500}
    caps over a hairline. It is the first thing the eye lands on when a screen
    changes, so it gets a face, an edge and a shadow like everything else. */
 .sect{
-  font-family:var(--display);font-size:clamp(17px,1.2vw,21px);font-weight:700;
-  letter-spacing:2.5px;color:var(--goldhi);text-transform:uppercase;
+  font-family:var(--ui);font-size:clamp(17px,1.2vw,21px);font-weight:600;
+  letter-spacing:2px;color:#f4fbfa;text-transform:uppercase;
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
   padding:8px 18px;border-radius:var(--r-sm);
-  background:linear-gradient(180deg,#1a4b56 0%,#123a44 48%,#0d2f37 52%,#0a2229 100%);
-  border:2px solid var(--line2);
+  background:linear-gradient(180deg,#1f8a86 0%,#146d6b 48%,#0e5250 52%,#093c3a 100%);
+  border:2px solid var(--brass);
   box-shadow:var(--slab-sm);
-  text-shadow:0 2px 0 rgba(0,0,0,.6);
+  text-shadow:0 2px 0 rgba(0,0,0,.5);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
 
@@ -135,7 +142,7 @@ h1,h2,h3{font-weight:500}
    corner is the light catching it instead. */
 .card{
   position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#123943 0%,#0d2d35 55%,#092128 100%);
+  background:linear-gradient(180deg,#1b2f4a 0%,#132539 55%,#0c1a2b 100%);
   border:2px solid var(--line);border-radius:var(--r);
   padding:clamp(14px,1vw,22px) clamp(15px,1.15vw,23px);
   margin-bottom:clamp(13px,.9vw,19px);
@@ -145,9 +152,19 @@ h1,h2,h3{font-weight:500}
 /* the gloss across the top face */
 .card::before{
   content:'';position:absolute;inset:0 0 auto;height:55%;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent);
 }
-.card::after{content:none}
+/* the four brass rivets — the detail that reads "moulded plate", not "box" */
+.card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:
+    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) top 9px left 9px/7px 7px no-repeat,
+    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) top 9px right 9px/7px 7px no-repeat,
+    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) bottom 9px left 9px/7px 7px no-repeat,
+    radial-gradient(circle at 45% 40%,#f0dca0,var(--brass) 60%) bottom 9px right 9px/7px 7px no-repeat;
+  box-shadow:0 1px 0 rgba(0,0,0,.5);
+  opacity:.85;
+}
 
 .card.flagcard{border-color:var(--brass);box-shadow:var(--slab),inset 0 0 28px rgba(217,201,138,.09)}
 .card.bosscard{border-color:#a05a4e;box-shadow:var(--slab),inset 0 0 28px rgba(217,74,58,.10)}
@@ -170,9 +187,9 @@ h1,h2,h3{font-weight:500}
 .btn{
   font-family:var(--ui);font-weight:500;
   font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
-  color:#dff2f4;
-  background:linear-gradient(180deg,#256e7c 0%,#1a5460 49%,#123f4a 51%,#0d2f38 100%);
-  border:2px solid #2f7f8a;border-radius:var(--r-sm);
+  color:#f2fbf9;
+  background:linear-gradient(180deg,#1f8a86 0%,#146d6b 49%,#0e5250 51%,#093c3a 100%);
+  border:2px solid #2aa39c;border-radius:var(--r-sm);
   padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
   min-height:clamp(48px,3.6vw,58px);
   display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
@@ -192,22 +209,23 @@ h1,h2,h3{font-weight:500}
   border-color:#eddba0;color:#3a2c0c;text-shadow:0 1px 0 rgba(255,246,214,.45);
 }
 .btn.red{
-  background:linear-gradient(180deg,#c25a44 0%,#a04532 49%,#7d3324 51%,#5a2419 100%);
-  border-color:#e69682;color:#fff0eb;
+  background:linear-gradient(180deg,#c6402c 0%,#a53322 49%,#822719 51%,#5e1c12 100%);
+  border-color:#e08066;color:#fff0eb;
 }
 .btn.blu{
   background:linear-gradient(180deg,#4189c4 0%,#2e6ba2 49%,#22527f 51%,#183c5e 100%);
   border-color:#8cc0ea;color:#f0f8ff;
 }
 .btn.grn{
-  background:linear-gradient(180deg,#48ad57 0%,#348741 49%,#256a30 51%,#1a4d23 100%);
+  background:linear-gradient(180deg,#4c9256 0%,#3a7440 49%,#2b5a30 51%,#1e4222 100%);
   border-color:#8ada92;color:#f2fff4;
 }
-/* Cancel, Belay, Not Now. It is still a slab and still presses, but it does
-   not compete with the button the player came here to hit. */
+/* Cancel, Belay, Not Now — and the mockup's plain "Secondary" button. It is
+   still a slab and still presses, but it does not compete with the button
+   the player came here to hit. */
 .btn.quiet{
-  background:linear-gradient(180deg,#1b2f34 0%,#142629 49%,#0e1d20 51%,#0a1618 100%);
-  border-color:#2a4348;color:#9dbabd;
+  background:linear-gradient(180deg,#213c58 0%,#182d45 49%,#122236 51%,#0c1926 100%);
+  border-color:var(--line2);color:#c8d8e6;
 }
 .btn.sm{
   font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:10px;
@@ -254,7 +272,7 @@ h1,h2,h3{font-weight:500}
 .tag,.mtype,.statechip{font-family:var(--ui);font-size:clamp(16px,1.05vw,18px);letter-spacing:2px;text-transform:uppercase}
 .tag{
   padding:5px 12px;border-left:4px solid;border-radius:0 8px 8px 0;
-  color:var(--ink);background:linear-gradient(180deg,#12363e,#08222a);
+  color:var(--ink);background:linear-gradient(180deg,#182c44,#0a1626);
   box-shadow:var(--slab-sm);
 }
 .t0{border-color:var(--grn);color:var(--grn)}

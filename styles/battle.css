@@ -4,7 +4,7 @@
 
 #battleScr{
   position:fixed;inset:0;z-index:20;display:none;flex-direction:column;
-  background:radial-gradient(ellipse at 50% 30%,#12383e 0%,#0a2328 45%,#04141a 100%);
+  background:radial-gradient(ellipse at 50% 30%,#1c3252 0%,#101f34 45%,#0a1526 100%);
 }
 #battleScr.on{display:flex}
 #battleScr.boss{background:radial-gradient(ellipse at 50% 30%,#3a1c1c 0%,#1e1012 45%,#0a0507 100%)}
@@ -118,7 +118,7 @@
 }
 .bcmds .btn:disabled .onote{color:var(--dim)}
 .bcmds .btn.on{
-  background:linear-gradient(180deg,#48ad57 0%,#348741 49%,#256a30 51%,#1a4d23 100%);
+  background:linear-gradient(180deg,#4c9256 0%,#3a7440 49%,#2b5a30 51%,#1e4222 100%);
   border-color:#8ada92;color:#f2fff4;
 }
 /* A boardable target is the one moment in a fight worth interrupting for. */

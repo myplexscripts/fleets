@@ -31,7 +31,7 @@ export function initMist() {
     blobs.forEach(b => {
       if (move) { b.x = (b.x + b.dx + 1) % 1; b.y = (b.y + b.dy + 1) % 1; }
       const g = cx.createRadialGradient(b.x * W, b.y * H, 0, b.x * W, b.y * H, b.r * W);
-      g.addColorStop(0, `rgba(90,200,210,${b.a})`);
+      g.addColorStop(0, `rgba(190,150,80,${b.a})`);
       g.addColorStop(1, 'rgba(0,0,0,0)');
       cx.fillStyle = g;
       cx.fillRect(0, 0, W, H);

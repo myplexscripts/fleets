@@ -359,11 +359,11 @@ function nextPrize() {
       <div class="sub"></div>
       <div class="prizeopts">
         ${prizeOpt(tileRow([tile('crew', (S.docks - S.ships.length), full ? 'bad' : 'ok', 'Docks free')], 'grid4'),
-          'Keep', i, 'capture', e.type, full, 'gold')}
+          'Keep', i, 'capture', e.type, full, 'grn')}
         ${prizeOpt(tileRow([bagTiles(SCRAP_YIELD[e.type], 'gold')], 'grid4'),
-          'Scuttle', i, 'salvage', e.type)}
+          'Scuttle', i, 'salvage', e.type, false, 'red')}
         ${e.derelict ? '' : prizeOpt(tileRow([tile('gold', ransomOf(t), 'gold', 'Ransom for her crew')], 'grid4'),
-          'Ransom', i, 'ransom', e.type)}
+          'Ransom', i, 'ransom', e.type, false, 'gold')}
         ${e.chest ? prizeOpt(tileRow([tile('chest', chestValue(t), 'gold', "The captain's own strongbox")], 'grid4'),
           "Captain's Chest", i, 'chest', e.type, false, 'gold') : ''}
       </div></div>`;
