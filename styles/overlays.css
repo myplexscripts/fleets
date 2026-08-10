@@ -24,26 +24,40 @@
 }
 .overlay.vis .sheet{transform:none;opacity:1}
 
-/* ---- the title bar ----
-   A flat plate, flush with the edge, icon-and-label on the left, a close
-   button on the right — the pattern every reference panel shares. Not a
-   floating badge sitting on top of the panel; it IS the top of the panel. */
+/* ---- the title plaque ----
+   A teal nameplate with a cream border, centred, with a small emblem either
+   side of the word. Not a full-width bar: the reference hangs a SIGN on the
+   panel, and a sign is narrower than the thing it is nailed to. The status
+   word and the subtitle sit under it, centred, on the panel's own ground. */
 .sheet-head{
-  flex-shrink:0;position:relative;
-  padding:calc(env(safe-area-inset-top) + 14px) 56px 14px 18px;
-  background:var(--tealhi);border-bottom:3px solid var(--brass);
+  flex-shrink:0;position:relative;text-align:center;
+  padding:calc(env(safe-area-inset-top) + 16px) 52px 13px;
+  background:var(--navy);border-bottom:2px solid var(--brass);
 }
-.sheet-head .row{flex-wrap:nowrap}
+.sheet-head .row{flex-wrap:wrap;justify-content:center}
 .sheet-head h3{
-  font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:600;
-  letter-spacing:1.5px;text-transform:uppercase;color:#fff;line-height:1.2;
-  text-shadow:0 1px 3px rgba(0,0,0,.4);
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--display);font-size:clamp(17px,1.3vw,23px);font-weight:600;
+  letter-spacing:1.6px;text-transform:uppercase;color:#fff;line-height:1.15;
+  white-space:nowrap;padding:6px 15px;margin:0 auto;max-width:100%;
+  background:var(--tealhi);border:3px solid #eaf4f2;
+  box-shadow:var(--slab-sm);
 }
-/* A status word on the title bar is a plate, not a chip with a coloured spine —
+/* the emblem either side of the word — part of the plaque, not a chip beside it.
+   40px is the game's floor for a tappable glyph; these are decorative and never
+   tapped, so they are allowed to be the size the sign wants. */
+.sheet-head h3 .plaqic{width:26px;height:26px;flex-shrink:0}
+.sheet-head h3 > span{overflow:hidden;text-overflow:ellipsis}
+/* A status word is a plate under the sign, not a chip with a coloured spine —
    the spine is a device for a list, and there is no list up here. */
 .sheet-head .tag,.sheet-head .mtype{
   flex-shrink:0;border:2px solid currentColor;border-radius:0;
   background:var(--navy3);box-shadow:none;padding:4px 11px;
+}
+/* the line under the sign that says what this particular job is */
+.sheet-sub{
+  font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);
+  letter-spacing:2px;text-transform:uppercase;color:var(--ink);margin-top:9px;
 }
 
 .panelx{
@@ -451,27 +465,43 @@
 /* Power sits in its own sunken box under the name; odds is the coloured pill
    below it, which is the one thing on the card that changes as ships are
    picked and so the one thing allowed to carry a status colour. */
-.foestat,.foeodds{
+/* Power is a labelled box, its number stacked under the word. Odds is a strip:
+   the word on the left in the dark, the figure on the right in a solid colour
+   chip — the one thing on the card that goes green, amber or red, and the
+   reason the strip is built sideways instead of stacked like the box above it. */
+.foestat{
   width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;
-  border-radius:0;padding:3px 4px;line-height:1;
+  padding:3px 4px;line-height:1;
+  background:var(--navy3);border:2px solid var(--tealhi);
 }
-.foestat{background:var(--navy3);border:2px solid var(--line)}
-.foestat i,.foeodds i{
+.foestat i{
   font-style:normal;font-family:var(--ui);font-size:16px;letter-spacing:1px;
   text-transform:uppercase;color:var(--dim);
 }
-.foestat b,.foeodds b{
+.foestat b{
   font-family:var(--ui);font-weight:500;font-size:clamp(18px,1.4vw,23px);color:var(--ink);
 }
-.foeodds{border:2px solid}
-.foeodds.dim{background:var(--navy3);border-color:var(--line)}
-.foeodds.ok{background:#2b5a30;border-color:#8ada92}
-.foeodds.ok b{color:#d9f5db}
-.foeodds.warn{background:#7d5a12;border-color:#e8c375}
-.foeodds.warn b{color:#fbeecb}
-.foeodds.bad{background:#7d2418;border-color:#e08066}
-.foeodds.bad b{color:#ffd9d0}
-.foeodds i{color:rgba(255,255,255,.7)}
+.foeodds{
+  width:100%;display:flex;align-items:stretch;line-height:1;
+  border:2px solid var(--line);background:var(--navy3);
+}
+.foeodds i{
+  flex:1;display:flex;align-items:center;justify-content:center;padding:3px 4px;
+  font-style:normal;font-family:var(--ui);font-size:16px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--dim);
+}
+.foeodds b{
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  min-width:46px;padding:3px 5px;
+  font-family:var(--ui);font-weight:500;font-size:clamp(17px,1.3vw,21px);
+}
+.foeodds.dim b{background:var(--navy2);color:var(--dim)}
+.foeodds.ok{border-color:var(--tealhi)}
+.foeodds.ok b{background:var(--tealhi);color:#eafaf8}
+.foeodds.warn{border-color:var(--brass)}
+.foeodds.warn b{background:var(--yel);color:#3a2c06}
+.foeodds.bad{border-color:#a5392c}
+.foeodds.bad b{background:#c0392b;color:#fff}
 .foechest{
   display:inline-flex;align-items:center;gap:3px;
   font-family:var(--ui);font-size:16px;letter-spacing:.6px;
@@ -538,11 +568,15 @@
 #resultScr.vis{opacity:1}
 /* the panel's own fixed nameplate — a flat title bar like every other panel;
    the verdict is not shown twice, it lives in the body where it changes */
+/* The account gets the same sign as every other panel — it is the one panel
+   whose name never changes, so the plaque is drawn in CSS rather than markup. */
 #resultScr .sheet-head::before{
-  content:'After Action';display:block;
+  content:'After Action';display:inline-block;
   font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:600;
-  letter-spacing:1.5px;text-transform:uppercase;color:#fff;
-  text-shadow:0 1px 3px rgba(0,0,0,.4);
+  letter-spacing:2px;text-transform:uppercase;color:#fff;line-height:1.15;
+  padding:8px 20px;
+  background:var(--tealhi);border:3px solid #eaf4f2;
+  box-shadow:var(--slab-sm);
 }
 
 .rverdict{

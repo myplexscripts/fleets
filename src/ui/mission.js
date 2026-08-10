@@ -235,11 +235,24 @@ function drawMission() {
   /* Danger only means something where cargo can be taken off you. */
   const showDanger = r.type === 'cargo' || (!isBoss && !isCh && r.type !== 'dive');
 
-  /* Only the name and what it is stay in the title bar. Everything that used
-     to stack underneath it — the danger reading, the mode tabs, what the job
-     asks for — is page content, not chrome, so it opens the body instead. */
+  /* The sign names the KIND of panel; the line under it names this particular
+     job. That order is the reference's, and it is the right way round: the
+     plaque is a heading and headings do not change every time you open a
+     different route, while "The Sugar Convoy" is the one thing on the screen
+     that does. The emblem either side of the word says the same thing again
+     in one glyph — a wheel for a run, crossed guns for a fight, an anchor for
+     a dive — and it is the same pair on both sides, as a sign is.
+
+     Everything that used to stack under the head — the danger reading, the
+     mode tabs, what the job asks for — is page content, so it opens the body. */
+  const fightingNow = fighting || (!canVoyage(r) && r.type !== 'dive');
+  const emblem = r.type === 'dive' ? 'anchor' : fightingNow ? 'guns' : 'wheel';
+  const kind = fighting ? 'Battle' : MTYPE[r.type].n;
+  const plaq = iconHTML(emblem, 0, 'plaqic');
   $('sheetHead').innerHTML =
-    `<div class="row"><h3>${esc(r.n)}</h3><span class="tag ${tagCls}">${tagText}</span></div>`;
+    `<h3>${plaq}<span>${esc(kind)}</span>${plaq}</h3>
+     <div class="sheet-sub">${esc(r.n)}</div>
+     <div class="row" style="margin-top:9px"><span class="tag ${tagCls}">${tagText}</span></div>`;
 
   let sub = '';
   if (showDanger) {
@@ -253,9 +266,9 @@ function drawMission() {
       <button class="mtab ${fighting ? '' : 'on'}" data-act="run-mode">${iconHTML(r.type === 'dive' ? 'chest' : 'cargo', 40)}${MTYPE[r.type].n}</button>
       <button class="mtab ${fighting ? 'on' : ''}" data-act="fight-mode">${iconHTML('danger', 40)}Battle</button>
     </div>`;
-  } else {
-    sub += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
   }
+  /* The lone type label that used to sit here is the plaque now — printing it
+     twice on one screen was the reason the head looked so tall. */
   sub += requirements(r, isBoss);
 
   /* ---- body: what it asks of you, who is waiting, then the ships to send ---- */

@@ -13,6 +13,7 @@ import { BELL_NAMES, bellMaxDepth } from '../data/salvage.js';
 import { WAREHOUSE, MAX_WAREHOUSE } from '../data/storage.js';
 import { totalGoods, totalMats, storeCap } from '../core/selectors.js';
 import { chip, chipRow, outOf } from './format.js';
+import { iconHTML } from '../art/icons.js';
 import { itemCard, itemGrid, sect } from './components.js';
 import { setSheet, openSheet } from './sheet.js';
 
@@ -39,11 +40,12 @@ const row = (key, def, held) => {
 
 function drawStores() {
   setSheet(
-    `<div class="row"><h3>Ship's Stores</h3>
-       ${chipRow([
-         chip('cargo', totalGoods(), 'gold', 'Goods in store'),
-         chip('mats', totalMats(), 'gold', 'Materials in store')
-       ], 'tight')}</div>`,
+    `<h3>${iconHTML('anchor', 0, 'plaqic')}<span>Ship's Stores</span>${iconHTML('anchor', 0, 'plaqic')}</h3>
+     <div class="sheet-sub">${WAREHOUSE[S.wh].n}</div>
+     <div class="row" style="margin-top:9px">${chipRow([
+       chip('cargo', totalGoods(), 'gold', 'Goods in store'),
+       chip('mats', totalMats(), 'gold', 'Materials in store')
+     ], 'tight')}</div>`,
 
     `<div class="sub quote">Won off the routes you run and the ships you beat. Sell what you cannot place at the Market.</div>
      ${sect('Trade Goods', 0)}

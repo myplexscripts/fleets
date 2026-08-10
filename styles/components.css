@@ -19,6 +19,20 @@
   box-shadow:var(--slab);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*60ms);
 }
+/* the same four gold angle-brackets the cards carry — see .card::after */
+.item::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:
+    linear-gradient(var(--gold),var(--gold)) top 6px left 6px/11px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 6px left 6px/2px 11px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 6px right 6px/11px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 6px right 6px/2px 11px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 6px left 6px/11px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 6px left 6px/2px 11px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 6px right 6px/11px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 6px right 6px/2px 11px no-repeat;
+  opacity:.55;
+}
 .item.owned{border-color:var(--brass);background:#3a2f14}
 .item.dis{opacity:.45}
 /* A card replaced in place — a stepper tick — must not replay its entrance. */

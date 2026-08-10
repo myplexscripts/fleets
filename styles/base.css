@@ -5,11 +5,15 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 :root{
-  /* The world is a chart on a table now, not a night sea: a warm parchment
-     ground carries dark-navy panels, the way every reference in the mockup
-     draws it. --bg is that parchment; the panels get their own --navy family
-     so "the page" and "a thing sitting on the page" never share a value. */
-  --bg:#e7cea0; --bg2:#dcbd85;
+  /* The ground is deep water, not parchment. A pale sand field threw more
+     light than anything sitting on it, so every navy panel read as a hole
+     punched in the page; against dark water the panels are the lit thing and
+     the ground falls away behind them, which is the whole point of the look.
+     --bg is that water; the panels keep their own --navy family so "the sea"
+     and "a thing floating on it" never share a value. */
+  --bg:#0f3b45; --bg2:#0a2b33;
+  /* the caustic web on the water — see main{} below for why it is drawn */
+  --water:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.016' numOctaves='4' seed='11' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.85 0 0 0 0 0.88 0 0 0 -1.25 0.52'/%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23c)' opacity='0.35'/%3E%3C/svg%3E");
   --navy:#182b44; --navy2:#101f34; --navy3:#0a1526;
   --panel:rgba(10,21,38,.92); --panel2:rgba(16,31,52,.92);
   --line:#3a5670; --line2:#5a86a4;
@@ -63,11 +67,11 @@ body{
 #vignette{
   position:fixed;inset:0;z-index:8;pointer-events:none;
   background:
-    radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(40,26,8,.16) 80%,rgba(30,18,6,.34) 100%),
+    radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(2,18,24,.22) 80%,rgba(1,12,16,.45) 100%),
     repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
   mix-blend-mode:multiply;
 }
-.calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(40,26,8,.15) 82%,rgba(30,18,6,.3) 100%)}
+.calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(2,18,24,.2) 82%,rgba(1,12,16,.4) 100%)}
 
 /* ---- app frame ---- */
 #app{
@@ -77,13 +81,22 @@ body{
 #app.on{display:flex}
 header,main,nav{position:relative;z-index:1}
 
+/* The sea, as the ground under every screen.
+
+   Drawn rather than shipped: an SVG turbulence filter tiled at 420px gives the
+   caustic web of light on deep water, costs no binary asset, and stitches
+   seamlessly so a long scroll never shows a seam. Kept very low contrast on
+   purpose — it has to read as texture at arm's length and as nothing at all
+   behind a panel, because the panels are what the player is looking at. */
 main{
   --mainpad:14px;
   flex:1;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   padding:var(--mainpad) var(--mainpad) 22px;
   padding-top:calc(env(safe-area-inset-top) + var(--mainpad));
-  background:var(--bg);
+  background-color:var(--bg);
+  background-image:var(--water);
+  background-size:420px 420px;
 }
 main.nopad{padding:0;overflow:hidden}
 
@@ -135,16 +148,28 @@ h1,h2,h3{font-weight:500}
   animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
 }
 .card::before{content:none}
-/* the four brass rivets — the detail that reads "moulded plate", not "box" */
+/* ---- corner brackets ----
+   Four gold angle-brackets set in from the corners: two short bars meeting at
+   a right angle, the way a chart is pinned to a board. This is the panel
+   ornament the reference actually uses — not a rivet, which is a moulding
+   detail and belongs to the look we just took out. Painted as eight gradient
+   slices on one pseudo-element so it costs no extra nodes. */
 .card::after{
-  content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  content:'';position:absolute;inset:0;pointer-events:none;
   background:
-    linear-gradient(var(--brass),var(--brass)) top 9px left 9px/7px 7px no-repeat,
-    linear-gradient(var(--brass),var(--brass)) top 9px right 9px/7px 7px no-repeat,
-    linear-gradient(var(--brass),var(--brass)) bottom 9px left 9px/7px 7px no-repeat,
-    linear-gradient(var(--brass),var(--brass)) bottom 9px right 9px/7px 7px no-repeat;
-  box-shadow:0 1px 0 rgba(0,0,0,.5);
-  opacity:.85;
+    /* top-left: across, then down */
+    linear-gradient(var(--gold),var(--gold)) top 7px left 7px/13px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 7px left 7px/2px 13px no-repeat,
+    /* top-right */
+    linear-gradient(var(--gold),var(--gold)) top 7px right 7px/13px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 7px right 7px/2px 13px no-repeat,
+    /* bottom-left */
+    linear-gradient(var(--gold),var(--gold)) bottom 7px left 7px/13px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 7px left 7px/2px 13px no-repeat,
+    /* bottom-right */
+    linear-gradient(var(--gold),var(--gold)) bottom 7px right 7px/13px 2px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 7px right 7px/2px 13px no-repeat;
+  opacity:.6;
 }
 
 .card.flagcard{border-color:var(--brass);box-shadow:var(--slab)}
@@ -231,14 +256,18 @@ h1,h2,h3{font-weight:500}
    game the same tick spacing whatever its own colour is doing. */
 .bar,.vbar,.secbar,.dbar,.notobar{
   position:relative;
-  background:var(--navy3);border:2px solid var(--line);border-radius:0;
+  background:var(--navy3);border:1px solid var(--brass);border-radius:0;
   overflow:hidden;
 }
 .bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:0}
+/* The dividers are brass, not background-coloured. A gap the colour of the
+   track reads as damage to the fill; a brass rule reads as a gauge that was
+   built with ten marks on it, which is what the reference draws. */
 .bar::after,.vbar::after,.secbar::after,.dbar::after,.notobar::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:repeating-linear-gradient(90deg,
-    transparent 0 calc(10% - 3px), var(--navy3) calc(10% - 3px) 10%);
+    transparent 0 calc(10% - 2px), var(--brass) calc(10% - 2px) 10%);
+  opacity:.85;
 }
 .bar{height:16px;margin-top:9px}
 .bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
