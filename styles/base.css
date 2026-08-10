@@ -24,37 +24,27 @@
 
   --bevel:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.45);
 
-  /* ---- the moulded look -------------------------------------------------
-     Everything in this game is a physical object sitting on a surface: it has
-     a lit top face, a thickness you can see, and a shadow under it. That is
-     the whole difference between a screen that reads as a game and a screen
-     that reads as a website, and it comes from three numbers used everywhere
-     rather than a new treatment invented per component.
-
-       --r / --r-sm / --r-pill   how round a thing is
-       --lift                    how thick it is — the visible edge below it
-       --slab / --slab-sm        the shadow recipe that produces the edge
-
-     A pressable thing sinks by exactly --lift when pressed and loses its
-     edge, which is why buttons feel like buttons. Nothing overrides these. */
+  /* ---- the flat look -------------------------------------------------
+     A graphic plate, not a moulded slab: solid fill, a clean 2-3px border,
+     one crisp offset shadow underneath it. No gloss, no bevel, no multi-tone
+     gradient pretending to be plastic. The reference is flat vector UI —
+     everything reads as cut card stock laid on the table, not injection-
+     moulded. --r / --r-sm / --r-pill still say how round a thing is; --lift
+     is now a small, honest press-travel rather than a thick physical edge. */
   --r:16px; --r-sm:12px; --r-pill:999px;
-  --lift:5px;
-  --edge:rgba(2,10,12,.78);
+  --lift:3px;
+  --edge:rgba(2,10,12,.6);
 
   --slab:
     0 var(--lift) 0 var(--edge),
-    0 calc(var(--lift) + 7px) 18px rgba(0,0,0,.5),
-    inset 0 2px 0 rgba(255,255,255,.10);
+    0 calc(var(--lift) + 3px) 8px rgba(0,0,0,.3);
   --slab-sm:
-    0 3px 0 var(--edge),
-    0 7px 12px rgba(0,0,0,.45),
-    inset 0 1px 0 rgba(255,255,255,.10);
+    0 2px 0 var(--edge),
+    0 4px 7px rgba(0,0,0,.28);
   /* what a pressed thing looks like: flat on the surface, no edge left */
   --slab-down:
     0 0 0 var(--edge),
-    0 2px 4px rgba(0,0,0,.5),
-    inset 0 2px 0 rgba(255,255,255,.06),
-    inset 0 -2px 6px rgba(0,0,0,.35);
+    0 1px 2px rgba(0,0,0,.35);
   /* a recessed well — for anything a number sits *in* rather than *on* */
   --well:
     inset 0 2px 5px rgba(0,0,0,.55),
@@ -123,10 +113,10 @@ h1,h2,h3{font-weight:500}
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
   padding:8px 18px;border-radius:var(--r-sm);
-  background:linear-gradient(180deg,#1f8a86 0%,#146d6b 48%,#0e5250 52%,#093c3a 100%);
+  background:var(--tealhi);
   border:2px solid var(--brass);
   box-shadow:var(--slab-sm);
-  text-shadow:0 2px 0 rgba(0,0,0,.5);
+  text-shadow:0 1px 0 rgba(0,0,0,.4);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
 
@@ -142,18 +132,14 @@ h1,h2,h3{font-weight:500}
    corner is the light catching it instead. */
 .card{
   position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#1b2f4a 0%,#132539 55%,#0c1a2b 100%);
+  background:var(--navy);
   border:2px solid var(--line);border-radius:var(--r);
   padding:clamp(14px,1vw,22px) clamp(15px,1.15vw,23px);
   margin-bottom:clamp(13px,.9vw,19px);
   box-shadow:var(--slab);
   animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
 }
-/* the gloss across the top face */
-.card::before{
-  content:'';position:absolute;inset:0 0 auto;height:55%;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent);
-}
+.card::before{content:none}
 /* the four brass rivets — the detail that reads "moulded plate", not "box" */
 .card::after{
   content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
@@ -179,21 +165,19 @@ h1,h2,h3{font-weight:500}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
 
 /* ---- buttons ----
-   A slab with a thickness. The two-tone face — bright above the midline, dark
-   below — is what makes it read as moulded rather than printed, and pressing
-   it drops it onto the surface by exactly the height of its own edge. That
-   travel is the whole feel of the game in one interaction, so every button in
-   every screen is this button. */
+   A flat plate: one solid fill, one clean border, one crisp shadow underneath
+   it. Pressing drops it onto the surface by --lift and the shadow collapses —
+   that small travel is the whole feel of the game in one interaction, so
+   every button in every screen is this button. No bevel, no gloss band. */
 .btn{
   font-family:var(--ui);font-weight:500;
   font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
   color:#f2fbf9;
-  background:linear-gradient(180deg,#1f8a86 0%,#146d6b 49%,#0e5250 51%,#093c3a 100%);
+  background:var(--tealhi);
   border:2px solid #2aa39c;border-radius:var(--r-sm);
   padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
   min-height:clamp(48px,3.6vw,58px);
   display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
-  text-shadow:0 2px 0 rgba(0,0,0,.45);
   box-shadow:var(--slab-sm);
   transition:transform .1s ease,box-shadow .1s ease,filter .15s;
   position:relative;
@@ -205,26 +189,26 @@ h1,h2,h3{font-weight:500}
   transform:translateY(3px);box-shadow:var(--slab-down);
 }
 .btn.gold{
-  background:linear-gradient(180deg,#d3ab58 0%,#b08c3e 49%,#8a6c2c 51%,#66501f 100%);
-  border-color:#eddba0;color:#3a2c0c;text-shadow:0 1px 0 rgba(255,246,214,.45);
+  background:#c99a3f;
+  border-color:#e8c375;color:#2e2308;
 }
 .btn.red{
-  background:linear-gradient(180deg,#c6402c 0%,#a53322 49%,#822719 51%,#5e1c12 100%);
+  background:#a5392c;
   border-color:#e08066;color:#fff0eb;
 }
 .btn.blu{
-  background:linear-gradient(180deg,#4189c4 0%,#2e6ba2 49%,#22527f 51%,#183c5e 100%);
+  background:#3374ab;
   border-color:#8cc0ea;color:#f0f8ff;
 }
 .btn.grn{
-  background:linear-gradient(180deg,#4c9256 0%,#3a7440 49%,#2b5a30 51%,#1e4222 100%);
+  background:#3f7a44;
   border-color:#8ada92;color:#f2fff4;
 }
 /* Cancel, Belay, Not Now — and the mockup's plain "Secondary" button. It is
-   still a slab and still presses, but it does not compete with the button
+   still a plate and still presses, but it does not compete with the button
    the player came here to hit. */
 .btn.quiet{
-  background:linear-gradient(180deg,#213c58 0%,#182d45 49%,#122236 51%,#0c1926 100%);
+  background:var(--navy);
   border-color:var(--line2);color:#c8d8e6;
 }
 .btn.sm{
@@ -249,20 +233,17 @@ h1,h2,h3{font-weight:500}
   background:#020f12;border:none;border-radius:var(--r-pill);overflow:hidden;
   box-shadow:var(--well);
 }
-.bar i,.vbar i,.secbar i,.dbar i,.notobar i{
-  border-radius:var(--r-pill);
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -2px 0 rgba(0,0,0,.25);
-}
+.bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:var(--r-pill)}
 .bar{height:12px;margin-top:9px}
 .bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .bar i.low{background:var(--yel)}
 .bar i.crit{background:var(--red)}
 .vbar{height:14px;margin-top:9px}
-.vbar i{display:block;height:100%;background:linear-gradient(90deg,#2c5a8a,#7ab0e0);transition:width 1s linear}
-.vbar.done i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
+.vbar i{display:block;height:100%;background:var(--blu);transition:width 1s linear}
+.vbar.done i{background:var(--grn)}
 .secbar{height:12px;margin-top:8px}
-.secbar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
-.secbar.clear i{background:linear-gradient(90deg,#3f7a44,#7fd08a)}
+.secbar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
+.secbar.clear i{background:var(--grn)}
 .dbar{height:11px;margin-top:7px}
 .dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
 

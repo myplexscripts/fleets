@@ -14,8 +14,7 @@
   position:relative;text-align:center;margin-bottom:12px;overflow:visible;
   display:flex;flex-direction:column;align-items:center;
   padding:clamp(18px,1.6vw,34px) clamp(14px,1.2vw,26px) clamp(16px,1.4vw,30px);
-  background:radial-gradient(ellipse at 50% 60%,rgba(31,138,134,.28),rgba(10,21,38,.94) 70%),
-             linear-gradient(180deg,#1b2f4a,#0c1a2b);
+  background:radial-gradient(ellipse at 50% 60%,rgba(31,138,134,.28),rgba(10,21,38,.94) 70%),var(--navy);
   border:1px solid var(--brass);border-radius:4px;
   animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both;
 }
@@ -95,7 +94,7 @@
   display:flex;align-items:center;gap:7px;
   padding:5px 11px 5px 12px;border-radius:var(--r-sm);
   border:2px solid var(--line);
-  background:linear-gradient(180deg,#1b2f4a 0%,#132539 55%,#0a1526 100%);
+  background:var(--navy);
   box-shadow:var(--slab-sm);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
@@ -106,13 +105,13 @@
    coming back to the chart after a raid, you watch it move. */
 .sea::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:var(--wanted,0%);
-  background:linear-gradient(90deg,rgba(217,177,74,.16),rgba(217,177,74,.42));
+  background:rgba(217,177,74,.3);
   border-right:2px solid rgba(240,205,120,.55);
   transition:width 1.1s cubic-bezier(.2,.9,.3,1);
   pointer-events:none;
 }
 .sea.alert::before{
-  background:linear-gradient(90deg,rgba(217,74,58,.28),rgba(230,96,72,.6));
+  background:rgba(222,88,64,.45);
   border-right-color:rgba(255,150,130,.8);
   animation:seapulse 1.5s ease-in-out infinite;
 }
@@ -187,8 +186,8 @@
 .mapfleet.none b{color:#e88a7a}
 
 .notobar{height:10px;margin-top:6px}
-.notobar i{display:block;height:100%;background:linear-gradient(90deg,#8a5a2c,#d9c98a);transition:width .6s ease}
-.notobar.full i{background:linear-gradient(90deg,#a02c22,#e06a5a)}
+.notobar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
+.notobar.full i{background:#c8503c}
 
 /* The key, inside the dialog the map button opens. Two columns of symbol and
    name — it used to be a permanent panel across the foot of the chart, which
@@ -230,7 +229,7 @@
 }
 .calm .goodsgrid{animation:none}
 .goodcard{
-  background:linear-gradient(180deg,#1b2f4a 0%,#132539 55%,#0c1a2b 100%);
+  background:var(--navy);
   border:2px solid var(--line);border-radius:var(--r);
   padding:12px 13px;box-shadow:var(--slab-sm);
   display:flex;flex-direction:column;gap:7px;
@@ -246,8 +245,8 @@
 .card.setdone{border-color:var(--brass);box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 26px rgba(217,201,138,.08)}
 .card.setdone{border-color:var(--gold)}
 .setbar{height:11px;background:#020f12;border:none;border-radius:var(--r-pill);margin-top:8px;overflow:hidden;box-shadow:var(--well)}
-.setbar i{display:block;height:100%;border-radius:var(--r-pill);background:linear-gradient(90deg,#8a5a2c,#d9c98a);box-shadow:inset 0 2px 0 rgba(255,255,255,.28);transition:width .6s ease}
-.setbar.full i{background:linear-gradient(90deg,#3f7a44,#d9c98a)}
+.setbar i{display:block;height:100%;border-radius:var(--r-pill);background:var(--gold);transition:width .6s ease}
+.setbar.full i{background:var(--grn)}
 .pieces{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:9px}
 .piece{
   display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:10px;
@@ -257,7 +256,7 @@
 }
 /* A flex child will happily squeeze an icon under the 40px floor. It may not. */
 .piece .ic{opacity:.35;flex-shrink:0}
-.piece.got{border-color:var(--brass);background:linear-gradient(180deg,#4a3d1c,#2a2209);box-shadow:var(--slab-sm);color:var(--goldhi)}
+.piece.got{border-color:var(--brass);background:#33290f;box-shadow:var(--slab-sm);color:var(--goldhi)}
 .piece.got .ic{opacity:1}
 
 /* ---- map key: symbol then name ---- */
@@ -314,7 +313,7 @@
   position:absolute;right:10px;bottom:14px;z-index:5;
   width:56px;height:56px;display:flex;align-items:center;justify-content:center;
   border:2px solid #2aa39c;border-radius:var(--r-sm);
-  background:linear-gradient(180deg,#1f8a86 0%,#146d6b 49%,#0e5250 51%,#093c3a 100%);
+  background:var(--tealhi);
   box-shadow:var(--slab-sm);cursor:pointer;
   transition:transform .1s ease,box-shadow .1s ease,filter .2s;
 }
