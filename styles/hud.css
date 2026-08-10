@@ -95,9 +95,14 @@ nav .navlbl{font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;line-height:1
 /* The selected tab was Teal with an ivory label: 3.42:1, and a 16px label is
    not large text. Gold with Navy on it is 5.23:1 and SAFE — and a gold tab
    reads as "you are here" at least as loudly as the teal one did. */
+/* The selected tab was Teal with an ivory label: 3.42:1, and a 16px label is
+   not large text. Gold with Navy on it is 5.23:1 and SAFE — and a gold tab
+   reads as "you are here" at least as loudly as the teal one did. It also
+   stands proud of the rail, so the rail reads as a row of keys. */
 nav button.on{
   background:var(--color-gold);
-  color:var(--on-gold);border-color:var(--color-amber);
+  color:var(--on-gold);border-color:var(--ink-out);
+  box-shadow:inset 0 0 0 2px var(--ink-out);
 }
 nav button.on .navic{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(217,201,138,.6))}
 

@@ -81,20 +81,51 @@
   /* ---- the flat look -------------------------------------------------
      Square corners, solid fills, hard borders, and nothing pretending to be
      lit or moulded. The reference is flat vector UI: shapes cut with a knife
-     and laid on the table. Every radius token is 0 — they are kept as tokens
-     rather than deleted so the intent stays legible and so a rounded variant
-     is one edit away rather than sixty. --lift is the press-travel, and the
-     only shadow left in the system is the hard offset that travel needs to be
-     visible; there is no gloss, no bevel and no recessed well anywhere. */
+     and laid on the table. Every radius token is 0 — kept as tokens rather
+     than deleted so a rounded variant is one edit away rather than sixty. */
   --r:0; --r-sm:0; --r-pill:0;
-  --lift:3px;
-  --edge:rgba(2,10,12,.75);
 
-  --slab:0 var(--lift) 0 var(--edge);
-  --slab-sm:0 2px 0 var(--edge);
-  /* what a pressed thing looks like: flat on the surface, no edge left */
-  --slab-down:0 0 0 var(--edge);
-  /* kept so nothing referencing it breaks — a well is now simply flat */
+  /* ---- the chunk ------------------------------------------------------
+     What separates a game control from a div with a border: an ink outline
+     around the whole shape, and a solid slab of colour underneath it that the
+     face drops onto when pressed. Both are flat — one ink, one a darker cut of
+     the control's own fill. There is no gradient, no gloss and no simulated
+     light anywhere in it; the depth is drawn, the way a sticker is drawn.
+
+     --ink-out is that outline. Near-black rather than a palette neutral,
+     because its whole job is to be darker than everything it wraps and to
+     hold the shape together at arm's length. */
+  --ink-out:color-mix(in srgb, var(--color-navy) 34%, #000);
+  --out:3px;          /* outline weight on a control */
+  --out-sm:2px;       /* on the small ones — chips, tags, tiles */
+  --base:6px;         /* how tall the slab under a control stands */
+  --base-sm:4px;
+
+  /* A control's base is a darker cut of its own fill, so a gold button sits on
+     gold shadow and a coral one on coral. Variants set --fill; this follows. */
+  --fill:var(--oceanb);
+  --fill-base:color-mix(in srgb, var(--fill) 52%, #000);
+
+  /* face + slab + one continuous outline around both */
+  --chunk:
+    0 var(--base) 0 0 var(--fill-base),
+    0 var(--base) 0 var(--out) var(--ink-out);
+  --chunk-sm:
+    0 var(--base-sm) 0 0 var(--fill-base),
+    0 var(--base-sm) 0 var(--out) var(--ink-out);
+  /* pressed: the slab is gone and only the outline is left */
+  --chunk-down:0 0 0 var(--out) var(--ink-out);
+
+  /* A panel is double-framed: ink outside, metal inside. The inner stroke is
+     a flat 2px line drawn inside the border — a frame, not a bevel: one
+     colour, no blur, no lighting. */
+  --frame-in:inset 0 0 0 2px var(--brass);
+
+  --lift:var(--base);
+  --edge:var(--ink-out);
+  --slab:0 5px 0 0 var(--ink-out);
+  --slab-sm:0 3px 0 0 var(--ink-out);
+  --slab-down:0 0 0 0 var(--ink-out);
   --bevel:none;
   --well:none;
 }
@@ -169,10 +200,10 @@ h1,h2,h3{font-weight:500}
   letter-spacing:2px;color:var(--color-warm-ivory);text-transform:uppercase;
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
-  padding:8px 18px;border-radius:0;
+  padding:10px 20px;border-radius:0;
   background:var(--tealhi);
-  border:2px solid var(--brass);
-  box-shadow:var(--slab-sm);
+  border:var(--out) solid var(--ink-out);
+  box-shadow:var(--frame-in),var(--slab-sm);
   text-shadow:0 1px 0 rgba(0,0,0,.4);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*70ms);
 }
@@ -190,10 +221,10 @@ h1,h2,h3{font-weight:500}
 .card{
   position:relative;overflow:hidden;
   background:var(--navy);
-  border:2px solid var(--line);border-radius:0;
-  padding:clamp(14px,1vw,22px) clamp(15px,1.15vw,23px);
-  margin-bottom:clamp(13px,.9vw,19px);
-  box-shadow:var(--slab);
+  border:var(--out) solid var(--ink-out);border-radius:0;
+  padding:clamp(16px,1.1vw,24px) clamp(17px,1.2vw,25px);
+  margin-bottom:clamp(16px,1.1vw,22px);
+  box-shadow:var(--frame-in),var(--slab);
   animation:cardIn .45s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*70ms);
 }
 .card::before{content:none}
@@ -239,63 +270,55 @@ h1,h2,h3{font-weight:500}
    that small travel is the whole feel of the game in one interaction, so
    every button in every screen is this button. No bevel, no gloss band. */
 .btn{
-  font-family:var(--ui);font-weight:500;
-  font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
+  font-family:var(--ui);font-weight:600;
+  font-size:clamp(17px,1.15vw,20px);letter-spacing:1.6px;text-transform:uppercase;
   /* Ocean Blue + Warm Ivory is 7.45:1, SAFE. This button used to be Teal with
      near-white on it, which is 3.42 — LARGE ONLY, and a 16px label is not
      large. Teal keeps the plaques and the accents; it does not carry labels. */
+  --fill:var(--oceanb);
   color:var(--ink);
-  background:var(--oceanb);
-  border:2px solid var(--color-aegean-blue);border-radius:0;
-  padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
-  min-height:clamp(48px,3.6vw,58px);
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
-  box-shadow:var(--slab-sm);
-  transition:transform .1s ease,box-shadow .1s ease,filter .15s;
+  background:var(--fill);
+  border:var(--out) solid var(--ink-out);border-radius:0;
+  padding:clamp(12px,.85vw,17px) clamp(17px,1.25vw,26px);
+  min-height:clamp(52px,3.8vw,62px);
+  margin-bottom:var(--base);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.15;
+  box-shadow:var(--chunk);
+  transition:transform .07s ease,box-shadow .07s ease,filter .15s;
   position:relative;
 }
 .btn:hover:not(:disabled){filter:brightness(1.14)}
-.btn:active:not(:disabled){transform:translateY(3px);box-shadow:var(--slab-down)}
+/* The press is the whole feel of the game in one interaction: the face travels
+   the exact height of its own slab and lands on the surface. */
+.btn:active:not(:disabled){transform:translateY(var(--base));box-shadow:var(--chunk-down)}
 .btn:disabled{
-  opacity:.42;filter:grayscale(.5);
-  transform:translateY(3px);box-shadow:var(--slab-down);
+  opacity:.5;filter:grayscale(.6);
+  transform:translateY(var(--base));box-shadow:var(--chunk-down);
 }
-/* Every variant takes the foreground the palette names for its fill, so each
-   one is SAFE for a normal-size label: Gold 5.23, Coral 5.15, Seafoam 6.51,
-   Aegean Blue 4.63, Navy 13.12. */
-.btn.gold{
-  background:var(--color-gold);
-  border-color:var(--color-amber);color:var(--on-gold);
-}
-.btn.red{
-  background:var(--color-coral);
-  border-color:var(--color-terracotta);color:var(--on-coral);
-}
-.btn.blu{
-  background:var(--color-aegean-blue);
-  border-color:var(--color-seafoam);color:var(--on-aegean-blue);
-}
-.btn.grn{
-  background:var(--color-seafoam);
-  border-color:var(--color-sage);color:var(--on-seafoam);
-}
+/* A variant sets its fill and nothing else — the slab under it is a darker cut
+   of that same fill, and the outline is ink either way. Each takes the
+   foreground the palette names for it, so every label is SAFE at normal size:
+   Gold 5.23, Coral 5.15, Seafoam 6.51, Aegean Blue 4.63, Navy 13.12. */
+.btn.gold{ --fill:var(--color-gold);         color:var(--on-gold) }
+.btn.red{  --fill:var(--color-coral);        color:var(--on-coral) }
+.btn.blu{  --fill:var(--color-aegean-blue);  color:var(--on-aegean-blue) }
+.btn.grn{  --fill:var(--color-seafoam);      color:var(--on-seafoam) }
 /* Cancel, Belay, Not Now — and the mockup's plain "Secondary" button. It is
    still a plate and still presses, but it does not compete with the button
    the player came here to hit. */
 .btn.quiet{
-  background:var(--navy);
-  border-color:var(--line2);color:var(--on-navy);
+  --fill:var(--navy);
+  color:var(--on-navy);
 }
 .btn.sm{
   font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:0;
-  padding:clamp(9px,.7vw,13px) clamp(13px,.9vw,19px);min-height:clamp(46px,3.2vw,54px);
+  padding:clamp(10px,.75vw,14px) clamp(14px,.95vw,20px);min-height:clamp(48px,3.3vw,56px);
+  --base:var(--base-sm);
 }
 .btn.wide{
-  width:100%;font-size:clamp(19px,1.4vw,25px);padding:clamp(15px,1.1vw,21px);
-  border-radius:0;box-shadow:var(--slab);
+  width:100%;font-size:clamp(20px,1.5vw,27px);padding:clamp(16px,1.2vw,23px);
+  border-radius:0;--base:8px;
 }
-.btn.wide:active:not(:disabled){transform:translateY(var(--lift));box-shadow:var(--slab-down)}
-.btn.wide:disabled{transform:translateY(var(--lift));box-shadow:var(--slab-down)}
 
 /* a text link that is still a real button */
 .linkbtn{
@@ -311,7 +334,9 @@ h1,h2,h3{font-weight:500}
    game the same tick spacing whatever its own colour is doing. */
 .bar,.vbar,.secbar,.dbar,.notobar{
   position:relative;
-  background:var(--navy3);border:1px solid var(--brass);border-radius:0;
+  background:var(--navy3);
+  border:var(--out-sm) solid var(--ink-out);border-radius:0;
+  box-shadow:inset 0 0 0 1px var(--brass);
   overflow:hidden;
 }
 .bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:0}
@@ -324,17 +349,17 @@ h1,h2,h3{font-weight:500}
     transparent 0 calc(10% - 2px), var(--brass) calc(10% - 2px) 10%);
   opacity:.85;
 }
-.bar{height:16px;margin-top:9px}
+.bar{height:22px;margin-top:11px}
 .bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .bar i.low{background:var(--yel)}
 .bar i.crit{background:var(--red)}
-.vbar{height:16px;margin-top:9px}
+.vbar{height:22px;margin-top:11px}
 .vbar i{display:block;height:100%;background:var(--blu);transition:width 1s linear}
 .vbar.done i{background:var(--grn)}
-.secbar{height:16px;margin-top:8px}
+.secbar{height:22px;margin-top:10px}
 .secbar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
 .secbar.clear i{background:var(--grn)}
-.dbar{height:14px;margin-top:7px}
+.dbar{height:20px;margin-top:9px}
 .dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
 
 /* ---- small type ---- */
@@ -429,8 +454,9 @@ h1,h2,h3{font-weight:500}
   display:inline-flex;align-items:center;gap:5px;
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
-  padding:2px 10px 2px 2px;border-radius:0;
+  padding:3px 12px 3px 3px;border-radius:0;
   background:var(--navy3);
+  border:var(--out-sm) solid var(--ink-out);
 }
 /* A chip's fill used to be translucent, so its real ground was whatever it
    happened to be sitting on — a panel, a card foot, or the Teal section plate,

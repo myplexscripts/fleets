@@ -13,25 +13,25 @@
 /* ---- item card ---------------------------------------------- */
 .item{
   position:relative;display:flex;flex-direction:column;overflow:hidden;
-  border:2px solid var(--line);border-radius:0;
+  border:var(--out) solid var(--ink-out);border-radius:0;
   background:var(--navy);
-  padding:clamp(12px,.9vw,17px) clamp(13px,1vw,19px) 0;
-  box-shadow:var(--slab);
+  padding:clamp(14px,1vw,19px) clamp(15px,1.1vw,21px) 0;
+  box-shadow:var(--frame-in),var(--slab);
   animation:cardIn .4s ease both;animation-delay:calc(var(--i,0)*60ms);
 }
 /* the same four gold angle-brackets the cards carry — see .card::after */
 .item::after{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
   background:
-    linear-gradient(var(--gold),var(--gold)) top 6px left 6px/11px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) top 6px left 6px/2px 11px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) top 6px right 6px/11px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) top 6px right 6px/2px 11px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 6px left 6px/11px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 6px left 6px/2px 11px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 6px right 6px/11px 2px no-repeat,
-    linear-gradient(var(--gold),var(--gold)) bottom 6px right 6px/2px 11px no-repeat;
-  opacity:.55;
+    linear-gradient(var(--gold),var(--gold)) top 5px left 5px/15px 3px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 5px left 5px/3px 15px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 5px right 5px/15px 3px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top 5px right 5px/3px 15px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 5px left 5px/15px 3px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 5px left 5px/3px 15px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 5px right 5px/15px 3px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom 5px right 5px/3px 15px no-repeat;
+  opacity:.9;
 }
 .item.owned{border-color:var(--brass);background:var(--navy)}
 .item.dis{opacity:.45}
@@ -66,11 +66,11 @@
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   margin:12px calc(clamp(13px,1vw,19px) * -1) 0;
   padding:11px clamp(13px,1vw,19px) clamp(12px,.9vw,17px);
-  background:rgba(2,14,17,.42);border-top:1px solid rgba(0,0,0,.5);
+  background:var(--navy3);border-top:var(--out) solid var(--ink-out);
   box-shadow:none;
   flex-wrap:wrap;
 }
-.item.owned .itemfoot{background:rgba(18,13,4,.42)}
+.item.owned .itemfoot{background:var(--navy3)}
 .itemprice{flex:1;min-width:0}
 .itemprice .chips{margin-top:0}
 .itemprice:empty{display:none}
@@ -93,22 +93,23 @@
    other button, so − and + press the same way Buy does. */
 .stepper{display:inline-flex;align-items:center;gap:10px}
 .stepbtn{
-  width:52px;height:52px;flex-shrink:0;border-radius:50%;
-  border:2px solid var(--color-slate);
-  background:var(--navy);
-  color:var(--color-warm-ivory);font-family:var(--ui);font-size:30px;font-weight:500;line-height:1;
+  width:56px;height:56px;flex-shrink:0;border-radius:50%;
+  --fill:var(--oceanb);
+  border:var(--out) solid var(--ink-out);
+  background:var(--fill);margin-bottom:var(--base-sm);
+  color:var(--color-warm-ivory);font-family:var(--ui);font-size:30px;font-weight:600;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
-  box-shadow:var(--slab-sm);
+  box-shadow:var(--chunk-sm);
   transition:transform .1s ease,box-shadow .1s ease,filter .15s;
 }
 .stepbtn:hover:not(:disabled){filter:brightness(1.14)}
-.stepbtn:active:not(:disabled){transform:translateY(3px);box-shadow:var(--slab-down)}
-.stepbtn:disabled{opacity:.4;filter:grayscale(.5);transform:translateY(3px);box-shadow:var(--slab-down);cursor:default}
+.stepbtn:active:not(:disabled){transform:translateY(var(--base-sm));box-shadow:var(--chunk-down)}
+.stepbtn:disabled{opacity:.5;filter:grayscale(.6);transform:translateY(var(--base-sm));box-shadow:var(--chunk-down);cursor:default}
 .stepn{
   min-width:72px;text-align:center;font-family:var(--ui);font-weight:500;
   font-size:clamp(22px,1.6vw,28px);color:var(--goldhi);letter-spacing:1px;
-  padding:9px 12px;border-radius:0;line-height:1.2;
-  background:rgba(2,14,17,.6);box-shadow:var(--well);
+  padding:10px 13px;border-radius:0;line-height:1.2;
+  background:var(--navy3);border:var(--out-sm) solid var(--ink-out);
 }
 
 /* ---- rail ---------------------------------------------------- */
@@ -120,17 +121,15 @@
 
 .railcard{
   flex:0 0 clamp(178px,44vw,214px);scroll-snap-align:start;position:relative;overflow:hidden;
-  border:2px solid var(--line);border-radius:0;
+  border:var(--out) solid var(--ink-out);border-radius:0;
   background:var(--navy);
-  padding:10px 12px 12px;cursor:pointer;
-  box-shadow:var(--slab-sm);
+  padding:11px 13px 13px;cursor:pointer;margin-bottom:var(--base-sm);
+  box-shadow:var(--frame-in),var(--slab-sm);
   transition:border-color .2s,box-shadow .1s,transform .1s,background .2s;
 }
-.railcard:active{transform:translateY(3px);box-shadow:var(--slab-down)}
+.railcard:active{transform:translateY(var(--base-sm));box-shadow:var(--frame-in),var(--slab-down)}
 .railcard.sel{
-  border-color:var(--goldhi);
-  background:var(--navy);
-  box-shadow:var(--slab-sm);
+  box-shadow:inset 0 0 0 3px var(--goldhi),var(--slab-sm);
 }
 .railcard.dis{opacity:.4;cursor:default}
 .railcard.flag{border-left:3px solid var(--gold)}
@@ -176,8 +175,9 @@
 .reqrows:last-child{margin-bottom:0}
 .reqrow{
   display:flex;align-items:center;gap:11px;
-  background:var(--navy2);border:2px solid var(--line);border-radius:0;
-  padding:7px 9px 7px 8px;
+  background:var(--navy2);border:var(--out) solid var(--ink-out);border-radius:0;
+  box-shadow:inset 0 0 0 1px var(--line);
+  padding:9px 11px 9px 9px;
 }
 .reqrow .reqic{width:40px;height:40px;flex-shrink:0}
 .reqlbl{
@@ -193,10 +193,10 @@
 .reqvals i b{font-weight:500;color:var(--ink);margin-left:.35em}
 /* The tick box, and the one thing on the row that carries colour. */
 .reqchk{
-  flex-shrink:0;width:34px;height:34px;border-radius:0;
+  flex-shrink:0;width:38px;height:38px;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:19px;line-height:1;font-weight:600;
-  border:2px solid;
+  font-size:21px;line-height:1;font-weight:600;
+  border:var(--out) solid var(--ink-out);
 }
 .reqrow.ok .reqchk{background:var(--tealhi);border-color:var(--color-seafoam);color:var(--color-warm-ivory)}
 .reqrow.bad .reqchk{background:var(--color-terracotta);border-color:var(--color-terracotta);color:var(--color-warm-ivory)}
@@ -267,6 +267,7 @@
 .mtab.on{
   background:var(--color-gold);
   color:var(--on-gold);
+  box-shadow:inset 0 0 0 2px var(--ink-out);
 }
 .mtab.on .ic{opacity:1}
 
