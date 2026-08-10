@@ -59,6 +59,6 @@ document.addEventListener('contextmenu', ev => {
 boot().catch(err => {
   console.error('[boot]', err);
   document.body.innerHTML =
-    '<div style="padding:24px;font-family:system-ui;color:#cfe3e4">' +
+    '<div style="padding:24px;font-family:system-ui;color:#6CB7B2">' +
     'Salt &amp; Powder failed to start. Check the console.</div>';
 });

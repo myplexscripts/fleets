@@ -33,7 +33,7 @@
     linear-gradient(var(--gold),var(--gold)) bottom 6px right 6px/2px 11px no-repeat;
   opacity:.55;
 }
-.item.owned{border-color:var(--brass);background:#3a2f14}
+.item.owned{border-color:var(--brass);background:var(--navy)}
 .item.dis{opacity:.45}
 /* A card replaced in place — a stepper tick — must not replay its entrance. */
 .item.noanim{animation:none}
@@ -94,9 +94,9 @@
 .stepper{display:inline-flex;align-items:center;gap:10px}
 .stepbtn{
   width:52px;height:52px;flex-shrink:0;border-radius:50%;
-  border:2px solid #35545a;
+  border:2px solid var(--color-slate);
   background:var(--navy);
-  color:#d5eaec;font-family:var(--ui);font-size:30px;font-weight:500;line-height:1;
+  color:var(--color-warm-ivory);font-family:var(--ui);font-size:30px;font-weight:500;line-height:1;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   box-shadow:var(--slab-sm);
   transition:transform .1s ease,box-shadow .1s ease,filter .15s;
@@ -129,7 +129,7 @@
 .railcard:active{transform:translateY(3px);box-shadow:var(--slab-down)}
 .railcard.sel{
   border-color:var(--goldhi);
-  background:#3a2f14;
+  background:var(--navy);
   box-shadow:var(--slab-sm);
 }
 .railcard.dis{opacity:.4;cursor:default}
@@ -151,8 +151,8 @@
   flex-shrink:0;font-family:var(--ui);font-size:16px;letter-spacing:1px;
   color:var(--gold);border:1px solid var(--brass);padding:1px 6px;border-radius:0;
 }
-.railtag.blu{color:#bcd8f0;border-color:#2c5a8a}
-.railtag.bad{color:#e88a7a;border-color:#8a463e}
+.railtag.blu{color:var(--color-seafoam);border-color:var(--color-aegean-blue)}
+.railtag.bad{color:var(--color-coral);border-color:var(--color-terracotta)}
 .railsub{
   font-family:var(--ui);font-size:16px;letter-spacing:1.2px;
   text-transform:uppercase;color:var(--dim);margin-top:1px;
@@ -198,9 +198,9 @@
   font-size:19px;line-height:1;font-weight:600;
   border:2px solid;
 }
-.reqrow.ok .reqchk{background:var(--tealhi);border-color:#4fd6ce;color:#fff}
-.reqrow.bad .reqchk{background:#a5392c;border-color:#e08066;color:#fff}
-.reqrow.bad .reqvals i b{color:#f0a89a}
+.reqrow.ok .reqchk{background:var(--tealhi);border-color:var(--color-seafoam);color:var(--color-warm-ivory)}
+.reqrow.bad .reqchk{background:var(--color-terracotta);border-color:var(--color-terracotta);color:var(--color-warm-ivory)}
+.reqrow.bad .reqvals i b{color:var(--color-coral)}
 /* One row, scrolling sideways — not a block that wraps.
 
    Eight readings at this size is three wrapped rows and a third of a phone
@@ -223,7 +223,7 @@
   font-family:var(--ui);font-size:16px;letter-spacing:1px;color:var(--dim);
   margin-top:6px;
 }
-.reqnote.bad{color:#e88a7a}
+.reqnote.bad{color:var(--color-coral)}
 
 /* ---- sheet footer -------------------------------------------- */
 /* The primary action never scrolls away from the thing it acts on. */
@@ -238,7 +238,11 @@
 
 /* ---- section heading ----------------------------------------- */
 .secttrail{margin-left:auto;display:flex;align-items:center;gap:8px}
-.sect .chip{background:rgba(0,0,0,.4)}
+/* A chip or tile riding on the Teal section plate. A translucent scrim over
+   Teal lands at rgb(17,86,83) — light enough that Amber and Sage labels fall
+   to 3.4:1. Opaque Navy puts them back on the ground the palette allocation
+   assumes, the same as every other chip. */
+.sect .chip,.sect .tile .tileic{background:var(--navy3)}
 .secttrail .chips{margin-top:0}
 
 /* ---- mission tabs ----
@@ -258,9 +262,11 @@
 .mtab:last-child{border-right:none}
 .mtab .ic{opacity:.6;transition:opacity .2s;flex-shrink:0}
 /* the chosen counter comes forward; the other stays sunk */
+/* Selected counter. Teal with an ivory label is 3.42:1 and these labels are
+   16px, so this takes Gold + Navy (5.23:1) like the nav rail. */
 .mtab.on{
-  background:var(--tealhi);
-  color:#fff;
+  background:var(--color-gold);
+  color:var(--on-gold);
 }
 .mtab.on .ic{opacity:1}
 
@@ -297,7 +303,7 @@
 }
 .tile b{font-weight:500;white-space:nowrap}
 .tile.ok b{color:var(--grn)}
-.tile.bad b{color:#e88a7a}
+.tile.bad b{color:var(--color-coral)}
 .tile.warn b{color:var(--yel)}
 .tile.dim,.tile.dim b{color:var(--dim)}
 .tile.gold b{color:var(--goldhi)}

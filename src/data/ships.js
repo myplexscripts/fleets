@@ -26,12 +26,16 @@ export const SHIPCFG = {
 };
 
 /* [upper sail, lower sail, flag, hull] */
+/* Sail, shadowed sail, trim, hull — all four drawn from the harmony palette so
+   the ships sit in the same world as the panels around them. These are
+   illustration rather than interface, but they are still large graphics on a
+   Navy ground, so every value here clears 3:1 against it. */
 export const PALETTES = {
-  player:   ['#d6cfba', '#bdb49b', '#c8b060', '#171310'],
-  enemy:    ['#6f8ba0', '#5a7386', '#a03028', '#171310'],
-  boss:     ['#8a2a2a', '#5e1a1a', '#e8d89a', '#0d0808'],
-  merchant: ['#a8c4d8', '#8aa8bd', '#3a7ab0', '#171310'],
-  flag:     ['#efe3ae', '#d9c98a', '#d94a3a', '#120e0a']
+  player:   ['#E2D6B6', '#A68F3A', '#BD913B', '#15273E'],  /* Sand / Olive Gold / Gold */
+  enemy:    ['#8DA58A', '#6B7280', '#C86A4A', '#15273E'],  /* Sage / Slate / Terracotta */
+  boss:     ['#C86A4A', '#5B3A5E', '#E2D6B6', '#15273E'],  /* Terracotta / Berry / Sand */
+  merchant: ['#6CB7B2', '#4C6F8A', '#2B4F6F', '#15273E'],  /* Seafoam / Aegean / Ocean */
+  flag:     ['#F2EFE6', '#BD913B', '#E07A6A', '#15273E']   /* Ivory / Gold / Coral */
 };
 
 /* Which type/palette pairs get pre-rendered for the battle scene. */

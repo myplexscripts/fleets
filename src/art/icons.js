@@ -32,22 +32,22 @@
    generated placeholder — same convention as the ship art. */
 
 const ICON_COLOR = {
-  gold: '#efe3ae', cargo: '#c8a97a', mats: '#9fb8bd', barrels: '#d9883a',
-  sea: '#7ab0e0', plate: '#9fb8bd', guns: '#d9883a', rig: '#cfe3e4', hold: '#c8a97a',
-  relic: '#d9c98a', flag: '#efe3ae', star: '#efe3ae', anchor: '#63c06a',
-  figure: '#e0b98a',
-  skull: '#e8a89c', bicorne: '#f0b0a6', warrant: '#e8705c', wreck: '#7ab0e0',
-  wheel: '#d9c98a', map: '#7ab0e0', port: '#c8a97a', scales: '#c8a97a',
+  gold: '#E2D6B6', cargo: '#E2D6B6', mats: '#8DA58A', barrels: '#D49A3A',
+  sea: '#6CB7B2', plate: '#8DA58A', guns: '#D49A3A', rig: '#6CB7B2', hold: '#E2D6B6',
+  relic: '#BD913B', flag: '#E2D6B6', star: '#E2D6B6', anchor: '#8DA58A',
+  figure: '#E2D6B6',
+  skull: '#E07A6A', bicorne: '#E07A6A', warrant: '#C86A4A', wreck: '#6CB7B2',
+  wheel: '#BD913B', map: '#6CB7B2', port: '#E2D6B6', scales: '#E2D6B6',
   /* trade goods */
-  rum: '#b5701f', sugar: '#e0d6bd', tobacco: '#8a6a32', wine: '#8f3050', spice: '#c9702a',
+  rum: '#C86A4A', sugar: '#E2D6B6', tobacco: '#A68F3A', wine: '#C26C7A', spice: '#C86A4A',
   /* materials */
-  wood: '#a9834e', metal: '#9fb8bd', cloth: '#d6cfba',
+  wood: '#A68F3A', metal: '#8DA58A', cloth: '#E2D6B6',
   /* salvage */
-  chest: '#d9c98a', bell: '#c98a4a',
+  chest: '#BD913B', bell: '#D49A3A',
   /* at-a-glance stats */
-  speed: '#8fd8e8', power: '#e8b06a', hull: '#9fb8bd', time: '#bcd8f0',
-  noto: '#d9c98a', depth: '#7ab0e0', target: '#f0b0a6', dest: '#c8a97a',
-  danger: '#e0a03a', crew: '#cfe3e4', lock: '#6d8288'
+  speed: '#6CB7B2', power: '#D49A3A', hull: '#8DA58A', time: '#6CB7B2',
+  noto: '#BD913B', depth: '#6CB7B2', target: '#E07A6A', dest: '#E2D6B6',
+  danger: '#D49A3A', crew: '#6CB7B2', lock: '#6B7280'
 };
 
 /* Wrap one path from src/icons/*.svg (see header) and return it as a
@@ -127,7 +127,7 @@ const ICONS = {
 const ICON_URL = {};
 
 function svgIcon(name) {
-  const c = ICON_COLOR[name] || '#cfe3e4';
+  const c = ICON_COLOR[name] || '#6CB7B2';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="160" height="160">${(ICONS[name] || ICONS.gold)(c)}</svg>`;
 }
 
@@ -140,7 +140,7 @@ function svgIcon(name) {
    its own transform. */
 export function glyphBody(name, colour) {
   const f = ICONS[name] || ICONS.gold;
-  return f(colour || ICON_COLOR[name] || '#efe3ae');
+  return f(colour || ICON_COLOR[name] || '#E2D6B6');
 }
 
 /* `data-icon` carries the glyph's name into the DOM. Nothing in the game reads

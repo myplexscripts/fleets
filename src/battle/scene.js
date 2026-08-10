@@ -144,7 +144,7 @@ export class BattleScene extends SceneBase {
     const plate = this.add.rectangle(0, dim.h * scale * 0.75 + 16, pw, 28, 0x07161b, 0.92)
       .setStrokeStyle(1, data.isBoss ? 0x8a463e : 0x164a52);
     const nm = this.add.text(0, dim.h * scale * 0.75 + 9, data.name.toUpperCase(),
-      { fontFamily: 'Oswald', fontSize: '14px', color: data.isBoss ? '#f0b0a6' : '#cfe3e4' }).setOrigin(0.5, 0.5);
+      { fontFamily: 'Oswald', fontSize: '14px', color: data.isBoss ? '#E07A6A' : '#6CB7B2' }).setOrigin(0.5, 0.5);
     const hp = this.add.graphics();
     /* Her reload, under her hull bar. This is the clock the whole fight runs
        on, so it belongs on the ship rather than in a panel somewhere. */
@@ -260,7 +260,7 @@ export class BattleScene extends SceneBase {
       .setBlendMode(Phaser.BlendModes.ADD).setDepth(6);
     this.tweens.add({ targets: fl, scale: fl.scale * 2, alpha: 0, duration: 260, onComplete: () => fl.destroy() });
 
-    this.floatText(x, y - 26, '-' + dmg, big ? '#ffb060' : '#f0d0a0', big ? 28 : 22);
+    this.floatText(x, y - 26, '-' + dmg, big ? '#D49A3A' : '#E2D6B6', big ? 28 : 22);
     this.shake(big ? 200 : 120, big ? 0.012 : 0.006);
     play(big ? 'explosion' : 'impact');
   }
@@ -371,7 +371,7 @@ export class BattleScene extends SceneBase {
     const g = this.add.image(o.c.x, o.c.y, 'soft').setScale(1.6).setTint(0xd94a3a)
       .setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5).setDepth(4);
     this.tweens.add({ targets: g, scale: 2.2, alpha: 0, duration: 900, repeat: 2, onComplete: () => g.destroy() });
-    this.floatText(o.c.x, o.c.y - 64, 'BRACE!', '#ff9080', 30);
+    this.floatText(o.c.x, o.c.y - 64, 'BRACE!', '#E07A6A', 30);
   }
 
   boardDash(from, to) {

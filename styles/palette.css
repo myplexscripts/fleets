@@ -1,0 +1,243 @@
+/* ============================================================
+   palette — the harmony palette, and the contrast rules that come with it
+
+   This file is the source of truth for colour. Nothing else in the game may
+   introduce a hex value; every stylesheet works from the semantic tokens in
+   base.css, and those are all built from the raw colours below.
+
+   Built from the original anchors:  Navy #15273E · Gold #BD913B · Teal #1C8F8A
+
+   CONTRAST RULES
+   ----------------
+   SAFE:       4.5:1 or higher. Suitable for normal-size text and UI labels.
+   LARGE ONLY: 3.0:1 to 4.49:1. Large/bold text, large icons, non-text graphics.
+   AVOID:      below 3.0:1. Never for meaningful content.
+
+   Visual harmony and readable contrast are different things: two colours can
+   look excellent beside each other and still be a poor foreground/background
+   pair. The per-background maps at the foot of this file are the reference,
+   and tools/check-contrast.js enforces them against what actually renders.
+   ============================================================ */
+
+:root {
+  /* Raw palette */
+  --color-warm-ivory: #F2EFE6;
+  --color-sand: #E2D6B6;
+  --color-slate: #6B7280;
+  --color-navy: #15273E;
+  --color-ocean-blue: #2B4F6F;
+  --color-aegean-blue: #4C6F8A;
+  --color-teal: #1C8F8A;
+  --color-seafoam: #6CB7B2;
+  --color-sage: #8DA58A;
+  --color-moss: #627A5A;
+  --color-olive: #7A8A4E;
+  --color-olive-gold: #A68F3A;
+  --color-gold: #BD913B;
+  --color-amber: #D49A3A;
+  --color-terracotta: #C86A4A;
+  --color-coral: #E07A6A;
+  --color-rose: #C26C7A;
+  --color-plum: #6E4B6E;
+  --color-mauve: #8E5A7E;
+  --color-berry: #5B3A5E;
+  --color-indigo-plum: #3E2E4E;
+  --color-indigo: #2F3E6E;
+  --color-deep-violet: #4A3D77;
+  --color-charcoal: #2B2F36;
+
+  /* Recommended semantic roles (from the palette document) */
+  --color-bg: var(--color-warm-ivory);
+  --color-surface: #FFFDF9;
+  --color-surface-muted: var(--color-sand);
+  --color-text: var(--color-navy);
+  --color-text-inverse: var(--color-warm-ivory);
+  --color-primary: var(--color-navy);
+  --color-secondary: var(--color-teal);
+  --color-accent: var(--color-gold);
+  --color-border: #D8D0C2;
+
+  /* Suggested foreground for each background.
+     Where marked LARGE ONLY, the --on-* value must not carry body text. */
+  --on-warm-ivory: var(--color-navy);        /* Navy 13.12:1, SAFE */
+  --on-sand: var(--color-navy);              /* Navy 10.44:1, SAFE */
+  --on-slate: var(--color-warm-ivory);       /* Warm Ivory 4.20:1, LARGE ONLY */
+  --on-navy: var(--color-warm-ivory);        /* Warm Ivory 13.12:1, SAFE */
+  --on-ocean-blue: var(--color-warm-ivory);  /* Warm Ivory 7.45:1, SAFE */
+  --on-aegean-blue: var(--color-warm-ivory); /* Warm Ivory 4.63:1, SAFE */
+  --on-teal: var(--color-navy);              /* Navy 3.84:1, LARGE ONLY */
+  --on-seafoam: var(--color-navy);           /* Navy 6.51:1, SAFE */
+  --on-sage: var(--color-navy);              /* Navy 5.66:1, SAFE */
+  --on-moss: var(--color-warm-ivory);        /* Warm Ivory 4.10:1, LARGE ONLY */
+  --on-olive: var(--color-navy);             /* Navy 4.00:1, LARGE ONLY */
+  --on-olive-gold: var(--color-navy);        /* Navy 4.75:1, SAFE */
+  --on-gold: var(--color-navy);              /* Navy 5.23:1, SAFE */
+  --on-amber: var(--color-navy);             /* Navy 6.10:1, SAFE */
+  --on-terracotta: var(--color-navy);        /* Navy 4.04:1, LARGE ONLY */
+  --on-coral: var(--color-navy);             /* Navy 5.15:1, SAFE */
+  --on-rose: var(--color-navy);              /* Navy 4.11:1, LARGE ONLY */
+  --on-plum: var(--color-warm-ivory);        /* Warm Ivory 6.31:1, SAFE */
+  --on-mauve: var(--color-warm-ivory);       /* Warm Ivory 4.67:1, SAFE */
+  --on-berry: var(--color-warm-ivory);       /* Warm Ivory 8.26:1, SAFE */
+  --on-indigo-plum: var(--color-warm-ivory); /* Warm Ivory 10.71:1, SAFE */
+  --on-indigo: var(--color-warm-ivory);      /* Warm Ivory 8.97:1, SAFE */
+  --on-deep-violet: var(--color-warm-ivory); /* Warm Ivory 8.21:1, SAFE */
+  --on-charcoal: var(--color-warm-ivory);    /* Warm Ivory 11.69:1, SAFE */
+}
+
+/* ============================================================
+   CONTRAST MAP BY BACKGROUND
+   Every foreground listed is itself a colour in this palette.
+   ============================================================ */
+
+/* BACKGROUND: Warm Ivory #F2EFE6
+   SAFE:       Navy 13.12, Charcoal 11.69, Indigo Plum 10.71, Indigo 8.97, Berry 8.26, Deep Violet 8.21, Ocean Blue 7.45, Plum 6.31, Mauve 4.67, Aegean Blue 4.63
+   LARGE ONLY: Slate 4.20, Moss 4.10, Teal 3.42, Olive 3.28, Terracotta 3.25, Rose 3.19
+   AVOID:      Olive Gold 2.76, Coral 2.55, Gold 2.51, Sage 2.32, Amber 2.15, Seafoam 2.02, Sand 1.26
+*/
+
+/* BACKGROUND: Sand #E2D6B6
+   SAFE:       Navy 10.44, Charcoal 9.30, Indigo Plum 8.52, Indigo 7.14, Berry 6.57, Deep Violet 6.53, Ocean Blue 5.93, Plum 5.02
+   LARGE ONLY: Mauve 3.71, Aegean Blue 3.68, Slate 3.34, Moss 3.26
+   AVOID:      Teal 2.72, Olive 2.61, Terracotta 2.59, Rose 2.54, Olive Gold 2.20, Coral 2.03, Gold 2.00, Sage 1.84, Amber 1.71, Seafoam 1.60, Warm Ivory 1.26
+*/
+
+/* BACKGROUND: Slate #6B7280
+   SAFE:       NONE within this palette
+   LARGE ONLY: Warm Ivory 4.20, Sand 3.34, Navy 3.12
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Navy #15273E   ← the game's panel ground; this map does the most work
+   SAFE:       Warm Ivory 13.12, Sand 10.44, Seafoam 6.51, Amber 6.10, Sage 5.66, Gold 5.23, Coral 5.15, Olive Gold 4.75
+   LARGE ONLY: Rose 4.11, Terracotta 4.04, Olive 4.00, Teal 3.84, Moss 3.20, Slate 3.12
+   AVOID:      Aegean Blue 2.84, Mauve 2.81, Plum 2.08, Ocean Blue 1.76, Deep Violet 1.60, Berry 1.59, Indigo 1.46, Indigo Plum 1.23, Charcoal 1.12
+*/
+
+/* BACKGROUND: Ocean Blue #2B4F6F   ← the game's default button
+   SAFE:       Warm Ivory 7.45, Sand 5.93
+   LARGE ONLY: Seafoam 3.69, Amber 3.46, Sage 3.22
+   AVOID:      Gold 2.97, Coral 2.92, Olive Gold 2.70, and everything below
+*/
+
+/* BACKGROUND: Aegean Blue #4C6F8A
+   SAFE:       Warm Ivory 4.63
+   LARGE ONLY: Sand 3.68
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Teal #1C8F8A   ← accent only: NO safe foreground exists in this palette
+   SAFE:       NONE
+   LARGE ONLY: Navy 3.84, Charcoal 3.42, Warm Ivory 3.42, Indigo Plum 3.13
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Seafoam #6CB7B2
+   SAFE:       Navy 6.51, Charcoal 5.79, Indigo Plum 5.31
+   LARGE ONLY: Indigo 4.45, Berry 4.09, Deep Violet 4.07, Ocean Blue 3.69, Plum 3.13
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Sage #8DA58A
+   SAFE:       Navy 5.66, Charcoal 5.04, Indigo Plum 4.62
+   LARGE ONLY: Indigo 3.87, Berry 3.56, Deep Violet 3.54, Ocean Blue 3.22
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Moss #627A5A
+   SAFE:       NONE within this palette
+   LARGE ONLY: Warm Ivory 4.10, Sand 3.26, Navy 3.20
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Olive #7A8A4E
+   SAFE:       NONE within this palette
+   LARGE ONLY: Navy 4.00, Charcoal 3.57, Warm Ivory 3.28, Indigo Plum 3.27
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Olive Gold #A68F3A
+   SAFE:       Navy 4.75
+   LARGE ONLY: Charcoal 4.23, Indigo Plum 3.88, Indigo 3.25
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Gold #BD913B   ← the game's primary button
+   SAFE:       Navy 5.23, Charcoal 4.66
+   LARGE ONLY: Indigo Plum 4.27, Indigo 3.58, Berry 3.29, Deep Violet 3.27
+   AVOID:      Ocean Blue 2.97, Plum 2.51, Warm Ivory 2.51, and everything below
+*/
+
+/* BACKGROUND: Amber #D49A3A
+   SAFE:       Navy 6.10, Charcoal 5.43, Indigo Plum 4.97
+   LARGE ONLY: Indigo 4.17, Berry 3.84, Deep Violet 3.81, Ocean Blue 3.46
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Terracotta #C86A4A
+   SAFE:       NONE within this palette
+   LARGE ONLY: Navy 4.04, Charcoal 3.59, Indigo Plum 3.29, Warm Ivory 3.25
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Coral #E07A6A   ← the game's danger button
+   SAFE:       Navy 5.15, Charcoal 4.58
+   LARGE ONLY: Indigo Plum 4.20, Indigo 3.52, Berry 3.24, Deep Violet 3.22
+   AVOID:      Ocean Blue 2.92, Warm Ivory 2.55, and everything below
+*/
+
+/* BACKGROUND: Rose #C26C7A
+   SAFE:       NONE within this palette
+   LARGE ONLY: Navy 4.11, Charcoal 3.66, Indigo Plum 3.35, Warm Ivory 3.19
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Plum #6E4B6E
+   SAFE:       Warm Ivory 6.31, Sand 5.02
+   LARGE ONLY: Seafoam 3.13
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Mauve #8E5A7E
+   SAFE:       Warm Ivory 4.67
+   LARGE ONLY: Sand 3.71
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Berry #5B3A5E
+   SAFE:       Warm Ivory 8.26, Sand 6.57
+   LARGE ONLY: Seafoam 4.09, Amber 3.84, Sage 3.56, Gold 3.29, Coral 3.24
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Indigo Plum #3E2E4E
+   SAFE:       Warm Ivory 10.71, Sand 8.52, Seafoam 5.31, Amber 4.97, Sage 4.62
+   LARGE ONLY: Gold 4.27, Coral 4.20, Olive Gold 3.88, Rose 3.35, Terracotta 3.29, Olive 3.27, Teal 3.13
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Indigo #2F3E6E
+   SAFE:       Warm Ivory 8.97, Sand 7.14
+   LARGE ONLY: Seafoam 4.45, Amber 4.17, Sage 3.87, Gold 3.58, Coral 3.52, Olive Gold 3.25
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Deep Violet #4A3D77
+   SAFE:       Warm Ivory 8.21, Sand 6.53
+   LARGE ONLY: Seafoam 4.07, Amber 3.81, Sage 3.54, Gold 3.27, Coral 3.22
+   AVOID:      everything else
+*/
+
+/* BACKGROUND: Charcoal #2B2F36
+   SAFE:       Warm Ivory 11.69, Sand 9.30, Seafoam 5.79, Amber 5.43, Sage 5.04, Gold 4.66, Coral 4.58
+   LARGE ONLY: Olive Gold 4.23, Rose 3.66, Terracotta 3.59, Olive 3.57, Teal 3.42
+   AVOID:      everything else
+*/
+
+/*
+  ACCENT-ONLY SURFACES
+  These have no 4.5:1 partner inside the palette. Prefer them for fills,
+  badges without text, large decorative type, or borders:
+  Slate (best 4.20) · Teal (3.84) · Moss (4.10) · Olive (4.00) ·
+  Terracotta (4.04) · Rose (4.11)
+*/

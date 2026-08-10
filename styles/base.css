@@ -5,22 +5,71 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 :root{
-  /* The ground is deep water, not parchment. A pale sand field threw more
-     light than anything sitting on it, so every navy panel read as a hole
-     punched in the page; against dark water the panels are the lit thing and
-     the ground falls away behind them, which is the whole point of the look.
-     --bg is that water; the panels keep their own --navy family so "the sea"
-     and "a thing floating on it" never share a value. */
-  --bg:#0f3b45; --bg2:#0a2b33;
+  /* ---- semantic tokens ----------------------------------------------
+     Every value here resolves to a colour in styles/palette.css. Nothing in
+     this file or any other stylesheet may name a hex directly; if a shade is
+     needed that the palette does not carry, it is mixed from a palette anchor
+     with black or white so the hue stays inside the family.
+
+     The allocation is driven by ONE contrast map — "BACKGROUND: Navy" — because
+     Navy is the ground under almost every label in the game. That map has
+     exactly eight SAFE foregrounds (Warm Ivory, Sand, Seafoam, Amber, Sage,
+     Gold, Coral, Olive Gold), and they are spent here. Anything the map calls
+     LARGE ONLY is used for fills, borders and glyphs, never for small text. */
+
+  /* The ground is deep water, mixed from the Teal and Navy anchors: Teal alone
+     is far too bright to sit a panel on, Navy alone would make the panels
+     invisible against it. */
+  --bg:color-mix(in srgb, var(--color-teal) 24%, var(--color-navy));
+  --bg2:color-mix(in srgb, var(--color-teal) 12%, var(--color-navy));
   /* the caustic web on the water — see main{} below for why it is drawn */
   --water:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.016' numOctaves='4' seed='11' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.85 0 0 0 0 0.88 0 0 0 -1.25 0.52'/%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23c)' opacity='0.35'/%3E%3C/svg%3E");
-  --navy:#182b44; --navy2:#101f34; --navy3:#0a1526;
-  --panel:rgba(10,21,38,.92); --panel2:rgba(16,31,52,.92);
-  --line:#3a5670; --line2:#5a86a4;
-  --ink:#f3ede0; --dim:#a7b8c9;
-  --gold:#dfc48c; --goldhi:#f4e3ae; --brass:#a9803e;
-  --grn:#4c8049; --yel:#d9b94a; --org:#d9883a; --red:#d3543f; --blu:#7ab0e0;
-  --purple:#6a4482; --tealhi:#1c8f8a;
+  /* Panel surfaces. Navy is the face; the two darker steps are shades of the
+     same anchor, for things a number sits IN rather than ON — bar tracks,
+     requirement rows, the recessed foot of a card. */
+  --navy:var(--color-navy);
+  --navy2:color-mix(in srgb, var(--color-navy) 76%, #000);
+  --navy3:color-mix(in srgb, var(--color-navy) 55%, #000);
+  --panel:color-mix(in srgb, var(--color-navy) 92%, transparent);
+  --panel2:color-mix(in srgb, var(--color-navy) 84%, transparent);
+
+  /* Borders are non-text graphics, so the bar is 3:1, not 4.5:1.
+     Slate clears it against Navy at 3.12; Aegean Blue (2.84) is decorative
+     only and never carries or outlines meaning on its own. */
+  --line:var(--color-slate);
+  --line2:var(--color-aegean-blue);
+
+  /* Text on Navy. Warm Ivory 13.12 and Sage 5.66 are both SAFE, and Sage is
+     far enough down in weight to read as secondary without failing. */
+  --ink:var(--color-warm-ivory);
+  --dim:var(--color-sage);
+
+  /* Metals, all SAFE as text on Navy: Gold 5.23, Amber 6.10, Olive Gold 4.75. */
+  --gold:var(--color-gold);
+  --goldhi:var(--color-amber);
+  --brass:var(--color-olive-gold);
+
+  /* Status. Seafoam 6.51 carries "good", Amber 6.10 "caution", Coral 5.15
+     "bad" — all SAFE on Navy in both directions, since Navy is also the
+     documented foreground for each of them as a fill.
+
+     --org and --purple are the two exceptions and are marked as such:
+     Terracotta is LARGE ONLY on Navy (4.04) so it only ever tints a glyph or
+     draws a border, and Mauve is AVOID as text (2.81) so it is a background
+     only, always with Warm Ivory on it (4.67, SAFE). */
+  --grn:var(--color-seafoam);
+  --yel:var(--color-amber);
+  --org:var(--color-terracotta);      /* graphics only */
+  --red:var(--color-coral);
+  --blu:var(--color-seafoam);
+  --purple:var(--color-mauve);        /* background only */
+
+  /* Teal has NO safe foreground anywhere in the palette — its best partner is
+     Navy at 3.84. It is therefore an accent: panel plaques and large display
+     type (where LARGE ONLY applies and Navy sits on it), fills, and borders.
+     Every button and tab that carries small text uses Ocean Blue or Gold. */
+  --tealhi:var(--color-teal);
+  --oceanb:var(--color-ocean-blue);
 
   /* One family, no serifs. Oswald carries every label, number, heading and
      button; running prose falls through to the device grotesque. A serif face
@@ -116,8 +165,8 @@ h1,h2,h3{font-weight:500}
    caps over a hairline. It is the first thing the eye lands on when a screen
    changes, so it gets a face, an edge and a shadow like everything else. */
 .sect{
-  font-family:var(--ui);font-size:clamp(17px,1.2vw,21px);font-weight:600;
-  letter-spacing:2px;color:#f4fbfa;text-transform:uppercase;
+  font-family:var(--ui);font-size:clamp(19px,1.3vw,23px);font-weight:600;
+  letter-spacing:2px;color:var(--color-warm-ivory);text-transform:uppercase;
   margin:20px 0 12px;display:flex;align-items:center;gap:10px;
   width:fit-content;max-width:100%;
   padding:8px 18px;border-radius:0;
@@ -173,11 +222,11 @@ h1,h2,h3{font-weight:500}
 }
 
 .card.flagcard{border-color:var(--brass);box-shadow:var(--slab)}
-.card.bosscard{border-color:#a05a4e;box-shadow:var(--slab)}
+.card.bosscard{border-color:var(--color-terracotta);box-shadow:var(--slab)}
 .card.chartercard{border-color:var(--brass)}
 .card.owned{border-color:var(--brass)}
-.card.atsea{border-color:#3d78ad;opacity:.94}
-.card.ready{border-color:#4f9a56;box-shadow:var(--slab)}
+.card.atsea{border-color:var(--color-aegean-blue);opacity:.94}
+.card.ready{border-color:var(--color-sage);box-shadow:var(--slab)}
 
 /* ---- layout helpers ---- */
 .row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
@@ -192,9 +241,12 @@ h1,h2,h3{font-weight:500}
 .btn{
   font-family:var(--ui);font-weight:500;
   font-size:clamp(16px,1.1vw,19px);letter-spacing:1.5px;text-transform:uppercase;
-  color:#f2fbf9;
-  background:var(--tealhi);
-  border:2px solid #2aa39c;border-radius:0;
+  /* Ocean Blue + Warm Ivory is 7.45:1, SAFE. This button used to be Teal with
+     near-white on it, which is 3.42 — LARGE ONLY, and a 16px label is not
+     large. Teal keeps the plaques and the accents; it does not carry labels. */
+  color:var(--ink);
+  background:var(--oceanb);
+  border:2px solid var(--color-aegean-blue);border-radius:0;
   padding:clamp(11px,.8vw,16px) clamp(16px,1.2vw,24px);
   min-height:clamp(48px,3.6vw,58px);
   display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.15;
@@ -208,28 +260,31 @@ h1,h2,h3{font-weight:500}
   opacity:.42;filter:grayscale(.5);
   transform:translateY(3px);box-shadow:var(--slab-down);
 }
+/* Every variant takes the foreground the palette names for its fill, so each
+   one is SAFE for a normal-size label: Gold 5.23, Coral 5.15, Seafoam 6.51,
+   Aegean Blue 4.63, Navy 13.12. */
 .btn.gold{
-  background:#c99a3f;
-  border-color:#e8c375;color:#2e2308;
+  background:var(--color-gold);
+  border-color:var(--color-amber);color:var(--on-gold);
 }
 .btn.red{
-  background:#a5392c;
-  border-color:#e08066;color:#fff0eb;
+  background:var(--color-coral);
+  border-color:var(--color-terracotta);color:var(--on-coral);
 }
 .btn.blu{
-  background:#3374ab;
-  border-color:#8cc0ea;color:#f0f8ff;
+  background:var(--color-aegean-blue);
+  border-color:var(--color-seafoam);color:var(--on-aegean-blue);
 }
 .btn.grn{
-  background:#3f7a44;
-  border-color:#8ada92;color:#f2fff4;
+  background:var(--color-seafoam);
+  border-color:var(--color-sage);color:var(--on-seafoam);
 }
 /* Cancel, Belay, Not Now — and the mockup's plain "Secondary" button. It is
    still a plate and still presses, but it does not compete with the button
    the player came here to hit. */
 .btn.quiet{
   background:var(--navy);
-  border-color:var(--line2);color:#c8d8e6;
+  border-color:var(--line2);color:var(--on-navy);
 }
 .btn.sm{
   font-size:clamp(16px,1.05vw,18px);letter-spacing:1px;border-radius:0;
@@ -296,16 +351,16 @@ h1,h2,h3{font-weight:500}
 .t2{border-color:var(--org);color:var(--org)}
 .t3{border-color:var(--red);color:var(--red)}
 .tag.gold{border-color:var(--gold);color:var(--goldhi)}
-.tag.blu{border-color:var(--blu);color:#bcd8f0}
+.tag.blu{border-color:var(--blu);color:var(--color-seafoam)}
 .mtype{
   color:var(--dim);border:2px solid var(--line);border-radius:0;padding:4px 11px;
   background:rgba(2,14,17,.5);box-shadow:var(--well);
 }
-.mtype.boss{color:#f0b0a6;border-color:#8a463e}
+.mtype.boss{color:var(--color-coral);border-color:var(--color-terracotta)}
 .mtype.gold{color:var(--goldhi);border-color:var(--brass)}
 .statechip{letter-spacing:1.5px}
 
-.clock{font-family:var(--ui);font-size:clamp(18px,1.35vw,25px);letter-spacing:2px;color:#bcd8f0}
+.clock{font-family:var(--ui);font-size:clamp(18px,1.35vw,25px);letter-spacing:2px;color:var(--color-seafoam)}
 .clock.done{color:var(--grn)}
 .drift{color:var(--org);font-size:16px;font-style:italic;margin-top:5px}
 
@@ -313,7 +368,7 @@ h1,h2,h3{font-weight:500}
 .evt{
   border-left:3px solid var(--line2);background:rgba(12,34,40,.6);
   padding:9px 12px;margin-top:10px;font-size:clamp(16px,1.1vw,19px);
-  font-style:italic;color:#a8c8ca;line-height:1.6;
+  font-style:italic;color:var(--color-seafoam);line-height:1.6;
 }
 .evt.noto{border-color:var(--gold);color:var(--gold)}
 .evt.prize{border-color:var(--brass);color:var(--goldhi);font-style:normal}
@@ -322,15 +377,15 @@ h1,h2,h3{font-weight:500}
 #wipe{position:fixed;inset:0;z-index:40;pointer-events:none;visibility:hidden}
 #wipe.go{visibility:visible}
 #wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg);transition:none}
-#wipe .p1{background:#0b2a30}
-#wipe .p2{background:#124048}
+#wipe .p1{background:var(--bg2)}
+#wipe .p2{background:var(--bg)}
 #wipe.go .p1{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1)}
 #wipe.go .p2{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1) .07s}
 
 /* ---- coins ---- */
 .coin{
   position:fixed;z-index:45;width:15px;height:15px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 35% 30%,#f5e2a0,#b8863b);
+  background:radial-gradient(circle at 35% 30%,var(--color-sand),var(--color-gold));
   box-shadow:none;
 }
 
@@ -375,13 +430,18 @@ h1,h2,h3{font-weight:500}
   font-family:var(--ui);font-size:clamp(16px,1.1vw,19px);letter-spacing:.6px;
   color:var(--ink);line-height:1;white-space:nowrap;
   padding:2px 10px 2px 2px;border-radius:0;
-  background:rgba(2,14,17,.5);box-shadow:var(--well);
+  background:var(--navy3);
 }
+/* A chip's fill used to be translucent, so its real ground was whatever it
+   happened to be sitting on — a panel, a card foot, or the Teal section plate,
+   which is light enough to sink a label under 4.5:1. It is opaque now, and the
+   darkest step of Navy, so every chip everywhere carries its contents on the
+   one background the whole colour allocation was built against. */
 .chip .chipic{width:max(40px,1.35em);height:max(40px,1.35em);flex-shrink:0;vertical-align:middle}
 .chip b{font-weight:500}
 .chip i{font-style:normal;color:var(--dim);margin:0 .1em}
 .chip.ok b{color:var(--grn)}
-.chip.bad b{color:#e88a7a}
+.chip.bad b{color:var(--color-coral)}
 .chip.warn b{color:var(--yel)}
 .chip.dim,.chip.dim b{color:var(--dim)}
 .chip.gold b{color:var(--goldhi)}

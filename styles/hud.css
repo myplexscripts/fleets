@@ -24,7 +24,7 @@
 /* ship's wheel — the way into settings, on Port and nowhere else */
 .iconbtn{
   width:clamp(44px,3vw,52px);height:clamp(44px,3vw,52px);flex-shrink:0;
-  border:2px solid #2aa39c;border-radius:50%;
+  border:2px solid var(--color-teal);border-radius:50%;
   background:var(--tealhi);
   box-shadow:var(--slab-sm);
   cursor:pointer;position:relative;
@@ -48,7 +48,7 @@
 .resitem .ic{
   width:clamp(40px,11vw,54px);height:clamp(40px,11vw,54px);flex-shrink:0;
   padding:4px;border-radius:50%;
-  background:#03151a;
+  background:var(--navy3);
   box-shadow:var(--well);
 }
 .resitem b{font-family:var(--ui);font-weight:500;color:var(--ink);line-height:1.15;font-size:clamp(20px,1.7vw,30px)}
@@ -92,19 +92,22 @@ nav button{
 nav .navic{width:clamp(40px,3vw,48px);height:auto;opacity:.55;transition:opacity .2s,filter .2s,transform .2s}
 nav .navlbl{font-size:clamp(16px,1.05vw,18px);letter-spacing:1.2px;line-height:1}
 
+/* The selected tab was Teal with an ivory label: 3.42:1, and a 16px label is
+   not large text. Gold with Navy on it is 5.23:1 and SAFE — and a gold tab
+   reads as "you are here" at least as loudly as the teal one did. */
 nav button.on{
-  background:var(--tealhi);
-  color:#fff;border-color:#2aa39c;
+  background:var(--color-gold);
+  color:var(--on-gold);border-color:var(--color-amber);
 }
 nav button.on .navic{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(217,201,138,.6))}
 
 nav button.alert{color:var(--red);animation:navpulse 1.4s ease-in-out infinite}
-@keyframes navpulse{50%{color:#ff9080;text-shadow:none}}
-.calm nav button.alert{animation:none;color:#ff9080}
+@keyframes navpulse{50%{color:var(--color-coral);text-shadow:none}}
+.calm nav button.alert{animation:none;color:var(--color-coral)}
 
 nav .badge{
-  position:absolute;top:2px;right:5px;background:var(--gold);color:#0b1a1e;
-  border:2px solid #0a1526;border-radius:0;
+  position:absolute;top:2px;right:5px;background:var(--gold);color:var(--navy3);
+  border:2px solid var(--navy3);border-radius:0;
   font-family:var(--ui);font-size:16px;padding:0 7px;line-height:22px;font-weight:600;
   box-shadow:0 2px 5px rgba(0,0,0,.6);
 }

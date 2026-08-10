@@ -385,13 +385,13 @@ export function renderMap() {
     const d = effDanger(r);
     /* Dives carry no danger rating, so they are tinted by whether the bell can
        reach them rather than by how dangerous the water is. */
-    const col = isDive ? (diveReachable(r) ? '#7ab0e0' : '#4a6070') : DHEX[d];
+    const col = isDive ? (diveReachable(r) ? '#6CB7B2' : '#6B7280') : DHEX[d];
     const open = canVoyage(r) && voyageOpen(r);
     const rp = at(r); const x = MX(rp.x), y = MY(rp.y);
 
     lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="${col}" stroke-width="${1.6 * MS}" opacity="0.7"/>`;
     if (active[r.id])
-      voyLines += `<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#7ab0e0" stroke-width="${2.4 * MS}" opacity="0.95"/>`;
+      voyLines += `<path class="voyline" d="M${hx},${hy} L${x},${y}" stroke="#6CB7B2" stroke-width="${2.4 * MS}" opacity="0.95"/>`;
 
     const isBt = r.type === 'bounty';
     const label = isCh ? PORTS[r.charterDef.loc].n.toUpperCase()
@@ -399,7 +399,7 @@ export function renderMap() {
       : isDive ? 'DEPTH ' + r.depth
       : isBt ? r.n.toUpperCase()
       : '';
-    const labelColor = isCh ? '#efe3ae' : (isDive ? '#8fb8d8' : (isBt ? '#f0a89a' : '#a8c4c6'));
+    const labelColor = isCh ? '#E2D6B6' : (isDive ? '#6CB7B2' : (isBt ? '#E07A6A' : '#8DA58A'));
 
     /* A bounty is the one marker with a clock on it, so the clock is drawn ON
        it: a ring that empties as her window runs down, and the time left in
@@ -412,7 +412,7 @@ export function renderMap() {
       const rr = 15 * MS, C = 2 * Math.PI * rr;
       clockRing = `<circle cx="${x}" cy="${y}" r="${rr}" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="${3 * MS}"/>`
         + `<circle class="btring" cx="${x}" cy="${y}" r="${rr}" fill="none"`
-        + ` stroke="${f < 0.25 ? '#ff8f7a' : '#e8705c'}" stroke-width="${3 * MS}" stroke-linecap="round"`
+        + ` stroke="${f < 0.25 ? '#E07A6A' : '#C86A4A'}" stroke-width="${3 * MS}" stroke-linecap="round"`
         + ` stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}"`
         + ` transform="rotate(-90 ${x} ${y})"/>`;
     }
@@ -421,17 +421,17 @@ export function renderMap() {
       class="mapnode${isBt ? ' bountynode' : ''}">
       ${hitShapes(x, y, label, LBL, 18 * MS)}
       ${isCh
-        ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#efe3ae" stroke="#8a793e" stroke-width="1.4"/>`
+        ? `<path class="charterstar" d="${starPath(x, y, 10 * MS)}" fill="#E2D6B6" stroke="#A68F3A" stroke-width="1.4"/>`
         : `<circle class="nodeglow" cx="${x}" cy="${y}" r="${13 * MS}" fill="${col}"/>${clockRing}${nodeShape({ ...r, x, y }, col, MS)}`}
-      ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#63c06a" stroke="#04161c" stroke-width="1.3"/>` : ''}
-      ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#7ab0e0" stroke="#04161c" stroke-width="1.3"/>` : ''}
+      ${open ? `<circle cx="${x + 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#8DA58A" stroke="#0B1622" stroke-width="1.3"/>` : ''}
+      ${active[r.id] ? `<circle cx="${x - 10 * MS}" cy="${y - 10 * MS}" r="${4.2 * MS}" fill="#6CB7B2" stroke="#0B1622" stroke-width="1.3"/>` : ''}
     </g>`;
     /* A bounty's name and her clock are one label on two lines, not two labels.
        As two they were each other's nearest neighbour and the layout below
        spent its effort prising apart the one pair that is meant to be together. */
     if (label) {
-      labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#04161c', 1,
-        isBt ? { text: fmtDur(bountyLeft(r) / 1000) + ' LEFT', fill: '#ffc9be' } : null);
+      labelAt(x, y + 18 * MS + LBL, label, LBL, labelColor, '#15273E', 1,
+        isBt ? { text: fmtDur(bountyLeft(r) / 1000) + ' LEFT', fill: '#E07A6A' } : null);
     }
   });
 
@@ -441,19 +441,19 @@ export function renderMap() {
     const x = MX(bp.x), y = MY(bp.y);
 
     if (S.bossBeaten[rk]) {
-      bossNodes += `<g>${struckFlag(x, y, MS, '#d9c98a')}</g>`;
+      bossNodes += `<g>${struckFlag(x, y, MS, '#BD913B')}</g>`;
       return;
     }
 
-    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#d94a3a" stroke-width="${2 * MS}" opacity="0.9"/>`;
+    lines += `<path class="routeline" d="M${hx},${hy} L${x},${y}" stroke="#C86A4A" stroke-width="${2 * MS}" opacity="0.9"/>`;
     bossNodes += `<g id="node_${b.id}" data-act="mission" data-id="${b.id}" class="mapnode">
       ${hitShapes(x, y, b.n.toUpperCase(), LBL, 22 * MS)}
-      <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#d94a3a"/>
-      ${glyphMark(x, y, 1.65 * MS, 'bicorne', '#f0b0a6')}</g>`;
-    labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#f0b0a6', '#0a0507', 1.2);
+      <circle class="bossglow" cx="${x}" cy="${y}" r="${18 * MS}" fill="#C86A4A"/>
+      ${glyphMark(x, y, 1.65 * MS, 'bicorne', '#E07A6A')}</g>`;
+    labels += labelAt(x, y + 22 * MS + LBL, b.n.toUpperCase(), LBL, '#E07A6A', '#15273E', 1.2);
   });
 
-  labelAt(hx, hy + 22 * MS + HLBL, 'HOME PORT', HLBL, '#d9c98a', '#04161c', 2);
+  labelAt(hx, hy + 22 * MS + HLBL, 'HOME PORT', HLBL, '#BD913B', '#15273E', 2);
   labels = placeLabels(labelSpecs, LBL);
 
   /* ---- bleed ----
@@ -473,7 +473,7 @@ export function renderMap() {
       viewBox="0 0 ${fullW} ${fullH}" preserveAspectRatio="none">
       <defs>
         <radialGradient id="seabg" cx="45%" cy="40%" r="80%">
-          <stop offset="0%" stop-color="#0e3a40"/><stop offset="55%" stop-color="#082830"/><stop offset="100%" stop-color="#04161c"/>
+          <stop offset="0%" stop-color="#1C5A5E"/><stop offset="55%" stop-color="#15273E"/><stop offset="100%" stop-color="#0B1622"/>
         </radialGradient>
       </defs>
       <rect width="${fullW}" height="${fullH}" fill="url(#seabg)"/>
@@ -481,8 +481,8 @@ export function renderMap() {
         <g class="coast">${landHTML(MX, MY, MS)}</g>
         ${lines}${voyLines}
         <g>
-          <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#d9c98a"/>
-          <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#d9c98a" stroke="#000" stroke-width="1.4"/>
+          <circle class="nodeglow" cx="${hx}" cy="${hy}" r="${19 * MS}" fill="#BD913B"/>
+          <circle cx="${hx}" cy="${hy}" r="${7 * MS}" fill="#BD913B" stroke="#000" stroke-width="1.4"/>
         </g>
         ${nodes}${bossNodes}
         <g class="maplabels">${labels}</g>
@@ -532,8 +532,8 @@ const KEY_WORD = {
   charter: 'Charter', boss: 'Admiral', beaten: 'Beaten'
 };
 const KEY_COL = {
-  cargo: '#63c06a', fight: '#e0a03a', dive: '#7ab0e0', bounty: '#e8705c',
-  charter: '#efe3ae', boss: '#f0b0a6', beaten: '#d9c98a'
+  cargo: '#8DA58A', fight: '#D49A3A', dive: '#6CB7B2', bounty: '#C86A4A',
+  charter: '#E2D6B6', boss: '#E07A6A', beaten: '#BD913B'
 };
 /* Every fight type answers to one row. */
 const KEY_ROW = t => (KEY_WORD[t] ? t : 'fight');
@@ -551,7 +551,7 @@ function struckFlag(x, y, k, col) {
 function keySwatch(type, col) {
   const inner = type === 'beaten' ? struckFlag(12, 12, 1.1, col)
     : type === 'charter'
-      ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="#8a793e" stroke-width="1.2"/>`
+      ? `<path d="${starPath(12, 12, 9)}" fill="${col}" stroke="#A68F3A" stroke-width="1.2"/>`
       : glyphMark(12, 12, 1.14, markerGlyph(type), col);
   return `<svg class="keysh" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">${inner}</svg>`;
 }

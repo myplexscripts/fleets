@@ -14,7 +14,7 @@
   position:relative;text-align:center;margin-bottom:12px;overflow:visible;
   display:flex;flex-direction:column;align-items:center;
   padding:clamp(18px,1.6vw,34px) clamp(14px,1.2vw,26px) clamp(16px,1.4vw,30px);
-  background:radial-gradient(ellipse at 50% 60%,rgba(31,138,134,.28),rgba(10,21,38,.94) 70%),var(--navy);
+  background:var(--navy);
   border:1px solid var(--brass);border-radius:0;
   animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both;
 }
@@ -65,7 +65,7 @@
 }
 
 /* ---- map ---- */
-#mapwrap{position:absolute;inset:0;background:#04161c;display:flex;flex-direction:column}
+#mapwrap{position:absolute;inset:0;background:var(--navy3);display:flex;flex-direction:column}
 #mapsvg{display:block}
 .mapnode{cursor:pointer}
 /* labels sit in their own layer and are never the thing you tap */
@@ -118,8 +118,8 @@
 .sea.beaten::before{display:none}
 .sea>*{position:relative;z-index:1}
 @keyframes seapulse{50%{filter:brightness(1.4)}}
-.sea.alert{border-color:#a05a4e;box-shadow:var(--slab-sm)}
-.seaout{color:#ffcfc6;font-weight:600}
+.sea.alert{border-color:var(--color-terracotta);box-shadow:var(--slab-sm)}
+.seaout{color:var(--color-coral);font-weight:600}
 .calm .sea{animation:none}
 .calm .sea::before{transition:none}
 .calm .sea.alert::before{animation:none}
@@ -145,7 +145,7 @@
    as a floor, but nothing normal should reach it. */
 .sect.sectctl .sectlbl{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex-shrink:1;
-  letter-spacing:1.2px;font-size:clamp(16px,1.2vw,21px);
+  letter-spacing:1.2px;font-size:clamp(19px,1.3vw,22px);
 }
 .sect.sectctl .secttrail{flex-shrink:0}
 .dockbuy{display:inline-flex;align-items:center;gap:4px;padding:5px 9px}
@@ -170,7 +170,7 @@
    mystery timer. It keeps the card's own size and its own green. */
 .seapatrol .clock{font-size:16px;letter-spacing:1px;color:inherit}
 .seanoto{color:var(--gold)}
-.seanoto.ready{color:#f0b0a6}
+.seanoto.ready{color:var(--color-coral)}
 .seadone{color:var(--grn)}
 .seanoto i,.mapfleet i{font-style:normal;color:var(--dim);margin:0 .1em}
 
@@ -182,12 +182,12 @@
   background:rgba(2,14,17,.5);box-shadow:var(--well);
 }
 .mapfleet b{font-weight:500;font-size:clamp(17px,1.2vw,20px)}
-.mapfleet.none{color:#e88a7a}
-.mapfleet.none b{color:#e88a7a}
+.mapfleet.none{color:var(--color-coral)}
+.mapfleet.none b{color:var(--color-coral)}
 
 .notobar{height:14px;margin-top:6px}
 .notobar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
-.notobar.full i{background:#c8503c}
+.notobar.full i{background:var(--color-terracotta)}
 
 /* The key, inside the dialog the map button opens. Two columns of symbol and
    name — it used to be a permanent panel across the foot of the chart, which
@@ -253,11 +253,11 @@
   display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:0;
   border:2px solid rgba(30,80,88,.5);background:rgba(2,14,17,.45);
   box-shadow:var(--well);
-  font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.5px;color:#5b787b;
+  font-family:var(--ui);font-size:clamp(16px,1vw,17px);letter-spacing:.5px;color:var(--dim);
 }
 /* A flex child will happily squeeze an icon under the 40px floor. It may not. */
 .piece .ic{opacity:.35;flex-shrink:0}
-.piece.got{border-color:var(--brass);background:#33290f;box-shadow:var(--slab-sm);color:var(--goldhi)}
+.piece.got{border-color:var(--brass);background:var(--navy);box-shadow:var(--slab-sm);color:var(--goldhi)}
 .piece.got .ic{opacity:1}
 
 /* ---- map key: symbol then name ---- */
@@ -313,7 +313,7 @@
 .legtoggle{
   position:absolute;right:10px;bottom:14px;z-index:5;
   width:56px;height:56px;display:flex;align-items:center;justify-content:center;
-  border:2px solid #2aa39c;border-radius:0;
+  border:2px solid var(--color-teal);border-radius:0;
   background:var(--tealhi);
   box-shadow:var(--slab-sm);cursor:pointer;
   transition:transform .1s ease,box-shadow .1s ease,filter .2s;
@@ -326,8 +326,8 @@
 /* ---- the coast ----
    Land under the chart, so a port is a place on a shore rather than a dot in
    open water and the dotted lines between them read as sea lanes. */
-.land{fill:#12352c}
-.landedge{fill:none;stroke:#1d5647;stroke-linejoin:round}
+.land{fill:var(--color-moss)}
+.landedge{fill:none;stroke:var(--color-moss);stroke-linejoin:round}
 .coast{opacity:.95}
 
 /* ---- zoom ----

@@ -16,7 +16,7 @@ export const SHIP_DIM = {};
 export function svgShip(type, palette) {
   const c = SHIPCFG[type], W = c.L + 18, Ht = c.H + 30, hy = Ht - 16;
   const [sail, sail2, flag, hull] = PALETTES[palette];
-  const trim = '#3d3020';
+  const trim = '#15273E';
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${Ht}" width="${W * 3}" height="${Ht * 3}">`;
 
   c.masts.forEach(mx => {
@@ -38,7 +38,7 @@ export function svgShip(type, palette) {
   /* Gunports, count by class. */
   const n = type === 'manowar' ? 7 : (type === 'flagship' ? 6 : (type === 'frigate' ? 5 : (type === 'brig' ? 4 : 0)));
   for (let i = 0; i < n; i++) {
-    s += `<rect x="${16 + i * (c.L - 26) / Math.max(1, n - 1)}" y="${hy - 3}" width="2.6" height="2.6" fill="${palette === 'flag' ? '#d9c98a' : '#4a3a22'}"/>`;
+    s += `<rect x="${16 + i * (c.L - 26) / Math.max(1, n - 1)}" y="${hy - 3}" width="2.6" height="2.6" fill="${palette === 'flag' ? '#BD913B' : '#A68F3A'}"/>`;
   }
   return s + '</svg>';
 }

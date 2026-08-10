@@ -11,7 +11,7 @@ export const REGIONS = {
    scale that is not telling them anything. */
 export const DNAMES  = ['SAFE', 'RISKY', 'HAZARDOUS'];
 export const DCOLORS = ['var(--grn)', 'var(--yel)', 'var(--red)'];
-export const DHEX    = ['#63c06a', '#d9c34a', '#d94a3a'];
+export const DHEX    = ['#8DA58A', '#D49A3A', '#C86A4A'];
 export const MAX_DANGER = DNAMES.length - 1;
 
 export const HOME = { x: 196, y: 452 };

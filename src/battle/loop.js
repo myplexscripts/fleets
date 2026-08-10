@@ -454,7 +454,7 @@ function doBoard() {
     blog(`${boarder.name}'s people go over the rail screaming and the ${t.name} strikes inside two minutes.`, 'good');
     if (sc) {
       const o = sc.find(t);
-      if (o) { sc.floatText(o.c.x, o.c.y - 44, 'TAKEN', '#63c06a', 24); sc.sink(o); }
+      if (o) { sc.floatText(o.c.x, o.c.y - 44, 'TAKEN', '#8DA58A', 24); sc.sink(o); }
     }
     buzz('big');
     retarget();
