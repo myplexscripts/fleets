@@ -18,32 +18,47 @@
 .overlay.vis{opacity:1}
 
 .sheet{
-  width:100%;height:100%;display:flex;flex-direction:column;
+  width:100%;height:100%;display:flex;flex-direction:column;position:relative;
   transform:translateY(14px);opacity:0;
   transition:transform .3s cubic-bezier(.2,.9,.3,1.1),opacity .26s ease;
 }
 .overlay.vis .sheet{transform:none;opacity:1}
+
+/* ---- the title bar ----
+   A flat plate, flush with the edge, icon-and-label on the left, a close
+   button on the right — the pattern every reference panel shares. Not a
+   floating badge sitting on top of the panel; it IS the top of the panel. */
 .sheet-head{
-  flex-shrink:0;padding:calc(env(safe-area-inset-top) + 16px) 18px 14px;
-  text-align:center;position:relative;
+  flex-shrink:0;position:relative;
+  padding:calc(env(safe-area-inset-top) + 14px) 56px 14px 18px;
+  background:var(--tealhi);border-bottom:3px solid var(--brass);
 }
-.sheet-head::after{
-  content:'';position:absolute;left:18px;right:18px;bottom:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--brass) 20%,var(--brass) 80%,transparent);
-  opacity:.5;
-}
-.sheet-head .row{justify-content:center}
-/* the mockup's floating teal plaque, straddled across the panel's own head */
+.sheet-head .row{flex-wrap:nowrap}
 .sheet-head h3{
-  display:inline-block;width:fit-content;max-width:100%;
-  font-family:var(--display);font-size:clamp(21px,1.7vw,30px);font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;color:#fff;line-height:1.2;
-  padding:9px 24px;border-radius:10px;margin:0 auto;
-  background:var(--tealhi);
-  border:3px solid #eef7f5;
-  box-shadow:0 4px 10px rgba(0,0,0,.4);
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
+  font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:#fff;line-height:1.2;
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
 }
+/* A status word on the title bar is a plate, not a chip with a coloured spine —
+   the spine is a device for a list, and there is no list up here. */
+.sheet-head .tag,.sheet-head .mtype{
+  flex-shrink:0;border:2px solid currentColor;border-radius:6px;
+  background:var(--navy3);box-shadow:none;padding:4px 11px;
+}
+
+.panelx{
+  position:absolute;top:10px;right:10px;z-index:3;
+  width:36px;height:36px;flex-shrink:0;border-radius:8px;
+  background:rgba(0,0,0,.24);border:2px solid rgba(255,255,255,.6);
+  color:#fff;font-family:var(--ui);font-size:18px;font-weight:600;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,transform .1s;
+}
+.panelx:hover{background:rgba(0,0,0,.4)}
+.panelx:active{transform:scale(.9)}
+/* full-bleed screens clear the notch instead of the box corner */
+.sheet .panelx,#resultScr>.panelx{top:calc(env(safe-area-inset-top) + 10px);right:14px}
+
 .sheet-body{
   flex:1;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
@@ -76,7 +91,7 @@
 #dialogs.vis{background:rgba(2,8,10,.74);backdrop-filter:blur(3px)}
 
 .dlg{
-  position:relative;width:min(460px,100%);
+  position:relative;width:min(460px,100%);overflow:hidden;
   background:var(--navy);
   border:2px solid var(--brass);border-radius:var(--r);
   box-shadow:var(--slab),0 18px 60px rgba(0,0,0,.85);
@@ -97,15 +112,13 @@
 }
 
 .dlg-head{
-  display:block;width:fit-content;max-width:calc(100% - 36px);
+  display:block;
   font-family:var(--display);font-weight:700;font-size:clamp(17px,1.2vw,22px);
-  letter-spacing:2px;text-transform:uppercase;color:#fff;
-  padding:8px 20px;border-radius:9px;margin:16px auto 0;
-  background:var(--tealhi);
-  border:3px solid #eef7f5;
-  box-shadow:0 4px 10px rgba(0,0,0,.4);
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
-  text-align:center;
+  letter-spacing:1.5px;text-transform:uppercase;color:#fff;
+  padding:12px 46px 12px 16px;
+  background:var(--tealhi);border-bottom:3px solid var(--brass);
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
+  text-align:left;
 }
 .dlg.danger .dlg-head{
   background:#a5392c;
@@ -135,7 +148,7 @@
 #pauseScr.vis{background:rgba(2,8,10,.8);backdrop-filter:blur(4px)}
 
 .pausebox{
-  position:relative;
+  position:relative;overflow:hidden;
   width:min(440px,100%);max-height:92dvh;display:flex;flex-direction:column;
   background:var(--navy);
   border:2px solid var(--brass);border-radius:var(--r);
@@ -154,15 +167,12 @@
 }
 
 .pausehead{
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  width:fit-content;max-width:calc(100% - 36px);margin:16px auto 4px;
-  padding:9px 24px;border-radius:10px;
-  background:var(--tealhi);
-  border:3px solid #eef7f5;
-  box-shadow:0 4px 10px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:10px;
+  padding:14px 46px 14px 18px;
+  background:var(--tealhi);border-bottom:3px solid var(--brass);
   font-family:var(--display);font-weight:700;font-size:clamp(18px,1.3vw,24px);
-  letter-spacing:2.5px;text-transform:uppercase;color:#fff;
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
+  letter-spacing:1.5px;text-transform:uppercase;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
 }
 .pausebody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:14px 18px 4px}
 .pausefoot{padding:12px 18px calc(env(safe-area-inset-bottom) + 14px);border-top:1px solid rgba(22,74,82,.6)}
@@ -414,23 +424,60 @@
    in the BODY rather than in the head, so opening it pushes the ships down
    rather than shoving the head over what is being read. */
 .foelist{
-  display:flex;flex-direction:column;gap:4px;margin:0 0 12px;
-  border:2px solid #8a463e;border-radius:var(--r-sm);padding:8px;
-  background:rgba(58,20,16,.22);
+  display:flex;flex-direction:column;gap:6px;margin:10px 0 12px;
   animation:cardIn .3s ease both;
 }
-.foe{
-  display:flex;flex-direction:column;align-items:flex-start;gap:3px;
-  border-left:3px solid #8a463e;background:rgba(58,20,16,.28);padding:5px 9px;
+/* ---- the enemy line-up, as cards ----
+   Her picture, her name, what she rates at, and what she is worth as odds —
+   one column a hull, side by side. Three ships read as three opponents you are
+   choosing against; the same three as stacked text rows read as a paragraph. */
+.foegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px}
+.foecard{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:var(--navy2);border:2px solid #8a463e;border-radius:8px;
+  padding:8px 6px;text-align:center;min-width:0;
 }
-.foe b{
-  font-family:var(--ui);font-size:16px;line-height:1.05;letter-spacing:1px;
-  text-transform:uppercase;color:#f0b0a6;
+.foeart{height:42px;display:flex;align-items:center;justify-content:center}
+.foeart .shipsvg{max-width:100%;height:auto}
+.foecard b{
+  font-family:var(--ui);font-weight:500;font-size:16px;line-height:1.1;
+  letter-spacing:.6px;text-transform:uppercase;color:#f0b0a6;
+  overflow-wrap:anywhere;
 }
-.foe span{font-family:var(--ui);font-size:16px;letter-spacing:.6px;color:var(--dim)}
-/* The glyphs keep their 40px floor; everything around them gives way instead. */
-.foe .chips{margin:0;gap:5px}
-.foe .chip{padding:2px 8px 2px 3px}
+.foetype{
+  font-family:var(--ui);font-size:16px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--dim);line-height:1;
+}
+/* Power sits in its own sunken box under the name; odds is the coloured pill
+   below it, which is the one thing on the card that changes as ships are
+   picked and so the one thing allowed to carry a status colour. */
+.foestat,.foeodds{
+  width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;
+  border-radius:5px;padding:3px 4px;line-height:1;
+}
+.foestat{background:var(--navy3);border:2px solid var(--line)}
+.foestat i,.foeodds i{
+  font-style:normal;font-family:var(--ui);font-size:16px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--dim);
+}
+.foestat b,.foeodds b{
+  font-family:var(--ui);font-weight:500;font-size:clamp(18px,1.4vw,23px);color:var(--ink);
+}
+.foeodds{border:2px solid}
+.foeodds.dim{background:var(--navy3);border-color:var(--line)}
+.foeodds.ok{background:#2b5a30;border-color:#8ada92}
+.foeodds.ok b{color:#d9f5db}
+.foeodds.warn{background:#7d5a12;border-color:#e8c375}
+.foeodds.warn b{color:#fbeecb}
+.foeodds.bad{background:#7d2418;border-color:#e08066}
+.foeodds.bad b{color:#ffd9d0}
+.foeodds i{color:rgba(255,255,255,.7)}
+.foechest{
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:var(--ui);font-size:16px;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--goldhi);
+}
+.foechest .ic{width:40px;height:40px}
 
 /* ---- mission sheet, chip era ----
    The picker carries each hull's four numbers as chips, so the right ship for a
@@ -447,9 +494,6 @@
 }
 .crewn .ic{width:40px;height:40px}
 
-/* enemy line: name left, her numbers right */
-.foe{align-items:center}
-.foe .chips{margin-top:0}
 
 /* what a victory brought home */
 .spoils{
@@ -492,29 +536,25 @@
 }
 #resultScr.on{display:flex}
 #resultScr.vis{opacity:1}
-#resultScr .sheet-head{text-align:center;padding-bottom:14px}
-/* the panel's own fixed nameplate — the verdict beneath it is the changing part */
+/* the panel's own fixed nameplate — a flat title bar like every other panel;
+   the verdict is not shown twice, it lives in the body where it changes */
 #resultScr .sheet-head::before{
-  content:'After Action';display:inline-block;width:fit-content;max-width:100%;
-  font-family:var(--display);font-size:clamp(19px,1.5vw,26px);font-weight:700;
-  letter-spacing:2.5px;text-transform:uppercase;color:#fff;
-  padding:8px 22px;border-radius:10px;margin:0 auto 12px;
-  background:var(--tealhi);
-  border:3px solid #eef7f5;
-  box-shadow:0 4px 10px rgba(0,0,0,.4);
-  text-shadow:0 2px 4px rgba(0,0,0,.5);
+  content:'After Action';display:block;
+  font-family:var(--display);font-size:clamp(19px,1.6vw,27px);font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.4);
 }
 
 .rverdict{
-  font-family:var(--display);font-weight:700;
+  font-family:var(--display);font-weight:700;text-align:center;
   font-size:clamp(28px,3vw,52px);letter-spacing:4px;text-transform:uppercase;
   line-height:1.1;
 }
-.rverdict.good{color:var(--grn);text-shadow:0 0 26px rgba(99,192,106,.35)}
-.rverdict.bad{color:#e88a7a;text-shadow:0 0 26px rgba(217,74,58,.3)}
+.rverdict.good{color:var(--grn)}
+.rverdict.bad{color:#e88a7a}
 .rwhere{
   font-family:var(--ui);font-size:clamp(16px,1.15vw,20px);letter-spacing:2.4px;
-  text-transform:uppercase;color:var(--dim);margin-top:5px;
+  text-transform:uppercase;color:var(--dim);margin-top:5px;text-align:center;
 }
 
 
@@ -677,22 +717,31 @@
   display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
   gap:9px;margin-top:8px;
 }
+/* A resource card is a labelled box: the name banded across the top, the
+   picture in the middle, the amount at the foot. Naming it first is what
+   turns a grid of pictures into a manifest you can read down. */
 .tcard{
-  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-  gap:5px;padding:12px 7px 10px;min-height:132px;
-  border-radius:var(--r);border:2px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:0;padding:0 0 9px;min-height:132px;overflow:hidden;
+  border-radius:10px;border:2px solid var(--line);
   background:var(--navy);
   box-shadow:var(--slab-sm);
   animation:tallyPop .44s cubic-bezier(.2,.9,.3,1.5) both;
   animation-delay:calc(var(--i,0) * 90ms + 160ms);
 }
-.tcard .tart{display:flex;align-items:center;justify-content:center;min-height:52px}
+.tcard .tart{
+  display:flex;align-items:center;justify-content:center;min-height:52px;
+  flex:1;padding:8px 6px 4px;
+}
 .tcard .tallyic{width:clamp(40px,11vw,52px);height:clamp(40px,11vw,52px)}
 .tcard .shipsvg{width:clamp(56px,15vw,74px)}
+/* the name band, first in the box and first in the reading order */
 .tcard .tname{
-  font-family:var(--ui);font-size:16px;letter-spacing:1px;line-height:1.15;
-  text-transform:uppercase;color:var(--dim);text-align:center;
-  overflow-wrap:anywhere;
+  order:-1;width:100%;
+  font-family:var(--ui);font-size:16px;letter-spacing:1px;line-height:1.2;
+  text-transform:uppercase;color:var(--ink);text-align:center;
+  background:var(--navy3);border-bottom:2px solid var(--line);
+  padding:5px 4px;overflow-wrap:anywhere;
 }
 .tcard .tn{
   font-family:var(--ui);font-weight:500;color:var(--goldhi);

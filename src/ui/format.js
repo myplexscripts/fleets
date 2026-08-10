@@ -57,6 +57,24 @@ export function outOf(icon, cur, max, cls, title) {
   return chip(icon, `${cur}<i>/</i>${max}`, cls, title);
 }
 
+/* A requirement, as a ROW rather than a chip.
+
+   The three or four readings that decide whether a job can be taken at all are
+   not the same kind of thing as the eight that describe it. A chip strip makes
+   them equal and makes the player scan sideways for the one that is red; a row
+   states the name, what it asks, what you have, and whether you meet it — with
+   the answer as a tick box at the end of the line, which is readable at a
+   glance and from across the room. Everything else stays a chip. */
+export function reqRow(icon, label, got, need, unit) {
+  const ok = got >= need, u = unit || '';
+  return `<div class="reqrow ${ok ? 'ok' : 'bad'}">`
+    + iconHTML(icon, 0, 'reqic')
+    + `<span class="reqlbl">${esc(label)}</span>`
+    + `<span class="reqvals"><i>Need <b>${need}${u}</b></i><i>Have <b>${got}${u}</b></i></span>`
+    + `<span class="reqchk">${ok ? '&#10003;' : '&#10007;'}</span>`
+    + `</div>`;
+}
+
 /* A tile: the glyph over the number instead of beside it.
 
    A chip is the right shape for a line of prose and the wrong shape for a row

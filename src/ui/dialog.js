@@ -37,6 +37,7 @@ function show(kind, opts) {
   const okLabel = opts.ok || (kind === 'alert' ? 'OK' : 'Confirm');
   h.innerHTML = `
     <div class="dlg ${opts.danger ? 'danger' : ''}" role="dialog" aria-modal="true">
+      <button class="panelx" data-dlg="cancel" aria-label="Close">&#10005;</button>
       <div class="dlg-head">${esc(opts.title || '')}</div>
       <div class="dlg-body">
         ${opts.text ? `<p>${esc(opts.text)}</p>` : ''}

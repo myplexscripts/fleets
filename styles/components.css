@@ -148,14 +148,45 @@
 
 /* ---- requirement bar -----------------------------------------
    What the job asks for, on a brass plate at the top of the panel. */
-.reqbar{
-  position:relative;overflow:hidden;
-  border:2px solid var(--brass);border-radius:var(--r-sm);
-  background:#33290f;
-  padding:9px 12px;margin-top:7px;
-  box-shadow:var(--slab-sm);
-}
+/* No box of its own. What the job asks for sits directly on the panel, the
+   way every reference draws it — a brass tray around it was one frame too
+   many, and it made the rows inside read as a nested dialog. */
+.reqbar{position:relative;margin-top:7px}
 .reqbar > *{position:relative}
+
+/* ---- requirement rows ----
+   One line a test: what it is, what it asks against what you have, and a tick
+   box that answers it. The tick is the whole point — a row of these is read
+   down the right-hand edge, not across. */
+.reqrows{display:flex;flex-direction:column;gap:6px;margin-bottom:9px}
+.reqrows:last-child{margin-bottom:0}
+.reqrow{
+  display:flex;align-items:center;gap:11px;
+  background:var(--navy2);border:2px solid var(--line);border-radius:8px;
+  padding:7px 9px 7px 8px;
+}
+.reqrow .reqic{width:40px;height:40px;flex-shrink:0}
+.reqlbl{
+  flex:1;min-width:0;font-family:var(--ui);font-weight:500;
+  font-size:clamp(17px,1.2vw,21px);letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.reqvals{display:flex;flex-direction:column;gap:1px;flex-shrink:0;text-align:right}
+.reqvals i{
+  font-style:normal;font-family:var(--ui);font-size:16px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--dim);line-height:1.15;white-space:nowrap;
+}
+.reqvals i b{font-weight:500;color:var(--ink);margin-left:.35em}
+/* The tick box, and the one thing on the row that carries colour. */
+.reqchk{
+  flex-shrink:0;width:34px;height:34px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;line-height:1;font-weight:700;
+  border:2px solid;
+}
+.reqrow.ok .reqchk{background:var(--tealhi);border-color:#4fd6ce;color:#fff}
+.reqrow.bad .reqchk{background:#a5392c;border-color:#e08066;color:#fff}
+.reqrow.bad .reqvals i b{color:#f0a89a}
 /* One row, scrolling sideways — not a block that wraps.
 
    Eight readings at this size is three wrapped rows and a third of a phone
@@ -169,7 +200,7 @@
   padding-bottom:2px;
 }
 .reqbar .chips::-webkit-scrollbar{display:none}
-.reqbar .chip{background:rgba(0,0,0,.42);flex-shrink:0}
+.reqbar .chip{background:var(--navy2);box-shadow:none;border:2px solid var(--line);flex-shrink:0}
 /* The glyphs keep the 40px floor the whole game holds to; the numbers beside
    them give up a few points instead, which is what lets four fit across. */
 .reqbar .chips.big .chip{font-size:clamp(17px,1.15vw,21px);padding:3px 11px 3px 4px}

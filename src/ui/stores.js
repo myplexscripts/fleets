@@ -43,10 +43,10 @@ function drawStores() {
        ${chipRow([
          chip('cargo', totalGoods(), 'gold', 'Goods in store'),
          chip('mats', totalMats(), 'gold', 'Materials in store')
-       ], 'tight')}</div>
-     <div class="sub quote" style="margin-top:6px">Won off the routes you run and the ships you beat. Sell what you cannot place at the Market.</div>`,
+       ], 'tight')}</div>`,
 
-    `${sect('Trade Goods', 0)}
+    `<div class="sub quote">Won off the routes you run and the ships you beat. Sell what you cannot place at the Market.</div>
+     ${sect('Trade Goods', 0)}
      ${itemGrid(GOOD_KEYS.map(k => row(k, GOODS[k], S.goods[k])).join(''))}
      ${sect('Materials', 1)}
      ${itemGrid(MAT_KEYS.map(k => row(k, MATERIALS[k], S.mats[k])).join(''))}

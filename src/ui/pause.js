@@ -33,6 +33,7 @@ function draw() {
   const inFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
   $('pauseScr').innerHTML = `
     <div class="pausebox">
+      <button class="panelx" data-act="pause-close" aria-label="Close">&#10005;</button>
       <div class="pausehead">${iconHTML('wheel', 40)}<span>Settings</span></div>
       <div class="pausebody">
         <div class="optlist">

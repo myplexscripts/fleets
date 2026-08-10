@@ -52,7 +52,7 @@ import { BOUNTY_GOLD_PER_RATING } from '../core/config.js';
 import { reloadMs } from '../battle/state.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
-import { chip, have, chipRow, bagChips, shipTiles } from './format.js';
+import { chip, have, reqRow, chipRow, bagChips, shipTiles } from './format.js';
 import { rail, railCard, reqBar } from './components.js';
 import { openSheet, closeSheet, setSheetFoot } from './sheet.js';
 import { deny } from '../fx/pop.js';
@@ -196,12 +196,27 @@ function foeList() {
   const drawn = curRoute ? drawBand(curRoute) : null;
   const tag = drawn && drawn.label
     ? `<span class="tag ${drawn.band === 'straggler' ? 't0' : 'bad'}">${esc(drawn.label)}</span>` : '';
+  /* One card a hull, side by side: her silhouette, her name, what she rates at,
+     and — once you have picked a line — what she is worth to you as odds. Three
+     ships read as three opponents this way; as stacked text rows they read as a
+     paragraph you have to parse. */
+  const fleet = sel.map(findShip).filter(Boolean);
   return `<div class="foelist" style="--i:0">
     ${tag ? `<div class="foeband">${tag}</div>` : ''}
-    ${foes.map(e => `<div class="foe"><b>${esc(e.name)}</b>${chipRow([
-      chip('speed', e.speed, 'dim'), chip('guns', e.guns, 'dim'), chip('hull', e.max, 'dim'),
-      e.chest ? chip('chest', 'BOX', 'gold', "She is carrying a captain's strongbox") : ''
-    ], 'tight')}</div>`).join('')}
+    <div class="foegrid">
+    ${foes.map(e => {
+      const o = fleet.length ? battleOdds(fleet, [e]) : null;
+      const cls = o === null ? 'dim' : o >= 85 ? 'ok' : o >= 60 ? 'warn' : 'bad';
+      return `<div class="foecard">
+        <div class="foeart">${shipHTML(e.type, 'enemy', 0.5)}</div>
+        <b>${esc(e.name)}</b>
+        <span class="foetype">${esc(tname(e))}</span>
+        <div class="foestat"><i>Power</i><b>${power(e)}</b></div>
+        <div class="foeodds ${cls}"><i>Odds</i><b>${o === null ? '—' : o + '%'}</b></div>
+        ${e.chest ? `<span class="foechest">${iconHTML('chest', 0, 'ic')}Strongbox</span>` : ''}
+      </div>`;
+    }).join('')}
+    </div>
   </div>`;
 }
 
@@ -220,25 +235,30 @@ function drawMission() {
   /* Danger only means something where cargo can be taken off you. */
   const showDanger = r.type === 'cargo' || (!isBoss && !isCh && r.type !== 'dive');
 
-  let head = `<div class="row"><h3>${esc(r.n)}</h3><span class="tag ${tagCls}">${tagText}</span></div>`;
+  /* Only the name and what it is stay in the title bar. Everything that used
+     to stack underneath it — the danger reading, the mode tabs, what the job
+     asks for — is page content, not chrome, so it opens the body instead. */
+  $('sheetHead').innerHTML =
+    `<div class="row"><h3>${esc(r.n)}</h3><span class="tag ${tagCls}">${tagText}</span></div>`;
+
+  let sub = '';
   if (showDanger) {
-    head += `<div class="dbar"><i style="width:${(d + 1) / DNAMES.length * 100}%;background:${DCOLORS[d]}"></i></div>`;
+    sub += `<div class="dbar"><i style="width:${(d + 1) / DNAMES.length * 100}%;background:${DCOLORS[d]}"></i></div>`;
   }
 
   /* A lane that has gone bad is two jobs, and both are offered up front. Neither
      is compulsory — you may always just sail it. */
   if (canVoyage(r) && laneFight(r)) {
-    head += `<div class="mtabs">
+    sub += `<div class="mtabs">
       <button class="mtab ${fighting ? '' : 'on'}" data-act="run-mode">${iconHTML(r.type === 'dive' ? 'chest' : 'cargo', 40)}${MTYPE[r.type].n}</button>
       <button class="mtab ${fighting ? 'on' : ''}" data-act="fight-mode">${iconHTML('danger', 40)}Battle</button>
     </div>`;
   } else {
-    head += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
+    sub += `<div class="row" style="margin-top:8px"><span class="mtype ${isBoss ? 'boss' : (isCh ? 'gold' : '')}">${MTYPE[r.type].n}</span></div>`;
   }
-  head += requirements(r, isBoss);
-  $('sheetHead').innerHTML = head;
+  sub += requirements(r, isBoss);
 
-  /* ---- body: who is waiting, then the ships to send ---- */
+  /* ---- body: what it asks of you, who is waiting, then the ships to send ---- */
 
   /* Picking a ship redraws the whole sheet, which used to throw the rail back
      to its first card — so choosing your third hull meant scrolling the fleet
@@ -251,7 +271,7 @@ function drawMission() {
   const panel = fighting ? laneBody(r)
     : canVoyage(r) ? voyageBody(r)
     : battleBody(r, isBoss, isCh);
-  $('sheetBody').innerHTML = panel.body;
+  $('sheetBody').innerHTML = sub + panel.body;
 
   if (railLeft) {
     const rail1 = $('shipPicks');
@@ -277,7 +297,7 @@ function requirements(r, isBoss) {
   if (fighting) {
     const d = effDanger(r);
     const odds = foes && picked ? battleOdds(fleet, foes) : 0;
-    return reqBar([
+    return reqBar([], [
       chip('danger', `${DNAMES[d]} <em>&rarr;</em> ${DNAMES[Math.max(0, d - 1)]}`, 'ok',
         'What winning does to this lane'),
       chip('crew', BATTLE_SHIPS, '', 'Ships this takes'),
@@ -296,12 +316,13 @@ function requirements(r, isBoss) {
     const spd = picked ? Math.round(fleet.reduce((a, s) => a + s.speed, 0) / fleet.length) : 0;
     const odds = tradeChance(r, fp);
     return reqBar([
-      /* The three the ship herself has to answer, first and together. */
-      have('cargo', holdCap(fleet), r.qty, 'Cargo space against the consignment'),
-      have('power', fp, r.power, 'Power against the water she crosses'),
-      have('speed', spd, r.speed, 'Speed against the passage'),
+      /* The four the ship herself has to answer, one per line. */
+      reqRow('cargo', 'Cargo', holdCap(fleet), r.qty),
+      reqRow('power', 'Power', fp, r.power),
+      reqRow('speed', 'Speed', spd, r.speed, ' kts'),
+      reqRow(r.good, g.n, goodsHeld(r.good), r.qty)
+    ], [
       /* Then what it costs you and what it pays. */
-      have(r.good, goodsHeld(r.good), r.qty, `${g.n} in store`),
       chip('dest', esc(r.dest), '', 'Destination'),
       chip('time', picked ? fmtDur(dur) : '—', '', 'Time away'),
       chip('target', picked ? odds + '%' : '—',
@@ -316,9 +337,9 @@ function requirements(r, isBoss) {
     const chests = picked ? diveChests(r, fleet) : 0;
     const value = chestValue(r);
     return reqBar([
-      have('depth', bellDepth(), r.depth, `${BELL_NAMES[S.bell]} reaches depth ${bellDepth()}`),
-      have('cargo', holdCap(fleet), r.chestMin * CARGO_PER_CHEST,
-        `Cargo space — ${CARGO_PER_CHEST} per chest raised`),
+      reqRow('depth', 'Depth', bellDepth(), r.depth, ' m'),
+      reqRow('cargo', 'Cargo', holdCap(fleet), r.chestMin * CARGO_PER_CHEST)
+    ], [
       chip('chest', picked ? chests : '—', 'gold', 'Chests expected'),
       chip('gold', picked ? chests * value : value, 'gold', picked ? 'Sold on the quay' : 'Per chest'),
       chip('time', picked ? fmtDur(dur) : '—', '', 'Time away'),
@@ -344,6 +365,8 @@ function requirements(r, isBoss) {
      odds. The player scrolled past four hundred pixels of chrome to reach the
      ships they were being asked to choose. */
   return reqBar([
+    r.power ? reqRow('power', 'Power', fp, r.power) : ''
+  ], [
     isBt ? chip('time',
       `<b class="clock" data-endsat="${r.endsAt}">${fmtDur(left / 1000)}</b>`,
       left < 3 * 60 * 1000 ? 'bad' : 'warn', 'Before she sails') : '',
@@ -352,8 +375,7 @@ function requirements(r, isBoss) {
         !picked ? 'dim' : odds >= 85 ? 'ok' : odds >= 60 ? 'warn' : 'bad', 'Estimated odds')
       : '',
     ...foeChips(),
-    r.power ? have('power', fp, r.power, 'Fleet power against what this fight is rated for')
-            : chip('power', fp, '', 'Fleet power'),
+    r.power ? '' : chip('power', fp, '', 'Fleet power'),
     chip('noto', '+' + notoGain(r), 'gold', 'Notoriety on victory'),
     isBt ? chip('gold', Math.round(routeRating(r) * BOUNTY_GOLD_PER_RATING), 'gold', 'The price on her')
          : bagChips(r.rew),

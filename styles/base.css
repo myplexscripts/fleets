@@ -228,23 +228,34 @@ h1,h2,h3{font-weight:500}
   text-decoration:underline;cursor:pointer;padding:0;
 }
 
-/* ---- meters ---- */
+/* ---- meters ----
+   Segmented, not a smooth sweep. A bar cut into ten blocks reads as a quantity
+   you can count at a glance — "seven of ten" — where a continuous fill only
+   ever reads as "most of the way". The notches are an overlay painted in the
+   panel colour over the top of the fill, so one rule gives every meter in the
+   game the same tick spacing whatever its own colour is doing. */
 .bar,.vbar,.secbar,.dbar,.notobar{
-  background:#020f12;border:none;border-radius:var(--r-pill);overflow:hidden;
-  box-shadow:var(--well);
+  position:relative;
+  background:var(--navy3);border:2px solid var(--line);border-radius:4px;
+  overflow:hidden;
 }
-.bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:var(--r-pill)}
-.bar{height:12px;margin-top:9px}
+.bar i,.vbar i,.secbar i,.dbar i,.notobar i{border-radius:0}
+.bar::after,.vbar::after,.secbar::after,.dbar::after,.notobar::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,
+    transparent 0 calc(10% - 3px), var(--navy3) calc(10% - 3px) 10%);
+}
+.bar{height:16px;margin-top:9px}
 .bar i{display:block;height:100%;background:var(--grn);transition:width .5s cubic-bezier(.2,.9,.3,1)}
 .bar i.low{background:var(--yel)}
 .bar i.crit{background:var(--red)}
-.vbar{height:14px;margin-top:9px}
+.vbar{height:16px;margin-top:9px}
 .vbar i{display:block;height:100%;background:var(--blu);transition:width 1s linear}
 .vbar.done i{background:var(--grn)}
-.secbar{height:12px;margin-top:8px}
+.secbar{height:16px;margin-top:8px}
 .secbar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
 .secbar.clear i{background:var(--grn)}
-.dbar{height:11px;margin-top:7px}
+.dbar{height:14px;margin-top:7px}
 .dbar i{display:block;height:100%;transition:width 1.2s ease,background 1.2s ease}
 
 /* ---- small type ---- */

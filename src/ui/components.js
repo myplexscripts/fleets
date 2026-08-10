@@ -95,10 +95,21 @@ export function railCard(o) {
 }
 
 /* ---- 4. requirement bar ----------------------------------------------
-   What the job in front of you asks for, big, in the head where it stays put
-   while the rail below it is scrolled. */
-export function reqBar(chips, note) {
-  return `<div class="reqbar">${chipRow(chips, 'big')}${note ? `<div class="reqnote">${note}</div>` : ''}</div>`;
+   What the job in front of you asks for.
+
+   Two bands, because there are two kinds of reading here. The tests — can this
+   fleet carry it, is it fast enough, does the bell reach — are ROWS, stated one
+   per line with a tick at the end. Everything that merely describes the job —
+   where it goes, how long it takes, what it pays — stays a chip strip
+   underneath. Rows are what you check; chips are what you weigh. */
+export function reqBar(rows, chips, note) {
+  const r = (rows || []).filter(Boolean);
+  const c = (chips || []).filter(Boolean);
+  return `<div class="reqbar">`
+    + (r.length ? `<div class="reqrows">${r.join('')}</div>` : '')
+    + (c.length ? chipRow(c, 'big') : '')
+    + (note ? `<div class="reqnote">${note}</div>` : '')
+    + `</div>`;
 }
 
 /* A section label. The one heading style.

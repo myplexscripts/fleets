@@ -185,7 +185,7 @@
 .mapfleet.none{color:#e88a7a}
 .mapfleet.none b{color:#e88a7a}
 
-.notobar{height:10px;margin-top:6px}
+.notobar{height:14px;margin-top:6px}
 .notobar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
 .notobar.full i{background:#c8503c}
 
@@ -244,8 +244,9 @@
 /* ---- collectible sets (Captain's Quarters) ---- */
 .card.setdone{border-color:var(--brass);box-shadow:0 3px 14px rgba(0,0,0,.5),inset 0 0 26px rgba(217,201,138,.08)}
 .card.setdone{border-color:var(--gold)}
-.setbar{height:11px;background:#020f12;border:none;border-radius:var(--r-pill);margin-top:8px;overflow:hidden;box-shadow:var(--well)}
-.setbar i{display:block;height:100%;border-radius:var(--r-pill);background:var(--gold);transition:width .6s ease}
+.setbar{position:relative;height:16px;background:var(--navy3);border:2px solid var(--line);border-radius:4px;margin-top:8px;overflow:hidden}
+.setbar::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 3px),var(--navy3) calc(10% - 3px) 10%)}
+.setbar i{display:block;height:100%;background:var(--gold);transition:width .6s ease}
 .setbar.full i{background:var(--grn)}
 .pieces{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:5px;margin-top:9px}
 .piece{

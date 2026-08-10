@@ -150,10 +150,10 @@ function drawTally(title, sub, lines) {
   /* And what beating an admiral makes you. */
   ledger.titles.forEach(t => push(glyph('star'), 'Title Earned', t, 'title'));
 
-  $('rHead').innerHTML = `<div class="rverdict ${cards.length ? 'good' : 'bad'}">${esc(title)}</div>
-    <div class="rwhere">${esc(sub)}</div>`;
   $('rBody').innerHTML =
-    ((lines && lines.length) ? `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : '')
+    `<div class="rverdict ${cards.length ? 'good' : 'bad'}">${esc(title)}</div>
+     <div class="rwhere">${esc(sub)}</div>`
+    + ((lines && lines.length) ? `<div class="rlines">${lines.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : '')
     + (cards.length ? `<div class="tally">${cards.join('')}</div>`
       : '<div class="sub center tallynone">Nothing came of it but the wear on your hulls.</div>')
     + wantedMeter();
@@ -300,11 +300,12 @@ export function showResult({ route, success, msg, captives = [], evt = '', noto 
     drawTally(title, route.n, lines);
     openResult();
   } else {
-    $('rHead').innerHTML = `<div class="rverdict ${success ? 'good' : 'bad'}">${esc(title)}</div>
-      <div class="rwhere">${esc(route.n)}</div>`;
     /* Only the decisions live here. What the fight was worth — the coin, the
        materials, the holds — is not shown twice; it is all on the account. */
-    $('rBody').innerHTML = '<div id="prizeSlot"></div>';
+    $('rBody').innerHTML =
+      `<div class="rverdict ${success ? 'good' : 'bad'}">${esc(title)}</div>
+       <div class="rwhere">${esc(route.n)}</div>
+       <div id="prizeSlot"></div>`;
     $('rBody').scrollTop = 0;
     nextPrize();
     drawFoot();

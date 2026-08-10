@@ -72,13 +72,20 @@ catch (e) {
   /* The enemy line-up folds up by default now — a card four hundred pixels tall
      pushed the fleet off the bottom of the sheet. Expand it before reading it,
      because who is out there by NAME is the thing this rule is about. */
+  /* The line-up is a card a hull now, not a text row — the identity of a draw
+     is her name and what she rates at. Odds are deliberately left out: they
+     move with the ships you have picked, and what this is checking is that the
+     ENEMIES do not. */
   const foeLine = () => p.evaluate(async () => {
-    if (!document.querySelectorAll('.foelist .foe').length) {
+    if (!document.querySelectorAll('.foelist .foecard').length) {
       const t = document.querySelector('[data-act="toggle-foes"]');
       if (t) { t.click(); await new Promise(r => setTimeout(r, 300)); }
     }
-    return [...document.querySelectorAll('.foelist .foe')]
-      .map(f => f.textContent.replace(/\s+/g, ' ').trim()).join(' | ');
+    return [...document.querySelectorAll('.foelist .foecard')].map(f => {
+      const name = f.querySelector('b');
+      const pow = f.querySelector('.foestat b');
+      return (name ? name.textContent.trim() : '') + ' ' + (pow ? pow.textContent.trim() : '');
+    }).join(' | ');
   });
 
   /* ---- 1. the draw is drawn once ---- */
