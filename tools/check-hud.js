@@ -110,16 +110,16 @@ const errors = [];
 
   console.log('3. the at-sea countdown and its meter run on their own');
   await p.click('#node_c1'); await p.waitForSelector('#overlay.vis'); await p.waitForTimeout(800);
-  await p.locator('#shipPicks .railcard.flag').click(); await p.waitForTimeout(500);
+  await p.locator('#shipPicks .pickrow.flag').click(); await p.waitForTimeout(500);
   await p.click('#sailBtn'); await p.waitForTimeout(900);
   await p.click('#tabVoy'); await p.waitForTimeout(1400);
-  const t1 = (await p.locator('.item[data-voy] .clock').first().textContent()).trim();
+  const t1 = (await p.locator('[data-voy] .clock').first().textContent()).trim();
   await p.waitForTimeout(3200);
-  const t2 = (await p.locator('.item[data-voy] .clock').first().textContent()).trim();
+  const t2 = (await p.locator('[data-voy] .clock').first().textContent()).trim();
   /* The meter is driven through --p, never through an inline width: an inline
      width would outrank the stylesheet's clamp() and hand the bar's one
      guarantee — that it cannot leave its own track — back to arithmetic. */
-  const bar = p.locator('.item[data-voy] .meter').first();
+  const bar = p.locator('[data-voy] .meter').first();
   const m = await bar.evaluate(e => ({
     p: e.style.getPropertyValue('--p'),
     width: e.style.width,

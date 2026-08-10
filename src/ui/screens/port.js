@@ -56,9 +56,15 @@ export function renderPort() {
   const full = S.ships.length >= S.docks;
   h += sect('Your Ships', i++,
     outOf('crew', S.ships.length, S.docks, full ? 'warn' : '', 'Docks in use')
-    + `<button class="btn sm gold dockbuy${full ? ' urge' : ''}" data-act="buy-dock"
+    /* Buying a berth is a top-up, not the thing you came here for, so it is
+       the quiet face at the end of the heading with its price beside it —
+       not a full-size gold key, which made the loudest object on the Port
+       screen a button nobody presses twice a session. It goes gold only when
+       every dock is full, which is the moment it stops being a top-up and
+       starts being the thing in the way. */
+    + `<button class="btn sm ${full ? 'gold urge' : 'quiet'} dockbuy" data-act="buy-dock"
         ${canPay(dc) ? '' : 'disabled'}
-        title="Another dock — ${dc.gold} gold">${iconHTML('crew', 40)}
+        title="Another dock — ${dc.gold} gold">Berth
         <span class="dockprice">${dc.gold}</span></button>`, 'sectctl');
 
   if (!S.ships.length) {

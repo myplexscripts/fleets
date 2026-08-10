@@ -112,25 +112,40 @@ function modeColour(img, x0, y0, x1, y1, dpr, fg) {
   x0 += iw; x1 -= iw; y0 += ih; y1 -= ih;
   const X0 = Math.max(0, Math.round(x0 * dpr)), X1 = Math.min(img.w, Math.round(x1 * dpr));
   const Y0 = Math.max(0, Math.round(y0 * dpr)), Y1 = Math.min(img.h, Math.round(y1 * dpr));
-  const dist2 = (a, b) => { const dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2]; return dr * dr + dg * dg + db * db; };
+  const dist2 = (a, b) => { const dr = a[0]-b[0], dg = a[1]-b[1], db = a[2]-b[2]; return dr*dr + dg*dg + db*db; };
+
+  /* Per-channel MEDIAN of the pixels that are not the text.
+
+     This was the mode, and the mode is the wrong statistic here. It assumes
+     the background is one flat value, which was true when every surface was a
+     solid fill and stopped being true the moment the game drew its water as a
+     tiling turbulence: behind a label there are now hundreds of slightly
+     different blues, none of which individually beats anything. Meanwhile the
+     anti-aliased rim of a condensed 20px cap is one exactly-repeated tone
+     thousands of pixels long, and it sits just outside whatever tolerance the
+     foreground is excluded by. So the mode reported a white heading's
+     background as its own glyph edge — 1.31:1 for a label measuring 13:1 on
+     the water it is actually printed on.
+
+     A median is robust to both. Texture spreads symmetrically around the true
+     background, so the median lands on it; glyph rims are a minority of the
+     box, so they move it by a pixel value or two at most. */
   const sample = exclude => {
-    const counts = new Map();
+    const R = [], G = [], B = [];
     for (let y = Y0; y < Y1; y++) {
       for (let x = X0; x < X1; x++) {
         const o = (y * img.w + x) * img.ch;
         const px = [img.px[o], img.px[o + 1], img.px[o + 2]];
         if (exclude && dist2(px, exclude) < 2200) continue;   /* ~47 per channel */
-        const k = (px[0] << 16) | (px[1] << 8) | px[2];
-        counts.set(k, (counts.get(k) || 0) + 1);
+        R.push(px[0]); G.push(px[1]); B.push(px[2]);
       }
     }
-    let best = -1, bestN = 0;
-    for (const [k, n] of counts) if (n > bestN) { bestN = n; best = k; }
-    return best < 0 ? null : [(best >> 16) & 255, (best >> 8) & 255, best & 255];
+    if (!R.length) return null;
+    const mid = a => { a.sort((m, n) => m - n); return a[a.length >> 1]; };
+    return [mid(R), mid(G), mid(B)];
   };
   /* Excluding the foreground can legitimately empty the sample — a solid
-     square swatch drawn in exactly its own "text" colour, say. Fall back to
-     the unfiltered mode rather than reporting nothing. */
+     swatch drawn in exactly its own "text" colour, say. */
   return sample(fg) || sample(null);
 }
 
@@ -245,7 +260,31 @@ async function goTab(p, tab) {
 }
 
 async function scan(p, label) {
-  await p.waitForTimeout(450);
+  /* Wait for the webfonts before measuring ANYTHING. The two faces are much
+     narrower than their fallbacks, so a screen laid out in the fallback and a
+     screen laid out in Staatliches are different heights — and this function
+     reads element boxes with evaluate() and then takes a screenshot, which
+     Playwright itself blocks on font loading. Measure one layout and sample
+     the other and you get a heading's box reported over whatever has since
+     moved under it: a real 13:1 label came back as 1.31:1 against a ship's
+     sails three hundred pixels away. */
+  /* Settle the page before measuring ANYTHING.
+
+     This function reads every element's box with evaluate() and then takes a
+     screenshot, and the two have to describe the same frame. Two things used
+     to make them disagree, and both produced the same nonsense result — a
+     label's box reported over whatever had since moved under it, so a 13:1
+     heading came back as 1.31:1 against a ship's sails three hundred pixels
+     away:
+
+       · the webfonts. Both faces are far narrower than their fallbacks, so a
+         screen laid out in the fallback is a different height, and Playwright
+         blocks the screenshot on font loading but not the evaluate();
+       · the entrance animations. `.calm` is the game's own reduced-motion
+         class, so switching it on is not a test-only hack — it is the state
+         a player with prefers-reduced-motion sees, and it holds still. */
+  await p.evaluate(() => { document.body.classList.add('calm'); return document.fonts.ready; });
+  await p.waitForTimeout(650);
   const cands = await p.evaluate(COLLECT);
   if (!cands.length) { console.log(`  ${label}: nothing to measure`); return; }
   const dpr = await p.evaluate(() => devicePixelRatio);

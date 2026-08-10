@@ -4,316 +4,234 @@
    ONE source of truth for colour, type, space, shape, depth and motion.
    Every other stylesheet reads from here and nothing else invents a value.
 
-   Loaded second, right after the raw palette (styles/palette.css) and before
-   any component. palette.css is the full harmony palette — a menu of colours
-   with their measured contrast ratios. This file is the ORDER: the small
-   subset actually used, and the job each one holds down.
-
    ------------------------------------------------------------
-   THE ART DIRECTION, stated once
+   THE ART DIRECTION
 
-   The game is one set: Kenney's UI Pack Adventure (CC0, kenney.nl), vectors
-   only, from assets/kenney-adventure. Three materials, three jobs:
+   The game is built on Kenney's UI Pack (assets/kenney-ui) — a flat, modern
+   mobile-game kit with five colour families, each a four-tone ramp, plus
+   buttons, checkboxes, sliders, inputs, stars, arrows and dividers drawn to
+   match. Ornamental frames come from Fantasy UI Borders
+   (assets/kenney-borders), which ships white on transparent and is therefore
+   tinted to whatever the surface under it needs.
 
-     WOOD       structure. The bars that frame a scene — the scene bar, the
-                nav rail, a panel's head and foot, a section heading. If it
-                holds the screen together it is wood.
-     PARCHMENT  content. The field a card's words and numbers are printed on.
-                If you are reading it, it is on parchment.
-     STEEL      readouts. Small inset plates — a chip, a tile, a requirement
-                row. If it is a value rather than a sentence, it is on steel.
+   The wood-and-parchment Adventure pack is NOT used. It is a fine set, but
+   it is a fantasy RPG set, and half a UI in carved wood beside half a UI in
+   flat colour is the single loudest way an interface says "assembled".
 
-   The other two Kenney packs in the repository (kenney-ui, kenney-borders)
-   are drawn in different styles and are deliberately NOT used: mixing them
-   is what makes a UI look assembled rather than art directed.
+   THE RAMP, read straight off the kit's own vectors. Four tones per family:
 
-   The harmony palette does not supply surfaces. It supplies STATUS — good,
-   caution, bad, money — and those colours only ever appear as a fill behind
-   a value or a rule beside one, never as another kind of panel.
+                SHADOW    DEEP      BASE      LIGHT
+     Blue       #146587   #167DA8   #1C9FD7   #36BDF7
+     Green      #046D41   #029357   #16BB77   #2FD792
+     Yellow     #B48000   #DEA312   #FFCC00   #FFEA9C
+     Red        #871023   #CD0B2A   #EE2747   #FF627B
+     Grey       #666880   #989AAF   #DADCE7   #FFFFFF
+
+   SHADOW is the slab a control sits on. DEEP is its edge. BASE is its face.
+   LIGHT is the lit top edge. A control is those four in that order, which is
+   exactly how the kit's own button art is drawn — so a control this
+   stylesheet draws and a control the kit draws are the same object.
    ============================================================ */
 
 :root{
 
-  /* ============================================================
-     1. COLOUR — the working subset
+  /* ---- the raw ramp ---------------------------------------------------- */
+  --blue-shadow:#146587;  --blue-deep:#167DA8;  --blue:#1C9FD7;  --blue-lit:#36BDF7;
+  --green-shadow:#046D41; --green-deep:#029357; --green:#16BB77; --green-lit:#2FD792;
+  --gold-shadow:#B48000;  --gold-deep:#DEA312;  --gold:#FFCC00;  --gold-lit:#FFEA9C;
+  --red-shadow:#871023;   --red-deep:#CD0B2A;   --red:#EE2747;   --red-lit:#FF627B;
+  --grey-shadow:#666880;  --grey-deep:#989AAF;  --grey:#DADCE7;  --grey-lit:#FFFFFF;
 
-     Twelve colours doing twelve jobs. The palette carries twenty-three; the
-     rest are not "unused", they are the ones this game decided against. A
-     colour earns a place here by having a job no other colour is doing.
-     ============================================================ */
-
-  /* ---- ground -------------------------------------------------------
-     Deep water, under every scene in the game. This is the single strongest
-     cohesion device the game has: whatever else a screen is doing, it is
-     happening on the same sea. Mixed from the palette's Teal and Navy
-     anchors — Teal alone is too bright to sit a panel on, Navy alone is too
-     dead to read as water. */
-  --sea:           color-mix(in srgb, var(--color-teal) 24%, var(--color-navy));
-  --sea-deep:      color-mix(in srgb, var(--color-teal) 12%, var(--color-navy));
-  --sea-abyss:     color-mix(in srgb, var(--color-navy) 62%, #000);
-  /* the scrim behind a modal: the sea, drowned */
-  --scrim:         color-mix(in srgb, var(--color-navy) 40%, rgba(0,0,0,.86));
+  /* ---- the ground -----------------------------------------------------
+     Deep water. The kit gives no background of its own, so this is the one
+     colour the game brings: a dark navy-teal that the five families all sit
+     on cleanly, and the single strongest cohesion device the game has —
+     whatever else a screen is doing, it happens on the same sea. */
+  --sea:#12304A;
+  --sea-deep:#0C2438;
+  --sea-abyss:#081826;
+  --sea-lit:#1B4262;
+  --scrim:rgba(6,18,28,.82);
 
   /* The caustic web of light on the water. Drawn as a tiling SVG turbulence
      rather than shipped as a binary: it stitches seamlessly, costs no
-     request, and is crisp at any density. Kept very low contrast on purpose
-     — it must read as texture at arm's length and as nothing at all behind a
-     panel, because the panel is what the player is looking at. */
-  --water:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.016' numOctaves='4' seed='11' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.85 0 0 0 0 0.88 0 0 0 -1.25 0.52'/%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23c)' opacity='0.35'/%3E%3C/svg%3E");
+     request, and stays crisp at any density. Very low contrast on purpose —
+     texture at arm's length, nothing at all behind a panel. */
+  --water:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.016' numOctaves='4' seed='11' stitchTiles='stitch' result='t'/%3E%3CfeColorMatrix in='t' type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.85 0 0 0 0 0.88 0 0 0 -1.25 0.52'/%3E%3C/filter%3E%3Crect width='420' height='420' filter='url(%23c)' opacity='0.3'/%3E%3C/svg%3E");
 
-  /* ---- materials ----------------------------------------------------
-     Read straight off the pack's own vectors, so a CSS-drawn surface and a
-     9-sliced one are the same colour. Nothing here is invented. */
-  --wood:          #B47B41;   /* frame body */
-  --wood-mid:      #A3703A;   /* frame shading */
-  --wood-dark:     #6D4B27;   /* frame outline, and the dark plank */
-  --parch:         #FFF1D2;   /* the field words are printed on */
-  --parch-sunk:    #E9DBB6;   /* the same field, recessed */
-  --steel:         #778D9F;   /* plate body */
-  --steel-dark:    #515F6B;   /* plate outline */
-  --steel-lit:     #94AFC6;   /* plate field — the one that carries a value */
+  /* ---- surfaces -------------------------------------------------------
+     Three, and only three, so a player learns the depth order once:
 
-  /* ---- ink ----------------------------------------------------------
-     Two foregrounds, and which one you get is decided by the material under
-     you, never by the component. Both are measured against every surface
-     they are allowed to touch:
+       SUNK    darker than the page. A track, a well, a thing sunk INTO a
+               card — a meter's groove, a stat block, an inset row.
+       CARD    the page's own panel. Everything you read sits on one.
+       RAISED  lighter than the card. A thing sitting ON it — the head of a
+               card, a selected row, a callout.
 
-       ink   on parchment  12.8:1     ink   on steel-lit  6.3:1
-       ivory on wood-dark   6.7:1     ivory on sea       ~9:1
-       ink   on gold        5.2:1     ivory on red-deep   7.3:1
+     All three are navy, so the coloured controls are the only saturated
+     things on screen and therefore the only things that pull the eye. */
+  --sunk:#0E2739;
+  --card:#1A3D5C;
+  --card-2:#16344E;          /* a card's quieter second band */
+  --raised:#24567E;
+  --line:#2E6187;            /* the hairline between bands */
+  --line-soft:rgba(255,255,255,.09);
 
-     `-soft` is the same ink at a lower rank — a caption, a unit, a hint. It
-     is a different colour rather than an opacity, because an opacity over
-     parchment and an opacity over steel are two different greys. */
-  --ink:           var(--color-navy);
-  --ink-soft:      var(--wood-dark);
-  --ivory:         var(--color-warm-ivory);
-  --ivory-soft:    var(--color-sand);
+  /* ---- ink ------------------------------------------------------------
+     Two foregrounds on the dark surfaces, one on the light controls. Every
+     pairing here is measured:
 
-  /* ---- the jobs -----------------------------------------------------
-     Each of these is one decision. A component asks for the job, never for
-     the colour: `background:var(--accent)` says "this is the money one",
+       ink       on card    11.4:1      ink       on sunk    13.9:1
+       ink-dim   on card     5.3:1      ink-dim   on sunk     6.5:1
+       on-light  on gold    12.6:1      on-light  on green    6.9:1  */
+  --ink:#F2F6FA;
+  --ink-dim:#9DB6CB;
+  --ink-dark:#0B1D2B;        /* on gold, green-lit, grey, white */
+
+  /* ---- the jobs -------------------------------------------------------
+     Five families, five jobs, and a component asks for the JOB. Nothing in
+     the game says "make this blue"; it says "this is the primary action",
      which survives the palette changing underneath it. */
 
-  /* PRIMARY — structure and the action you came here to take. Wood. */
-  --primary:       var(--wood);
-  --primary-edge:  var(--wood-dark);
-  --on-primary:    var(--ink);
+  /* PRIMARY — navigation, and the ordinary action. */
+  --primary:var(--blue);
+  --primary-deep:var(--blue-deep);
+  --primary-shadow:var(--blue-shadow);
+  --primary-lit:var(--blue-lit);
+  --on-primary:var(--ink-dark);       /* 5.3:1 on the blue face; white is 3.0 */
 
-  /* SECONDARY — the supporting action, and every inset readout. Steel. */
-  --secondary:     var(--steel-lit);
-  --secondary-edge:var(--steel-dark);
-  --on-secondary:  var(--ink);
-
-  /* ACCENT — money, notoriety, and the fact that something is chosen.
+  /* ACCENT — money, notoriety, and the fact that something is CHOSEN.
      Gold is the only colour in the game that means "this one". */
-  --accent:        var(--color-gold);
-  --accent-lit:    var(--color-amber);
-  --accent-deep:   var(--color-olive-gold);
-  --on-accent:     var(--ink);            /* 5.23:1, SAFE */
+  --accent:var(--gold);
+  --accent-deep:var(--gold-deep);
+  --accent-shadow:var(--gold-shadow);
+  --accent-lit:var(--gold-lit);
+  --on-accent:var(--ink-dark);        /* 12.6:1 */
 
-  /* SUCCESS / WARNING / ERROR — status, and only status. */
-  --good:          var(--color-seafoam);  /* on ink 6.51:1 */
-  --good-deep:     #3E6B2A;               /* green INK: 5.6:1 on parchment */
-  --on-good:       var(--ink);
-  --warn:          var(--color-amber);    /* on ink 6.10:1 */
-  --on-warn:       var(--ink);
-  --bad:           var(--color-coral);    /* on ink 5.15:1 */
-  --bad-deep:      #8E3F38;               /* the pack's red; ivory on it 7.3:1 */
-  --on-bad:        var(--ink);
+  /* SUCCESS — a thing arriving, a test met, an action that pays out. */
+  --good:var(--green);
+  --good-deep:var(--green-deep);
+  --good-shadow:var(--green-shadow);
+  --good-lit:var(--green-lit);
+  --on-good:var(--ink-dark);          /* 6.9:1 */
 
-  /* SELECTED — one treatment, everywhere. A selected thing takes the accent
-     as a fill AND a ring AND (where it has one) a marker, because a tint on
-     its own is not a state a colourblind player can read. */
-  --selected:      var(--accent);
-  --selected-ring: var(--ivory);
-  --on-selected:   var(--on-accent);
+  /* WARNING — caution. There is no sixth family, so warning is the accent
+     ramp one step down, which reads as "amber" against gold's "money". */
+  --warn:var(--gold-deep);
+  --on-warn:var(--ink-dark);
 
-  /* DISABLED — never just "faded". A disabled control loses its lift as
-     well, so it reads as pressed-in and dead rather than merely dim. */
-  --disabled-ink:  var(--color-slate);
-  --disabled-fade: .45;
-  --disabled-desat:grayscale(.7);
+  /* ERROR — a test failed, and anything destructive. */
+  --bad:var(--red);
+  --bad-deep:var(--red-deep);
+  --bad-shadow:var(--red-shadow);
+  --bad-lit:var(--red-lit);
+  --on-bad:#FFFFFF;                   /* 4.8:1 on the red face */
 
-  /* FOCUS — the keyboard ring. Two rings, ivory outside gold, so it is
-     visible against wood, parchment, steel and open water alike. Nothing in
-     the game may remove this. */
-  --focus:         var(--accent-lit);
-  --focus-halo:    var(--ink);
-  --focus-ring:    0 0 0 3px var(--focus), 0 0 0 6px var(--focus-halo);
+  /* SECONDARY — the supporting action. */
+  --secondary:var(--grey);
+  --secondary-deep:var(--grey-deep);
+  --secondary-shadow:var(--grey-shadow);
+  --on-secondary:var(--ink-dark);
+
+  /* DISABLED — never merely faded. A disabled control loses its slab as
+     well as its colour, so it reads pressed-in and dead rather than dim. */
+  --disabled-fade:.42;
+  --disabled-desat:grayscale(.75);
+
+  /* FOCUS — the keyboard ring. Gold inside white, so it is visible on every
+     surface and every control face in the game. Nothing may remove it. */
+  --focus-ring:0 0 0 3px var(--gold), 0 0 0 6px var(--ink-dark);
 
   /* ============================================================
-     2. TYPE
+     TYPE
 
-     Two faces, and their roles are fixed. Nothing else is ever loaded.
+     Two faces, roles fixed, nothing else ever loaded.
 
-       DISPLAY (Staatliches) — a single-weight condensed caps face. It
-       carries every heading, button, label, tab, chip and number: anything
-       you glance at rather than read. It is the game's voice.
-
+       DISPLAY (Staatliches) — single-weight condensed caps. Every heading,
+       button, label, tab, chip and number: anything GLANCED at.
        PROSE (Archivo Narrow) — a grotesque built to stay legible narrow and
-       small. It carries every sentence: descriptions, flavour, hints, the
-       account of a battle. It is the game's speaking voice.
+       small. Every sentence: descriptions, flavour, hints.
 
-     The test is length, not importance. One word or one number is display.
-     A clause is prose.
+     The test is length, not importance. One word or one number is display;
+     a clause is prose.
      ============================================================ */
-  --font-display:'Staatliches', 'Arial Narrow', Impact, sans-serif;
-  --font-prose:'Archivo Narrow', system-ui, -apple-system, 'Segoe UI', Roboto,
-               Helvetica, Arial, sans-serif;
+  --font-display:'Staatliches','Arial Narrow',Impact,sans-serif;
+  --font-prose:'Archivo Narrow',system-ui,-apple-system,'Segoe UI',Roboto,
+               Helvetica,Arial,sans-serif;
 
-  /* The scale. Seven steps, each with a hard floor at or above 16px because
-     tools/check-min-size.js fails the build below it — a phone game with
-     14px labels is a phone game nobody over forty can play.
+  /* A 6-step scale. Fixed px at phone size and only opening up on a large
+     canvas, so a phone layout is designed once rather than fluidly guessed. */
+  --fs-hero:clamp(38px,9vw,72px);     /* the wordmark, a verdict */
+  --fs-xl:clamp(24px,5.5vw,32px);     /* scene names, award names */
+  --fs-lg:20px;                        /* section headings, card titles */
+  --fs-md:17px;                        /* button labels, item names */
+  --fs-sm:15px;                        /* captions, units, tab labels */
+  --fs-xs:13px;                        /* the floor: badges, hotkeys */
 
-     The upper end only opens up on a large screen: these are clamps against
-     the viewport, so the scale grows with the canvas instead of leaving a
-     tablet reading phone-sized type. */
-  --fs-hero:  clamp(34px, 8.2vw, 74px);   /* the wordmark, a verdict */
-  --fs-display:clamp(26px, 3.4vw, 40px);  /* scene names, award names */
-  --fs-title: clamp(21px, 2.2vw, 28px);   /* section headings, card titles */
-  --fs-head:  clamp(18px, 1.6vw, 23px);   /* item names, button labels */
-  --fs-body:  clamp(16px, 1.25vw, 19px);  /* sentences */
-  --fs-label: clamp(16px, 1.15vw, 18px);  /* captions, units, tab labels */
-  --fs-micro: 16px;                        /* the floor. Never go under it. */
+  --fs-num-xl:clamp(28px,7vw,40px);
+  --fs-num:20px;
+  --fs-num-sm:16px;
 
-  /* Numbers get their own steps: a readout is meant to be seen from further
-     away than the word next to it. */
-  --fs-num-lg:clamp(26px, 2.6vw, 38px);
-  --fs-num:   clamp(19px, 1.5vw, 24px);
-  --fs-num-sm:clamp(17px, 1.2vw, 20px);
-
-  /* Tracking. Staatliches is condensed, so caps need air to stop reading as
-     a fence. Three settings, by size — big type needs proportionally less. */
-  --track-wide:2px;
-  --track:1.2px;
-  --track-tight:.6px;
-
-  --lh-tight:1.12;
-  --lh-body:1.55;
+  --track-wide:1.6px;
+  --track:1px;
+  --track-none:.3px;
+  --lh-tight:1.1;
+  --lh-body:1.5;
 
   /* ============================================================
-     3. SPACE — a 4px grid, named by rank rather than by number of pixels,
-     so "the gap between a card and the next card" is one decision made once.
+     SPACE — an 8pt grid. Six steps, named by rank.
      ============================================================ */
-  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:26px; --s7:34px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
 
-  /* The three that carry the layout. Everything else is local. */
-  --gutter:var(--s4);            /* screen edge to content */
-  --stack:var(--s4);             /* one block to the next */
-  --inset:var(--s3);             /* a surface's frame to its content */
+  --gutter:16px;      /* screen edge to content */
+  --stack:10px;       /* one block to the next */
+  --inset:12px;       /* a surface's edge to its content */
 
   /* ============================================================
-     4. SHAPE
-
-     The pack draws rounded corners, so the interface has rounded corners.
-     These match the art's own radius at the sizes it is sliced at, which is
-     what lets a CSS-drawn meter sit beside a 9-sliced panel without the two
-     looking like they came from different games.
+     SHAPE — the kit's own geometry. Its buttons are 192x64 with a 6-unit
+     corner, so everything the game draws matches that.
      ============================================================ */
   --r-sm:6px;
   --r:10px;
   --r-lg:16px;
   --r-pill:999px;
 
-  /* ---- how a surface is built ----------------------------------------
-     Every surface in the game is the pack's FRAME art over a field this
-     stylesheet paints itself:
-
-         border-image: url(panel_x.svg) 16 / Npx stretch;   ← frame only
-         background:   var(--field);                        ← we choose this
-
-     Note the missing `fill` keyword. With it, the art's own centre slice is
-     stretched across the middle and the field colour is whatever that pixel
-     happens to be — which is how a label ended up on the frame's mid-brown
-     instead of the parchment it was designed against, at 2.2:1. The frame is
-     the art's job; the field is contrast's job, and contrast cannot be left
-     to a value nobody can see in the source.
-
-     The three fields, and the one foreground each is allowed to carry:
-
-         --parch      + --ink        12.8:1
-         --steel-lit  + --ink         6.3:1
-         --wood-dark  + --ivory       6.7:1  (--ivory-soft 5.4:1)
-
-     A control needing to say something in colour changes its FIELD, never
-     its text — every status fill below carries --ink at 5.1:1 or better,
-     where a coloured label on a light plate lands under 3:1. */
-
-  /* 9-slice widths. The pack's panels are 64 units with a 16-unit frame and
-     its buttons are 48x24 with an 8-unit frame; these are those numbers at
-     screen scale. Changing one of these changes every surface of that kind. */
-  --slice-panel:16px;
-  --slice-plank:12px;
-  --slice-plate:8px;
-  --slice-btn:8px;
-
   /* ============================================================
-     5. DEPTH
-
-     Flat art, drawn depth. There is no blur-based elevation anywhere: a
-     control sits on a hard slab of its own shadow and drops onto the surface
-     when pressed. That travel is the whole feel of the game.
+     DEPTH — flat art, drawn depth. No blur anywhere: a control sits on a
+     hard slab of its own shadow and drops onto the surface when pressed.
+     That travel is the whole feel of the game.
      ============================================================ */
-  --lift:4px;                    /* how far a control stands off the page */
+  --lift:4px;
   --lift-lg:6px;
-  --shadow-drop:0 var(--lift) 0 rgba(0,0,0,.34);
-  --shadow-drop-lg:0 var(--lift-lg) 0 rgba(0,0,0,.36);
-  /* the one soft shadow in the game: a full-screen surface over the water */
-  --shadow-float:0 10px 34px rgba(0,0,0,.55);
+  --shadow-card:0 2px 0 rgba(0,0,0,.28);
+  --shadow-float:0 12px 32px rgba(0,0,0,.5);
 
   /* ============================================================
-     6. MOTION
-
-     Fast enough to feel responsive, slow enough to be seen. Three speeds,
-     and one overshoot curve that everything springy uses so the whole game
-     bounces the same way. All of it is disabled under `.calm`, which the
-     options screen sets from prefers-reduced-motion.
+     MOTION — three speeds and one overshoot, so everything springs alike.
+     All of it is off under `.calm`.
      ============================================================ */
   --t-press:70ms;
-  --t-state:160ms;
-  --t-enter:320ms;
-  --t-meter:520ms;
+  --t-state:150ms;
+  --t-enter:280ms;
+  --t-meter:500ms;
   --ease-out:cubic-bezier(.2,.9,.3,1);
-  --ease-pop:cubic-bezier(.2,.9,.3,1.35);
+  --ease-pop:cubic-bezier(.2,.9,.3,1.4);
 
   /* ============================================================
-     7. LAYERS — every z-index in the game, in one list, so two things can
-     never accidentally claim the same plane.
+     LAYERS — every z-index in the game, in one list.
      ============================================================ */
-  --z-scene:1;
-  --z-chrome:6;        /* scene bar, nav */
-  --z-vignette:8;
-  --z-sheet:10;
-  --z-battle:20;
-  --z-result:22;
-  --z-title:25;
-  --z-tutorial:29;
-  --z-pause:32;
-  --z-dialog:35;
-  --z-wipe:40;
-  --z-pop:58;
-  --z-award:60;
-  --z-loading:64;
+  --z-scene:1; --z-chrome:6; --z-vignette:8; --z-sheet:10; --z-battle:20;
+  --z-result:22; --z-title:25; --z-tutorial:29; --z-pause:32; --z-dialog:35;
+  --z-wipe:40; --z-pop:58; --z-award:60; --z-loading:64;
 
   /* ============================================================
-     8. TOUCH — the floors. Apple's HIG asks for 44pt; a game played with a
-     thumb on the move wants more than the minimum for anything it expects
-     you to hit repeatedly, so the primary floor is 52 and the nav is 56.
+     TOUCH — the floors. HIG asks 44pt; anything hit repeatedly gets more.
      ============================================================ */
   --tap:44px;
-  --tap-comfortable:52px;
-  --tap-nav:56px;
-  --icon:40px;         /* the glyph floor check-min-size.js enforces */
+  --tap-lg:52px;
+  --tap-nav:58px;
+  --icon:28px;          /* a glyph inside a row */
+  --icon-lg:40px;       /* a glyph that IS the control */
 }
 
-/* A narrow phone gives its gutter back to the content. */
-@media (max-width:380px){ :root{ --gutter:var(--s3) } }
-
-/* One control's fill and the darker cut of it that it sits on. Variants set
-   `--fill`; the slab follows automatically, so a gold button sits on gold
-   shadow and a red one on red without either of them saying so. */
-:root{
-  --fill:var(--primary);
-  --fill-edge:color-mix(in srgb, var(--fill) 55%, #000);
-}
+@media (max-width:370px){ :root{ --gutter:12px } }

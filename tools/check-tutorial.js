@@ -116,7 +116,7 @@ const screenFor = sel => SCREEN[sel] || (/^#node_/.test(sel) ? 'routes' : 'fleet
        (the step before it waits on ships:1). Stage that, or the button measures
        zero and the check is grading a state the player never sees. */
     if (s.sel === '#sailBtn') {
-      await p.locator('#shipPicks .railcard:not(.dis)').first().click().catch(() => {});
+      await p.locator('#shipPicks .pickrow:not(.dis)').first().click().catch(() => {});
       await p.locator('#sailBtn').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       await p.waitForTimeout(700);
     }

@@ -171,7 +171,7 @@ const done = () => {
 
     await p.click('#tabRoutes'); await p.waitForTimeout(1300);
     await p.click('#node_c1'); await p.waitForTimeout(900); await measure('cargo sheet');
-    await p.locator('#shipPicks .railcard.flag').click(); await p.waitForTimeout(600);
+    await p.locator('#shipPicks .pickrow.flag').click(); await p.waitForTimeout(600);
     await measure('cargo sheet picked');
     await p.click('[data-act="close-sheet"]'); await p.waitForTimeout(500);
     await p.click('#node_c3'); await p.waitForTimeout(900); await measure('battle sheet');
@@ -241,7 +241,7 @@ const done = () => {
     /* And the fight itself. The order bar is four buttons across a phone, each
        carrying a 40px glyph and a label, which is the tightest row in the game —
        exactly the place a widened padding silently squeezes an icon to 39.9. */
-    await p.locator('#shipPicks .railcard:not(.dis)').first().click();
+    await p.locator('#shipPicks .pickrow:not(.dis)').first().click();
     await p.waitForTimeout(500);
     await p.click('#sailBtn');
     await p.waitForSelector('#battleScr.on', { timeout: 9000 });

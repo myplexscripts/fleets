@@ -1,4 +1,12 @@
 /* ============================================================
+   palette — REFERENCE ONLY. This file is not loaded by the game.
+
+   The interface is drawn in the Kenney UI kit's own five-family ramp (see
+   styles/tokens.css), because the kit's buttons, checkboxes and sliders are
+   painted in those exact values and a label picked from a different palette
+   would sit on art that disagrees with it. This document is kept for the
+   contrast maps below, which are still the reference for judging a pairing.
+
    palette — the harmony palette, and the contrast rules that come with it
 
    This file is the source of truth for colour. Nothing else in the game may

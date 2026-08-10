@@ -2,9 +2,9 @@
    battle — the engagement view
 
    The one scene where the game is a picture rather than a panel, so the
-   chrome gets out of the way: a wood head at the top, the water in the
-   middle, and the orders on a wood shelf at the bottom. Same three bands as
-   every other panel in the game, with the middle one handed to Phaser.
+   chrome gets out of the way: a head at the top, the water in the middle,
+   the orders on a shelf at the bottom. The same three bands as every other
+   panel in the game, with the middle one handed to Phaser.
    ============================================================ */
 
 #battleScr{
@@ -13,36 +13,36 @@
   background:var(--sea-abyss);
 }
 #battleScr.on{display:flex}
-#battleScr.boss{background:color-mix(in srgb, var(--color-terracotta) 26%, var(--sea-abyss))}
+#battleScr.boss{background:linear-gradient(180deg,#3A0C18,var(--sea-abyss))}
 
 #phaserHost{position:relative;flex:1 1 auto;min-height:0}
 #phaserHost canvas{position:absolute;inset:0;width:100% !important;height:100% !important}
 #phaserHost .nofx{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   padding:var(--s5);text-align:center;
-  font-family:var(--font-prose);font-style:italic;color:var(--ivory-soft);
+  font-family:var(--font-prose);font-style:italic;color:var(--ink-dim);
 }
 
 /* ---- the head ---- */
 .bhead{
   flex:0 0 auto;position:relative;z-index:2;text-align:center;
   padding:calc(env(safe-area-inset-top) + var(--s2)) var(--s3) var(--s2);
-  border-bottom:3px solid var(--wood-dark);
-  background:var(--wood-dark);
+  border-bottom:1px solid var(--line);
+  background:var(--sea-deep);
 }
 .bhead .h{
   font-family:var(--font-display);text-transform:uppercase;
-  font-size:var(--fs-title);letter-spacing:var(--track-wide);
-  color:var(--ivory);text-shadow:0 2px 0 rgba(0,0,0,.4);
+  font-size:var(--fs-lg);letter-spacing:var(--track-wide);
+  color:var(--ink);text-shadow:0 2px 0 rgba(0,0,0,.4);
 }
 .bhead .sub{
-  font-family:var(--font-prose);font-size:var(--fs-micro);
-  color:var(--ivory-soft);line-height:1.3;
+  font-family:var(--font-prose);font-size:var(--fs-xs);
+  color:var(--ink-dim);line-height:1.3;
   /* one line, always — two lines of instruction cost the water two lines */
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .bhead .warn{
-  color:var(--bad);font-family:var(--font-display);font-size:var(--fs-micro);
+  color:var(--red-lit);font-family:var(--font-display);font-size:var(--fs-xs);
   letter-spacing:var(--track-wide);text-transform:uppercase;
   animation:battlewarn 1s ease-in-out infinite;
 }
@@ -56,15 +56,15 @@
   position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;
   display:flex;flex-direction:column;justify-content:flex-end;
   padding:var(--s6) var(--s4) var(--s2);
-  font-family:var(--font-prose);font-size:var(--fs-micro);font-style:italic;
-  color:var(--ivory);line-height:1.45;text-align:center;
+  font-family:var(--font-prose);font-size:var(--fs-xs);font-style:italic;
+  color:var(--ink);line-height:1.45;text-align:center;
   text-shadow:0 1px 4px #000;
   background:linear-gradient(180deg,transparent,rgba(4,16,20,.55) 45%,rgba(4,16,20,.82));
 }
 .blog div{animation:logIn var(--t-state) ease both}
 .blog div:first-child:not(:only-child){opacity:.5}
-.blog .good{color:var(--good)}
-.blog .bad{color:var(--bad)}
+.blog .good{color:var(--green-lit)}
+.blog .bad{color:var(--red-lit)}
 @keyframes logIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .calm .blog div{animation:none}
 
@@ -76,8 +76,8 @@
   flex:0 0 auto;position:relative;z-index:2;
   display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s1);
   padding:var(--s2) var(--s2) calc(env(safe-area-inset-bottom) + var(--s3));
-  border-top:3px solid var(--wood-dark);
-  background:var(--wood-dark);
+  border-top:1px solid var(--line);
+  background:var(--sea-deep);
 }
 .bcmds.busy{pointer-events:none;opacity:.55}
 .bcmds .btn{
@@ -86,18 +86,18 @@
   min-width:0;
 }
 .bcmds .btn .ic{width:var(--icon);height:var(--icon)}
-/* At four across on a narrow phone the longest label only just fits, so it
-   gives up its letter spacing rather than its size — 16px is the floor. */
-.bcmds .olbl{font-size:var(--fs-micro);letter-spacing:0;line-height:1;white-space:nowrap}
+/* At four across on a narrow phone the longest label only just fits, so
+   it gives up its letter spacing rather than its size. */
+.bcmds .olbl{font-size:var(--fs-xs);letter-spacing:0;line-height:1;white-space:nowrap}
 .bcmds .onote{
   position:absolute;top:2px;right:var(--s1);
-  font-family:var(--font-display);font-size:var(--fs-micro);line-height:1;color:var(--ink);
+  font-family:var(--font-display);font-size:var(--fs-xs);line-height:1;color:var(--ink);
 }
-.bcmds .btn:disabled .onote{color:var(--steel-dark)}
+.bcmds .btn:disabled .onote{color:var(--ink-dim)}
 /* keyboard hint, on pointer devices only */
 .bcmds .hot{
   position:absolute;top:2px;left:var(--s1);
-  font-size:var(--fs-micro);line-height:1;color:var(--ink-soft);opacity:.7;
+  font-size:var(--fs-xs);line-height:1;color:var(--ink-dim);opacity:.7;
 }
 @media (pointer:coarse){.bcmds .hot{display:none}}
 
@@ -105,7 +105,7 @@
    same marker a success button uses everywhere else. */
 .bcmds .btn.on::after{
   content:'';position:absolute;left:var(--s2);right:var(--s2);bottom:2px;height:3px;
-  border-radius:var(--r-pill);background:var(--good-deep);
+  border-radius:var(--r-pill);background:var(--green);
 }
 /* A boardable target is the one moment in a fight worth interrupting for. */
 .bcmds .btn.ready{animation:boardready 1.1s ease-in-out infinite}
@@ -121,36 +121,36 @@
 .banner.on{display:flex}
 .banner .big{
   font-family:var(--font-display);font-size:clamp(36px,3.5vw,66px);
-  letter-spacing:5px;text-transform:uppercase;color:var(--ivory);
+  letter-spacing:5px;text-transform:uppercase;color:var(--ink);
   text-shadow:0 3px 0 rgba(0,0,0,.5);
   animation:bigIn .55s var(--ease-pop) both;
 }
 /* The verdict, in the three tones the whole game reads status in. These sit
    on the darkened water rather than on a panel, so they take the light cut
    of each tone rather than the deep one a light surface would need. */
-.banner .big.good{color:var(--good)}
-.banner .big.warn{color:var(--warn)}
-.banner .big.bad {color:var(--bad)}
-.banner .sub{color:var(--ivory-soft);margin-top:var(--s3);max-width:34ch}
+.banner .big.good{color:var(--green-lit)}
+.banner .big.warn{color:var(--gold)}
+.banner .big.bad {color:var(--red-lit)}
+.banner .sub{color:var(--ink-dim);margin-top:var(--s3);max-width:34ch}
 .banner .bannerok{margin-top:var(--s5);width:min(280px,80%)}
 @keyframes bigIn{0%{transform:scale(2.4);opacity:0}60%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
 .calm .banner .big{animation:none}
 .banner .stat{width:min(320px,82%);margin-top:var(--s4)}
 .banner .stat .lbl{
   display:flex;justify-content:space-between;
-  font-family:var(--font-display);font-size:var(--fs-micro);
-  letter-spacing:var(--track);text-transform:uppercase;color:var(--ivory-soft);
+  font-family:var(--font-display);font-size:var(--fs-xs);
+  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-dim);
 }
 .rewrow{
   display:flex;gap:var(--s4);margin-top:var(--s3);flex-wrap:wrap;justify-content:center;
   font-family:var(--font-display);font-size:var(--fs-num);
-  color:var(--accent-lit);letter-spacing:var(--track-tight);
+  color:var(--gold);letter-spacing:var(--track-none);
   animation:riseIn var(--t-enter) .25s ease both;
 }
 .rewrow span{display:flex;align-items:center;gap:var(--s1)}
 .calm .rewrow{animation:none}
 
-@media (min-width:900px) and (orientation:landscape){
+@media (min-width:820px) and (orientation:landscape){
   #phaserHost{max-width:1500px;width:100%;margin:0 auto}
   .bcmds{gap:var(--s2)}
   .blog{max-width:900px;margin:0 auto}

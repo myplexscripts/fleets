@@ -67,11 +67,17 @@ export function outOf(icon, cur, max, cls, title) {
    glance and from across the room. Everything else stays a chip. */
 export function reqRow(icon, label, got, need, unit) {
   const ok = got >= need, u = unit || '';
+  /* have / need on one line, in that order, with the tick as the answer. The
+     old row stacked "Need 8" over "Have 0" as two lines of small caps, which
+     is four words and two lines to say what "0 / 8" says in four characters
+     — and it made every row 56px tall. */
   return `<div class="reqrow ${ok ? 'ok' : 'bad'}">`
     + iconHTML(icon, 0, 'reqic')
     + `<span class="reqlbl">${esc(label)}</span>`
-    + `<span class="reqvals"><i>Need <b>${need}${u}</b></i><i>Have <b>${got}${u}</b></i></span>`
-    + `<span class="reqchk">${ok ? '&#10003;' : '&#10007;'}</span>`
+    /* The unit is printed once, on the pair, rather than on each half —
+       "0 KTS / 4 KTS" says knots twice to say one thing. */
+    + `<span class="reqvals"><b class="got">${got}</b><i>/</i><b>${need}${u}</b></span>`
+    + `<span class="reqchk"></span>`
     + `</div>`;
 }
 
@@ -112,18 +118,42 @@ export function chipRow(list, cls) {
 
    Pass `need` and the cargo tile becomes a have/need test — green if this hull
    can take the job, red if it cannot. */
-export function shipTiles(s, power, need) {
-  return tileRow([
-    tile('speed', s.speed, '', 'Speed'),
-    tile('guns', s.guns, '', 'Guns'),
-    tile('hull', `${Math.max(0, s.hull)}<i>/</i>${s.max}`,
-      s.hull <= 0 ? 'bad' : (s.hull < s.max * 0.6 ? 'warn' : ''), 'Hull'),
+/* One reading in the strip: glyph, number, word. */
+export function stat(icon, value, label, cls) {
+  return `<span class="stat ${cls || ''}">${iconHTML(icon, 0, 'ic')}`
+    + `<b>${value}</b><span>${esc(label)}</span></span>`;
+}
+
+/* A ship's five numbers as one strip, in a fixed order so the eye learns
+   where to look: speed, guns, hull, cargo, and what she is worth in a fight.
+
+   One row, always. These used to be five framed tiles at 40px a glyph, which
+   wrapped onto two rows in anything narrower than a full-width card and made
+   a ship 120px tall before her name. Pass `need` and the cargo reading
+   becomes a have/need test — green if this hull can take the job, red if
+   she cannot. */
+export function shipStats(s, power, need) {
+  return `<div class="stats">`
+    + stat('speed', s.speed, 'Speed')
+    + stat('guns', s.guns, 'Guns')
+    + stat('hull', `${Math.max(0, s.hull)}<i>/</i>${s.max}`, 'Hull',
+        s.hull <= 0 ? 'bad' : (s.hull < s.max * 0.6 ? 'warn' : ''))
+    + (need == null
+        ? stat('cargo', s.cargo, 'Cargo')
+        : stat('cargo', `${s.cargo}<i>/</i>${need}`, 'Cargo', s.cargo >= need ? 'ok' : 'bad'))
+    + (power == null ? '' : stat('power', power, 'Power'))
+    + `</div>`;
+}
+export const shipTiles = shipStats;
+
+/* The picker shows two numbers, not five: what she brings to THIS job. */
+export function pickChips(s, need) {
+  return chipRow([
+    chip('guns', s.guns, '', 'Guns'),
     need == null
-      ? tile('cargo', s.cargo, '', 'Cargo space')
-      : tile('cargo', `${s.cargo}<i>/</i>${need}`, s.cargo >= need ? 'ok' : 'bad',
-        'Cargo space vs this consignment'),
-    power == null ? '' : tile('power', power, '', 'Power')
-  ], 'grid5');
+      ? chip('cargo', s.cargo, '', 'Cargo space')
+      : chip('cargo', `${s.cargo}<i>/</i>${need}`, s.cargo >= need ? 'ok' : 'bad', 'Cargo vs this consignment')
+  ], 'tight');
 }
 
 /* "12 barrels of rum" — still spelled out where the words carry meaning. */

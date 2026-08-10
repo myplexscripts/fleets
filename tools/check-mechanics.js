@@ -221,7 +221,7 @@ catch (e) {
     await p.click('#node_ch1');
     await p.waitForSelector('#overlay.vis');
     await p.waitForTimeout(600);
-    await p.locator('#shipPicks .railcard:not(.dis)').first().click();
+    await p.locator('#shipPicks .pickrow:not(.dis)').first().click();
     await p.waitForTimeout(400);
     const canSail = !(await p.locator('#sailBtn').isDisabled());
     console.log('   and she can sail the hunting ground: ' + canSail);

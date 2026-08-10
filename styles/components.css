@@ -1,665 +1,447 @@
 /* ============================================================
    components — the shared vocabulary
 
-   The rules these obey are written out at the top of src/ui/components.js;
-   this file is how they look. A player learns one shape and it holds
-   everywhere, so the Buy button on a bolt of cloth sits where the Repair
-   button on a hull sat.
-
-   The load-bearing invariant: an item card's footer is price on the LEFT,
-   actions on the RIGHT, primary action rightmost. Nothing overrides it.
+   Every card, price, quantity and picker in the game is built from what is
+   here, so a player learns one shape and it holds everywhere.
    ============================================================ */
 
 /* ============================================================
    BUTTONS
 
-   Three faces, and the pack draws exactly three, which is not a coincidence
-   — a set with more than three kinds of button is a set where nobody can
-   tell which one matters.
+   The face is the kit's own art, 9-sliced; the slab under it is the same
+   family's SHADOW tone, so a gold button sits on gold shadow and a red one
+   on red without either of them saying so. Pressing drops the face the exact
+   height of its own slab — that small, precise travel is the whole feel of
+   the game, and it is the same travel on every control in it.
 
-     PRIMARY (wood)   the thing you came here to press. Warm, and it always
-                      sits rightmost in a footer or a pair.
-     SECONDARY (steel) the supporting move — cancel, speed up, take down.
-     DESTRUCTIVE (red) it removes something and cannot be undone.
+   Five families, five jobs. A screen never shows more than two at once:
+   the thing you came to do, and everything else.
 
-   All three carry INK, because all three faces are light. That is what
-   makes them legible; the frame colour and the position are what make them
-   distinguishable, and neither of those is a hue-only cue.
-
-   EVERY state is drawn, because a game played with a thumb on a bus in
-   sunlight cannot rely on a 6% tint:
-
-     default        face + 4px slab underneath
-     hover          brightens and rises 1px — fine pointers only, so a touch
-                    device never gets a stuck hover after a tap
-     pressed        travels the full height of its own slab and lands flat
-     focus-visible  a two-tone ring, visible on wood, parchment and water
-     disabled       loses the slab as well as the colour: it reads pressed-in
-                    and dead, not merely dim
+   Every state is drawn, because a game played with a thumb on a bus in
+   sunlight cannot rely on a 6% tint.
    ============================================================ */
 .btn{
+  --face:var(--blue);
+  --slab:var(--blue-shadow);
   position:relative;
   display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
   font-family:var(--font-display);font-weight:400;
-  font-size:var(--fs-head);letter-spacing:var(--track);text-transform:uppercase;
-  line-height:1.1;text-align:center;
-  color:var(--on-primary);
-  min-height:var(--tap-comfortable);
+  font-size:var(--fs-md);letter-spacing:var(--track);text-transform:uppercase;
+  line-height:1;text-align:center;white-space:nowrap;
+  color:var(--ink-dark);
+  min-height:var(--tap);
   padding:var(--s2) var(--s4);
-  border:var(--slice-btn) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 / var(--slice-btn) stretch;
-  background:var(--parch);
-  border-radius:0;cursor:pointer;
+  border:0;border-radius:var(--r-sm);cursor:pointer;
+  background:var(--face);
   margin-bottom:var(--lift);
-  filter:drop-shadow(0 var(--lift) 0 rgba(0,0,0,.32));
+  /* the kit's own anatomy, drawn: a lit top edge inside the face, and the
+     family's SHADOW tone as the slab underneath */
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.3),
+             inset 0 -2px 0 rgba(0,0,0,.12),
+             0 var(--lift) 0 var(--slab);
   transition:transform var(--t-press) var(--ease-out),
-             filter var(--t-state) ease,
-             opacity var(--t-state) ease;
+             box-shadow var(--t-press) var(--ease-out),
+             filter var(--t-state),opacity var(--t-state);
 }
 .btn .ic{width:var(--icon);height:var(--icon)}
 
-/* hover is a pointer affordance, not a touch one */
 @media (hover:hover) and (pointer:fine){
-  .btn:hover:not(:disabled){
-    transform:translateY(-1px);
-    filter:drop-shadow(0 5px 0 rgba(0,0,0,.32)) brightness(1.06);
-  }
+  .btn:hover:not(:disabled){filter:brightness(1.1)}
 }
-/* The press. The face travels the exact height of its own slab and lands on
-   the surface — that small, precise travel is the whole feel of the game. */
 .btn:active:not(:disabled){
   transform:translateY(var(--lift));
-  filter:drop-shadow(0 0 0 rgba(0,0,0,.32)) brightness(.97);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(0,0,0,.12),0 0 0 var(--slab);
 }
-.btn:focus-visible{outline:none;box-shadow:var(--focus-ring);border-radius:var(--r-sm)}
+.btn:focus-visible{outline:none;box-shadow:0 var(--lift) 0 var(--slab),var(--focus-ring)}
 .btn:disabled{
-  cursor:default;
-  opacity:var(--disabled-fade);filter:var(--disabled-desat);
+  cursor:default;opacity:var(--disabled-fade);filter:var(--disabled-desat);
   transform:translateY(var(--lift));
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.3),0 0 0 var(--slab);
 }
 
 /* ---- the faces ----
-   `.gold`, `.grn`, `.blu`, `.quiet` and `.red` are the names the screens
-   already use. They map onto the three faces rather than each inventing a
-   colour: five button colours on one screen is a ransom note. */
-.btn.gold,.btn.wide,.btn.grn{
-  border-image:url('../assets/kenney-adventure/Vector/button_brown.svg') 8 / var(--slice-btn) stretch;background:var(--parch);
-  color:var(--on-primary);
-}
-.btn.quiet,.btn.blu{
-  border-image:url('../assets/kenney-adventure/Vector/button_grey.svg') 8 / var(--slice-btn) stretch;background:var(--steel-lit);
-  color:var(--on-secondary);
-}
-.btn.red{
-  border-image:url('../assets/kenney-adventure/Vector/button_red.svg') 8 / var(--slice-btn) stretch;
-  background:var(--bad-deep);
-  color:var(--ivory);
-}
-/* A success action keeps the primary wood face and takes a green marker, so
-   "collect" is distinguishable from "upgrade" without a fourth button
-   colour that only means something if you already know the code. */
-.btn.grn::after{
-  content:'';position:absolute;left:var(--s2);right:var(--s2);bottom:2px;height:3px;
-  border-radius:var(--r-pill);background:var(--good-deep);
-}
+   `.gold`, `.grn`, `.blu`, `.quiet`, `.red`: the names the screens already
+   use, each mapped onto one family of the kit's ramp.
 
-/* ---- the sizes ---- */
-.btn.sm{
-  font-size:var(--fs-label);letter-spacing:var(--track-tight);
-  min-height:var(--tap);padding:var(--s1) var(--s3);
-  --lift:3px;
-}
-.btn.wide{
-  width:100%;font-size:var(--fs-title);
-  min-height:var(--tap-nav);padding:var(--s3) var(--s4);
-  --lift:var(--lift-lg);
-}
+   Drawn from the ramp rather than 9-sliced from the kit's button ART, and
+   that is a contrast decision rather than a stylistic one. Those faces are
+   fixed values chosen for a LIGHT interface: the grey key is near-white,
+   which on this dark ground made every secondary button the brightest object
+   on screen, and the red face is #EE2747, on which white measures 4.19:1 —
+   under the bar, and unfixable, because you cannot recolour the middle of a
+   9-slice. Painting the same ramp here keeps the kit's anatomy (lit top edge,
+   family-shadow slab, 6px corner) and lets every face be a value its own
+   label can actually be read on:
 
-/* ---- the close key ----
-   The pack draws one with the cross already on it, so the glyph is art and
-   the button carries no text at all. */
+     gold #FFCC00 + dark ink  12.6:1     green #16BB77 + dark ink  6.4:1
+     blue #1C9FD7 + dark ink   5.3:1     red   #CD0B2A + white     5.2:1
+
+   The kit's own SVGs still draw the round keys, checkboxes, sliders and
+   stars, where the art carries a shape this cannot. */
+.btn.gold,.btn.wide{--face:var(--gold);--slab:var(--gold-shadow);color:var(--ink-dark)}
+.btn.grn        {--face:var(--green);--slab:var(--green-shadow);color:var(--ink-dark)}
+.btn.blu        {--face:var(--blue);--slab:var(--blue-shadow);color:var(--ink-dark)}
+.btn.red        {--face:var(--red-deep);--slab:#5E0A18;color:#fff}
+/* SECONDARY recedes: the surface one step up from the card with a hairline
+   round it. It is a button, not an announcement. */
+.btn.quiet{
+  --face:var(--raised);--slab:var(--sea-abyss);color:var(--ink);
+  box-shadow:inset 0 0 0 2px var(--line),0 var(--lift) 0 var(--slab);
+}
+.btn.quiet:active:not(:disabled){box-shadow:inset 0 0 0 2px var(--line),0 0 0 var(--slab)}
+
+/* ---- sizes ---- */
+.btn.sm{font-size:var(--fs-sm);min-height:38px;padding:var(--s1) var(--s3);--lift:3px}
+.btn.wide{width:100%;font-size:var(--fs-lg);min-height:var(--tap-lg);--lift:var(--lift-lg)}
+
+/* ---- the close key ---- */
 .panelx{
-  /* A default corner, so a close key dropped into any panel lands somewhere
-     sensible. Panels that need it elsewhere — the full-screen sheets, which
-     have to clear a notch — move it, and the head that contains it always
-     reserves a column so it can never sit on top of a title. */
   position:absolute;z-index:3;top:var(--s2);right:var(--s2);
   width:var(--tap);height:var(--tap);flex-shrink:0;
-  border:var(--slice-btn) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/button_red_close.svg') 8 fill / var(--slice-btn) stretch;
-  background:none;cursor:pointer;
-  font-size:0;                                    /* the cross is in the art */
-  filter:drop-shadow(0 3px 0 rgba(0,0,0,.32));
-  transition:transform var(--t-press) var(--ease-out),filter var(--t-state);
+  display:flex;align-items:center;justify-content:center;
+  border:0;border-radius:var(--r-sm);
+  background:var(--red-deep);cursor:pointer;color:#fff;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.22);
+  font-family:var(--font-display);font-size:var(--fs-lg);line-height:1;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.22),0 3px 0 #5E0A18;margin-bottom:3px;
+  transition:transform var(--t-press) var(--ease-out),box-shadow var(--t-press);
 }
-.panelx:active{transform:translateY(3px);filter:none}
-.panelx:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.panelx:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.22),0 0 0 #5E0A18}
+.panelx:focus-visible{outline:none;box-shadow:0 3px 0 #5E0A18,var(--focus-ring)}
 
 /* ============================================================
    METERS — one primitive, every bar in the game
 
-   This replaces six near-identical bars that each drew themselves a little
-   differently and all shared one bug: they were built as a 9-sliced capsule
-   whose fill carried its OWN 8px border, so a fill at height:100% of a
-   10px content box came out 26px tall and hung out of both ends of its
-   track. That is why they looked broken at every value and unrecoverable at
-   the small ones.
-
-   Drawn in CSS instead, and the geometry now makes the failure impossible:
-
-     · the track clips (`overflow:hidden`), so nothing can escape it — a
-       wrong number can only ever be a wrong LENGTH, never an overflow
-     · the fill's width is clamp(0%, var(--p), 100%), so a value outside the
-       range is pinned rather than believed, in CSS as well as in JS
-     · the fill is a plain child with no border of its own, so it is exactly
-       as tall as the track's content box at every size
-     · height comes from a token, so a hull bar and a voyage bar are the
-       same object wearing different colours
-
-   `--p` is a percentage set by src/ui/format.js#meter, which clamps and
-   rounds before it ever reaches the DOM.
+   The track clips and the fill's width is clamp(0%, --p, 100%), so a wrong
+   number can only ever be a wrong LENGTH, never an overflow. `--p` is set by
+   src/ui/format.js#meter, which clamps and rounds before it reaches the DOM.
+   Anything patching one live sets --p, never a width: an inline width
+   outranks the clamp and hands the guarantee back to arithmetic.
    ============================================================ */
 .meter{
   --p:0%;
-  --meter-h:18px;
-  --meter-fill:var(--good);
+  --meter-h:10px;
+  --fill:var(--good);
+  --fill-deep:var(--good-deep);
   position:relative;display:block;width:100%;max-width:100%;
   height:var(--meter-h);
-  margin-top:var(--s2);
   border-radius:var(--r-pill);
-  background:var(--steel-dark);
-  box-shadow:inset 0 2px 0 rgba(0,0,0,.38),
-             inset 0 0 0 2px color-mix(in srgb, var(--wood-dark) 80%, #000);
-  overflow:hidden;                     /* the guarantee */
-  isolation:isolate;
+  background:var(--sea-abyss);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.5);
+  overflow:hidden;
 }
 .meter > i{
   display:block;height:100%;
-  width:clamp(0%, var(--p), 100%);     /* the second guarantee */
+  width:clamp(0%,var(--p),100%);
   border-radius:var(--r-pill);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--meter-fill) 72%, #fff) 0 42%,
-      var(--meter-fill) 42% 100%);
-  transition:width var(--t-meter) var(--ease-out),
-             background var(--t-meter) linear;
+  background:linear-gradient(180deg,var(--fill) 0 55%,var(--fill-deep) 55% 100%);
+  transition:width var(--t-meter) var(--ease-out);
 }
 .calm .meter > i{transition:none}
-
-/* Ten marks on the gauge, so a reading can be counted as well as seen. Kept
-   faint — it is a scale, not a stripe pattern. */
-.meter::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(90deg,
-    transparent 0 calc(10% - 2px), rgba(0,0,0,.22) calc(10% - 2px) 10%);
-}
-.meter.plain::after{content:none}
-
-/* sizes */
-.meter.sm{--meter-h:12px}
-.meter.lg{--meter-h:24px}
-
-/* tones — the same four the rest of the game uses, and no others */
-.meter.good{--meter-fill:var(--good)}
-.meter.warn{--meter-fill:var(--warn)}
-.meter.bad {--meter-fill:var(--bad)}
-.meter.gold{--meter-fill:var(--accent)}
-.meter.info{--meter-fill:var(--steel-lit)}
-
-/* A meter that has arrived says so by going green and holding still. */
-.meter.done{--meter-fill:var(--good)}
-.meter.full{--meter-fill:var(--accent-lit)}
-/* A meter at the top of its sweep, where something is about to happen. */
-.meter.alert{--meter-fill:var(--bad)}
-.meter.alert > i{animation:meterPulse 1.3s ease-in-out infinite}
-@keyframes meterPulse{50%{filter:brightness(1.28)}}
-.calm .meter.alert > i{animation:none}
+.meter.lg{--meter-h:16px}
+.meter.sm{--meter-h:7px}
+.meter.good{--fill:var(--good);--fill-deep:var(--good-deep)}
+.meter.warn{--fill:var(--gold);--fill-deep:var(--gold-deep)}
+.meter.bad {--fill:var(--red);--fill-deep:var(--red-deep)}
+.meter.gold{--fill:var(--gold);--fill-deep:var(--gold-deep)}
+.meter.info{--fill:var(--blue);--fill-deep:var(--blue-deep)}
+.meter.done,.meter.full{--fill:var(--green);--fill-deep:var(--green-deep)}
+.meter.alert > i{animation:meterPulse 1.2s ease-in-out infinite}
+@keyframes meterPulse{50%{filter:brightness(1.3)}}
 
 /* ============================================================
    CHIPS — one glyph, one number
 
-   The house unit for anything numeric inside a sentence or a row. A chip is
-   a small steel plate the number is stamped into, which is what makes a row
-   of them read as a readout rather than as a sentence someone abandoned.
+   The house unit for anything numeric. Small on purpose: the old set drew
+   every glyph at 40px, which made a three-part price 300px wide and is most
+   of why nothing fitted on a line. A chip is a readout, not a button.
    ============================================================ */
-.chips{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1);margin-top:var(--s2)}
-.chips.tight{gap:3px;margin-top:var(--s1)}
-.chips.big{gap:var(--s2)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1)}
+.chips.tight{gap:3px}
 
 .chip{
-  --field:var(--steel-lit);
-  display:inline-flex;align-items:center;gap:var(--s1);
+  display:inline-flex;align-items:center;gap:4px;
   font-family:var(--font-display);font-size:var(--fs-num-sm);
-  letter-spacing:var(--track-tight);line-height:1;white-space:nowrap;
+  letter-spacing:var(--track-none);line-height:1;white-space:nowrap;
   color:var(--ink);
-  padding:2px var(--s2) 2px 2px;
-  border:var(--slice-plate) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;
-  background:var(--field);
+  padding:3px 7px 3px 4px;border-radius:var(--r-sm);
+  background:var(--sunk);
 }
-.chip .chipic{width:var(--icon);height:var(--icon)}
+.chip .chipic{width:20px;height:20px}
 .chip b{font-weight:400;color:inherit}
-.chip i{font-style:normal;opacity:.55;margin:0 .1em}
-.chip em{font-style:normal;opacity:.55;margin:0 .3em}
+.chip i{font-style:normal;opacity:.5;margin:0 1px}
+.chip em{font-style:normal;opacity:.5;margin:0 3px}
 
-/* ---- status on a chip ----
-   The PLATE changes colour, not the label. A green label on a light steel
-   plate measures 2.1:1 and an amber one 3.2:1 — both unreadable, and both
-   were shipping. A green PLATE with the same ink on it measures 6.5:1, and
-   it is louder besides: a red number in a row of black ones is something you
-   have to be looking for, where a red plate in a row of steel ones is
-   something you see from across the table.
-
-   Every fill below is a colour the palette already documents Navy as safe on
-   (Seafoam 6.51, Amber 6.10, Coral 5.15, Gold 5.23), so the ink never
-   changes and no pairing has to be checked twice. */
-.chip.ok   {--field:var(--good)}
-.chip.warn {--field:var(--warn)}
-.chip.bad  {--field:var(--bad)}
-.chip.gold {--field:var(--accent)}
-/* Nothing there yet. A drained plate rather than a dimmed label, so it reads
-   as inactive without dropping under the contrast bar to say so. */
-.chip.dim  {--field:#AEB9C2}
-.chips.big .chip{font-size:var(--fs-num);padding:2px var(--s3) 2px 2px}
+/* Status is carried by the TEXT here, because a chip sits on the dark sunk
+   surface where every one of these clears 4.5:1 comfortably. */
+.chip.ok   b{color:var(--green-lit)}
+.chip.warn b{color:var(--gold)}
+.chip.bad  b{color:var(--red-lit)}
+.chip.gold b{color:var(--gold)}
+.chip.dim,.chip.dim b{color:var(--ink-dim)}
+/* a chip that is a control */
+.chip.tappable{cursor:pointer;background:var(--raised)}
+.chip.tappable:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 
 /* ============================================================
-   TILES — the glyph OVER the number
+   STATS — a ship's numbers, as one strip
 
-   For a set of amounts that has to be read as a group: a haul, a ship's five
-   numbers, the yield of a choice. Six chips do not fit across a phone at a
-   40px glyph; six tiles do. They share a fixed column so the tiles in one
-   card line up with the tiles in the next, which is the whole point of them.
+   Five readings on one line, glyph over number, no plates. The old build
+   gave each of these its own framed steel tile at 40px a glyph, which was
+   five boxes and 120px of height to say five small numbers.
    ============================================================ */
-.tiles{
-  display:flex;flex-wrap:nowrap;align-items:flex-start;justify-content:center;
-  gap:var(--s1);margin-top:var(--s2);
+.stats{
+  display:grid;grid-template-columns:repeat(var(--n,5),1fr);
+  gap:var(--s1);
+  background:var(--sunk);border-radius:var(--r-sm);
+  padding:var(--s2) var(--s1);
 }
-.tiles.wrap{flex-wrap:wrap;row-gap:var(--s3)}
-.tiles.left{justify-content:flex-start}
+.stats.n4{--n:4}
+.stat{
+  display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;
+  font-family:var(--font-display);line-height:1;
+}
+.stat .ic{width:22px;height:22px;opacity:.85}
+.stat b{font-size:var(--fs-num-sm);font-weight:400;color:var(--ink);white-space:nowrap}
+.stat i{font-style:normal;opacity:.45}
+.stat.ok b{color:var(--green-lit)}
+.stat.bad b{color:var(--red-lit)}
+.stat.warn b{color:var(--gold)}
+.stat.dim b{color:var(--ink-dim)}
+.stat span{
+  font-size:var(--fs-xs);letter-spacing:var(--track-none);
+  text-transform:uppercase;color:var(--ink-dim);
+}
 
+/* tiles: the same object, used where a GROUP of amounts has to line up */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2);justify-items:center}
+.tiles.grid5{grid-template-columns:repeat(5,1fr)}
+.tiles.wrap{display:flex;flex-wrap:wrap;justify-content:center}
 .tile{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  flex:0 1 auto;min-width:0;
-  font-family:var(--font-display);font-size:var(--fs-num-sm);
-  letter-spacing:var(--track-tight);line-height:1.05;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;
+  font-family:var(--font-display);line-height:1;color:var(--ink);
 }
-.tile .tileic{
-  width:var(--icon);height:var(--icon);padding:4px;
-  border:6px solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / 6px stretch;background:var(--steel-lit);
-  box-sizing:content-box;
-}
-.tile b{font-weight:400;white-space:nowrap}
-.tile i{font-style:normal;opacity:.55;margin:0 .04em}
-
-/* Status on a tile works the way it works on a chip: the PLATE under the
-   glyph takes the colour and the number keeps its ink. A tile can sit on
-   parchment in one card and on a steel-backed row in another, and a coloured
-   numeral cannot clear 4.5:1 against both — the plate can, because the ink on
-   it never changes. It is also the louder signal: a red plate in a row of
-   steel ones is visible before you have read anything. */
-.tile.ok   .tileic{background:var(--good)}
-.tile.warn .tileic{background:var(--warn)}
-.tile.bad  .tileic{background:var(--bad)}
-.tile.gold .tileic{background:var(--accent)}
-.tile.dim  .tileic{background:#AEB9C2}
-.tile.dim  b{opacity:.75}
-
-/* Fixed grids, so a row of four in one card sits over the row of four in the
-   next. Four for a haul, five for a ship. */
-.tiles.grid4{display:grid;grid-template-columns:repeat(4,1fr);justify-items:center;gap:var(--s1)}
-.tiles.grid5{display:grid;grid-template-columns:repeat(5,1fr);justify-items:center;gap:var(--s1)}
-.tiles.grid4 .tile,.tiles.grid5 .tile{width:100%}
-/* Narrow hosts — a rail card is a third of a phone wide — take three
-   columns and two rows rather than squeezing five glyphs under the floor. */
-.railcard .tiles.grid5,
-.itemgrid.rail .tiles.grid5{grid-template-columns:repeat(3,1fr);row-gap:var(--s2)}
+.tile .tileic{width:32px;height:32px}
+.tile b{font-size:var(--fs-num-sm);font-weight:400;white-space:nowrap}
+.tile i{font-style:normal;opacity:.45}
+.tile.ok b{color:var(--green-lit)}
+.tile.bad b{color:var(--red-lit)}
+.tile.warn b{color:var(--gold)}
+.tile.gold b{color:var(--gold)}
+.tile.dim,.tile.dim b{color:var(--ink-dim)}
 
 /* ============================================================
-   ITEM CARD
+   THE LIST ROW — the core unit of the game
 
-   identity → what you hold → what it is → footer.
+   Everything ownable, buyable or sellable is one of these. It replaces a
+   card-per-item that was 300px tall and could only be read one at a time.
+
+     head    glyph · name · a trailing badge or level
+     body    the sentence, the numbers, the meter — whatever this thing needs
+     foot    price on the LEFT, action on the RIGHT, primary rightmost
+
+   The foot is a two-column grid whose action column never shrinks and never
+   wraps into the price column. It cannot overlap, because the two are not in
+   the same flow — which is exactly what went wrong when it was a flex row
+   with `flex-wrap:wrap` on it.
    ============================================================ */
-.item{
-  position:relative;display:flex;flex-direction:column;
-  padding:var(--inset) var(--inset) 0;
-  animation:riseIn var(--t-enter) var(--ease-out) both;
-  animation-delay:calc(var(--i,0)*50ms);
-}
-.item.noanim{animation:none}
+.list{display:flex;flex-direction:column;gap:var(--s2)}
 
-.itemhead{display:flex;align-items:center;gap:var(--s2);min-width:0}
-.itemhead .itemic{width:clamp(var(--icon),3.2vw,52px);height:clamp(var(--icon),3.2vw,52px);flex-shrink:0}
-.itemname{flex:1 1 auto;min-width:0}
-.itemname b{
+.listrow{
+  background:var(--card);border-radius:var(--r);
+  box-shadow:var(--shadow-card);
+  padding:var(--s3);
+  display:flex;flex-direction:column;gap:var(--s2);
+  position:relative;overflow:hidden;
+}
+.listrow.flagged::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--flag,transparent);
+}
+.listrow.owned{--flag:var(--accent)}
+.listrow.ready{--flag:var(--good)}
+.listrow.atsea{--flag:var(--blue)}
+.listrow.dis{opacity:.55}
+.listrow.noanim{animation:none}
+
+.rowhead{display:flex;align-items:center;gap:var(--s2);min-width:0}
+.rowhead .rowic{width:var(--icon-lg);height:var(--icon-lg);flex-shrink:0}
+.rowname{flex:1 1 auto;min-width:0}
+.rowname b{
   display:block;font-family:var(--font-display);font-weight:400;
-  font-size:var(--fs-head);letter-spacing:var(--track);text-transform:uppercase;
-  color:var(--ink);line-height:var(--lh-tight);
-  overflow-wrap:anywhere;
+  font-size:var(--fs-md);letter-spacing:var(--track);text-transform:uppercase;
+  color:var(--ink);line-height:1.15;overflow-wrap:break-word;
 }
-.itemname span{
-  display:block;font-family:var(--font-display);font-size:var(--fs-label);
-  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-soft);
-  margin-top:2px;overflow-wrap:anywhere;
+.rowname span{
+  display:block;font-family:var(--font-prose);font-size:var(--fs-sm);
+  color:var(--ink-dim);line-height:1.3;overflow-wrap:break-word;
 }
-/* What you already hold sits at the end of the head and may shrink, but
-   never below its own content — it wraps under on a narrow card instead of
-   crushing the name. */
-.itemhead .chips{margin-top:0;flex:0 1 auto;justify-content:flex-end}
+.rowtrail{flex:0 0 auto;display:flex;align-items:center;gap:var(--s1)}
 
-.itembody{margin-top:var(--s2)}
-.itembody .chips{margin-top:0}
-.itembody .chips + .chips{margin-top:var(--s2)}
-.itembody .sub{margin-top:var(--s1)}
+.rowbody{display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.rowbody:empty{display:none}
 
-/* ---- the footer, and the bug that lived in it ----
-
-   Price on the left, actions on the right, primary rightmost. The old rule
-   set `flex-wrap:wrap` on this row, which is what produced the collision in
-   the reference shots: on a narrow rail card the three price chips wrapped
-   into a tall column, the button stayed on the first line, and the two
-   overlapped. Wrapping a row whose whole job is "these two things are on
-   opposite ends" cannot work.
-
-   So the footer does not wrap. It is a two-column grid — price takes what is
-   left, the action column takes exactly what it needs and never shrinks —
-   and when there genuinely is not room for both side by side, the whole
-   footer STACKS at a container query rather than interleaving. Either way
-   the two can never occupy the same pixels. */
-.itemfoot{
+.rowfoot{
   display:grid;grid-template-columns:1fr auto;align-items:center;
   gap:var(--s2) var(--s3);
-  margin:var(--s3) calc(var(--inset) * -1) 0;
-  padding:var(--s2) var(--inset);
-  border:var(--slice-plank) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 / var(--slice-plank) stretch;background:var(--wood-dark);
+  margin:var(--s1) calc(var(--inset) * -1) calc(var(--s3) * -1);
+  padding:var(--s2) var(--s3) var(--s3);
+  border-top:1px solid var(--line-soft);
 }
-.itemprice{min-width:0}
-.itemprice .chips{margin-top:0}
-.itemprice:empty{display:none}
-/* With no price, the action takes the whole footer and stays right-aligned —
-   and the shelf itself gets shallower, so a card with nothing to pay for does
-   not carry the same slab of wood as one that does. */
-.itemprice:empty + .itemacts{grid-column:1/-1;justify-content:flex-end}
-.itemfoot:has(.itemprice:empty){padding-block:var(--s1)}
-.itemacts{
-  display:flex;align-items:center;gap:var(--s2);
-  flex-shrink:0;justify-content:flex-end;flex-wrap:wrap;
-}
-.itemacts .btn{margin-bottom:var(--lift)}
-/* the primary action is the last one, and it is the one that looks primary */
-.itemacts .btn:not(:last-child){opacity:.9}
-
-.item:not(:has(.itemfoot)){padding-bottom:var(--inset)}
-
-/* A card narrower than this cannot hold a price and a button on one line, so
-   it stops trying and stacks them — price above, action full width below. */
-@container item (max-width:250px){
-  .itemfoot{grid-template-columns:1fr}
-  .itemacts{grid-column:1;justify-content:stretch}
-  .itemacts .btn{flex:1}
-}
-.item{container-type:inline-size;container-name:item}
-
-/* ---- the grid, and the rail ---- */
-.itemgrid{display:grid;gap:var(--s3);grid-template-columns:1fr;margin-bottom:var(--stack)}
-@media (min-width:560px){ .itemgrid{grid-template-columns:1fr 1fr} }
-@media (min-width:900px) and (orientation:landscape){
-  .itemgrid{grid-template-columns:repeat(auto-fill,minmax(clamp(300px,23vw,440px),1fr))}
-}
-
-/* The same item cards laid out as one scrolling row instead of a column, so
-   a fleet is a thumb-swipe rather than a page-length scroll. Snap-scrolled
-   so a swipe lands on a card and not between two of them.
-
-   The card width is the fix for the reference shot where a rail card was
-   too narrow to hold its own footer: 78vw at the bottom means one card fills
-   the screen with the next one peeking, which is both the standard mobile
-   carousel affordance AND wide enough that price and button never collide. */
-.itemgrid.rail{
-  display:flex;grid-template-columns:none;flex-wrap:nowrap;
-  overflow-x:auto;overflow-y:visible;overscroll-behavior-x:contain;
-  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
-  gap:var(--s3);
-  padding:2px 2px var(--s3);margin:0 -2px var(--s3);
-  scroll-padding-left:2px;
-}
-.itemgrid.rail > .item{
-  flex:0 0 min(78vw, 330px);scroll-snap-align:start;
-}
-@media (min-width:900px) and (orientation:landscape){
-  .itemgrid.rail > .item{flex-basis:clamp(300px,26vw,380px)}
-}
+.rowprice{min-width:0}
+.rowprice:empty{display:none}
+.rowprice:empty + .rowacts{grid-column:1/-1;justify-content:flex-end}
+.rowacts{display:flex;align-items:center;gap:var(--s2);justify-content:flex-end;flex-shrink:0}
+.rowacts .btn{margin-bottom:3px}
 
 /* ============================================================
-   STEPPER — how many.
-   Two round keys and the amount between them. The amount is a readout, not
-   an input: there is nothing to mistype and nothing to validate.
+   PICKER ROWS — choosing a ship
+
+   A vertical list of selectable rows, not a sideways rail. Selected takes
+   the accent as a fill, a ring AND a check mark from the kit, so it is three
+   cues and only one of them is colour.
+   ============================================================ */
+.picklist{display:flex;flex-direction:column;gap:var(--s1)}
+.pickrow{
+  display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s2);border-radius:var(--r-sm);
+  background:var(--sunk);cursor:pointer;text-align:left;
+  border:2px solid transparent;
+  transition:background var(--t-state),border-color var(--t-state),transform var(--t-press);
+}
+.pickrow:active{transform:scale(.99)}
+.pickrow:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.pickrow.sel{background:var(--raised);border-color:var(--accent)}
+.pickrow.dis{opacity:.45;cursor:default}
+.pickart{width:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.pickart img,.pickart svg{max-width:100%;height:auto}
+.pickmeta{flex:1 1 auto;min-width:0}
+/* Note the child combinators. `.pickmeta span` matched every span inside the
+   row — including the chips and their contents — and being more specific
+   than `.chip` it turned each one into a block, so a two-chip strip came out
+   as two full-width stacked slabs. A layout rule aimed at one element must
+   name that element. */
+.pickmeta > b{
+  display:block;font-family:var(--font-display);font-weight:400;font-size:var(--fs-md);
+  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink);line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.picksub{
+  display:block;font-family:var(--font-prose);font-size:var(--fs-xs);
+  color:var(--ink-dim);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pickmeta .chips{margin-top:4px}
+/* the order mark — a numbered gold disc, because tap order sets the line */
+.pickmark{
+  width:26px;height:26px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:var(--fs-sm);line-height:1;
+  background:rgba(255,255,255,.08);color:transparent;
+}
+.pickrow.sel .pickmark{background:var(--accent);color:var(--on-accent)}
+
+/* ============================================================
+   STEPPER — how many
    ============================================================ */
 .stepper{display:inline-flex;align-items:center;gap:var(--s2)}
 .stepbtn{
-  width:var(--tap-comfortable);height:var(--tap-comfortable);flex-shrink:0;
+  width:var(--tap);height:var(--tap);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:url('../assets/kenney-adventure/Vector/round_grey.svg') center/contain no-repeat;
   border:0;border-radius:50%;cursor:pointer;
-  color:var(--ink);font-family:var(--font-display);font-size:28px;line-height:1;
-  padding-bottom:3px;                       /* optically centres the glyph */
-  filter:drop-shadow(0 3px 0 rgba(0,0,0,.3));
-  transition:transform var(--t-press) var(--ease-out),filter var(--t-state),opacity var(--t-state);
+  background:var(--blue);
+  color:var(--ink-dark);font-family:var(--font-display);font-size:22px;line-height:1;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.3);
+  box-shadow:0 3px 0 var(--primary-shadow);margin-bottom:3px;
+  transition:transform var(--t-press) var(--ease-out),box-shadow var(--t-press),opacity var(--t-state);
 }
-@media (hover:hover) and (pointer:fine){
-  .stepbtn:hover:not(:disabled){filter:drop-shadow(0 4px 0 rgba(0,0,0,.3)) brightness(1.07)}
-}
-.stepbtn:active:not(:disabled){transform:translateY(3px);filter:none}
-.stepbtn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
-.stepbtn:disabled{opacity:var(--disabled-fade);filter:var(--disabled-desat);cursor:default;transform:translateY(3px)}
+.stepbtn:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 var(--primary-shadow)}
+.stepbtn:focus-visible{outline:none;box-shadow:0 3px 0 var(--primary-shadow),var(--focus-ring)}
+.stepbtn:disabled{opacity:var(--disabled-fade);filter:var(--disabled-desat);cursor:default;transform:translateY(3px);box-shadow:none}
 .stepn{
-  min-width:64px;text-align:center;
-  font-family:var(--font-display);font-size:var(--fs-num);
-  color:var(--ink);letter-spacing:var(--track-tight);line-height:1;
-  padding:var(--s2) var(--s3);
-  border:var(--slice-plate) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;background:var(--steel-lit);
+  min-width:56px;text-align:center;
+  font-family:var(--font-display);font-size:var(--fs-num);color:var(--ink);
+  padding:var(--s2);border-radius:var(--r-sm);background:var(--sunk);line-height:1;
 }
-
-/* ============================================================
-   RAIL — a sideways row of things you choose between.
-   ============================================================ */
-.rail{
-  display:flex;gap:var(--s2);
-  overflow-x:auto;overscroll-behavior-x:contain;
-  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
-  padding:2px 2px var(--s3);margin:0 -2px;
-}
-.railcard{
-  flex:0 0 clamp(172px,46vw,210px);scroll-snap-align:start;
-  position:relative;cursor:pointer;
-  padding:var(--s2) var(--s3) var(--s3);
-  margin-bottom:var(--lift);
-  filter:drop-shadow(0 3px 0 rgba(0,0,0,.28));
-  transition:transform var(--t-press) var(--ease-out),filter var(--t-state);
-}
-.railcard:active{transform:translateY(3px);filter:none}
-.railcard:focus-visible{outline:none;box-shadow:var(--focus-ring)}
-
-/* SELECTED — three cues at once, so it survives sunlight, a cheap screen and
-   colourblindness: a gold ring, a gold check mark in the corner, and the
-   card standing forward of its neighbours. */
-.railcard.sel{
-  box-shadow:inset 0 0 0 3px var(--selected), inset 0 0 0 6px var(--selected-ring);
-  transform:translateY(-2px);
-  filter:drop-shadow(0 5px 0 rgba(0,0,0,.3));
-}
-.railcard.sel::after{
-  content:'';position:absolute;top:6px;right:6px;width:26px;height:26px;
-  background:url('../assets/kenney-adventure/Vector/checkbox_beige_checked.svg') center/contain no-repeat;
-}
-.railcard.dis{opacity:var(--disabled-fade);filter:var(--disabled-desat);cursor:default}
-.railcard.flag{--flagcolor:var(--accent)}
-
-.railart{
-  position:relative;height:clamp(44px,11vw,58px);
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:var(--s1);pointer-events:none;
-}
-.railart svg,.railart img{max-width:100%;max-height:100%}
-.railname{
-  display:flex;align-items:center;justify-content:space-between;gap:var(--s1);
-  font-family:var(--font-display);font-size:var(--fs-label);
-  letter-spacing:var(--track);text-transform:uppercase;
-  color:var(--ink);line-height:var(--lh-tight);min-width:0;
-}
-.railname > :first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.railtag{
-  flex-shrink:0;font-family:var(--font-display);font-size:var(--fs-micro);
-  letter-spacing:var(--track-tight);color:var(--ink);
-  padding:1px var(--s1);border-radius:var(--r-sm);
-  background:var(--accent);
-}
-.railtag.blu{background:var(--steel-lit)}
-.railtag.bad{background:var(--bad)}
-/* Two lines, hard stop. A rail card is a fixed-width thing in a row of
-   identical fixed-width things, so a caption that runs to three lines does
-   not make one card taller — it makes every card in the rail taller, and on
-   a 393x852 phone that is what pushed the ship picker off the bottom of the
-   mission panel and left a card sliced by the panel's own frame. */
-.railsub{
-  font-family:var(--font-display);font-size:var(--fs-micro);
-  letter-spacing:var(--track-tight);text-transform:uppercase;
-  color:var(--ink-soft);margin-top:1px;line-height:1.25;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.railcard .chips{margin-top:var(--s1);gap:3px}
-.railcard .chip{font-size:var(--fs-micro);padding:1px var(--s1) 1px 1px}
 
 /* ============================================================
    REQUIREMENT ROWS — what the job asks, one test per line
 
-   Read down the right-hand edge, not across: the tick box at the end of each
-   line is the answer, and a column of ticks with one cross in it is readable
-   at a glance and from across the room.
+   Read down the right-hand edge: the tick at the end of each line is the
+   answer, and a column of ticks with one cross in it is readable at a
+   glance. The boxes are the kit's own, so met and unmet differ in SHAPE.
    ============================================================ */
-.reqbar{margin-top:var(--s2)}
-.reqrows{display:flex;flex-direction:column;gap:var(--s1);margin-bottom:var(--s2)}
-.reqrows:last-child{margin-bottom:0}
+.reqbar{display:flex;flex-direction:column;gap:var(--s2)}
+.reqrows{display:flex;flex-direction:column;gap:var(--s1)}
 .reqrow{
   display:flex;align-items:center;gap:var(--s2);
-  min-height:var(--tap-comfortable);padding:var(--s1) var(--s2);
-  border:var(--slice-plate) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;background:var(--steel-lit);
-  color:var(--ink);
+  min-height:var(--tap);padding:var(--s1) var(--s2);
+  border-radius:var(--r-sm);background:var(--sunk);
 }
-.reqrow .reqic{width:var(--icon);height:var(--icon);flex-shrink:0}
+.reqrow .reqic{width:24px;height:24px;flex-shrink:0;opacity:.85}
 .reqlbl{
   flex:1 1 auto;min-width:0;
-  font-family:var(--font-display);font-size:var(--fs-head);
+  font-family:var(--font-display);font-size:var(--fs-md);
   letter-spacing:var(--track);text-transform:uppercase;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.reqvals{display:flex;flex-direction:column;gap:0;flex-shrink:0;text-align:right}
-.reqvals i{
-  font-style:normal;font-family:var(--font-display);font-size:var(--fs-micro);
-  letter-spacing:var(--track-tight);text-transform:uppercase;
-  color:var(--ink);line-height:1.2;white-space:nowrap;
+.reqvals{
+  flex-shrink:0;display:flex;align-items:baseline;gap:5px;
+  font-family:var(--font-display);font-size:var(--fs-num-sm);
+  letter-spacing:var(--track-none);white-space:nowrap;
 }
-.reqvals i b{font-weight:400;color:var(--ink);margin-left:.35em}
-.reqrow.bad .reqvals i b{color:var(--ink)}
-/* The tick. A real checkbox from the pack, so met and unmet differ in SHAPE
-   as well as in colour. */
+.reqvals i{font-style:normal;color:var(--ink-dim)}
+.reqvals b{font-weight:400;color:var(--ink)}
+.reqrow.bad .reqvals b.got{color:var(--red-lit)}
+.reqrow.ok .reqvals b.got{color:var(--green-lit)}
 .reqchk{
-  flex-shrink:0;width:var(--icon);height:var(--icon);
-  background:url('../assets/kenney-adventure/Vector/checkbox_beige_empty.svg') center/contain no-repeat;
-  font-size:0;
+  width:26px;height:26px;flex-shrink:0;font-size:0;
+  background:center/contain no-repeat
+    url('../assets/kenney-ui/Vector/Grey/check_square_grey_square.svg');
 }
-.reqrow.ok  .reqchk{background-image:url('../assets/kenney-adventure/Vector/checkbox_beige_checked.svg')}
-.reqrow.bad .reqchk{background-image:url('../assets/kenney-adventure/Vector/checkbox_beige_cross.svg')}
+.reqrow.ok  .reqchk{background-image:url('../assets/kenney-ui/Vector/Green/check_square_color_checkmark.svg')}
+.reqrow.bad .reqchk{background-image:url('../assets/kenney-ui/Vector/Red/check_square_color_cross.svg')}
 
-/* The chip strip under the rows: one row, scrolling sideways rather than a
-   block that wraps. Eight readings at this size is three wrapped rows and a
-   third of a phone spent before the player reaches anything actionable. */
-.reqbar .chips{
-  margin-top:0;flex-wrap:nowrap;
-  overflow-x:auto;overscroll-behavior-x:contain;
-  -webkit-overflow-scrolling:touch;padding-bottom:2px;
-  /* The strip fades out at its right edge rather than guillotining the chip
-     that happens to be crossing it. A cut-off chip reads as a broken layout;
-     a fading one reads as "there is more this way", which is what it is. */
-  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);
-  mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);
-}
-.reqbar .chip{flex-shrink:0}
 .reqnote{
-  font-family:var(--font-prose);font-size:var(--fs-body);
-  color:var(--ink-soft);margin-top:var(--s2);line-height:var(--lh-body);
+  font-family:var(--font-prose);font-size:var(--fs-sm);
+  color:var(--ink-dim);line-height:var(--lh-body);
 }
-.reqnote.bad{color:var(--bad-deep)}
+.reqnote.bad{color:var(--red-lit)}
 
 /* ============================================================
    TABS — a set of counters you stand at
-
-   The selected one is not "the same tab, tinted". It takes the accent fill,
-   an ink label, a raised position and a marker bar along its bottom edge,
-   and the unselected ones sit recessed on steel. Four cues, one of which is
-   colour.
    ============================================================ */
 .mtabs{
-  display:flex;gap:var(--s1);margin-top:var(--s2);
+  display:flex;gap:4px;padding:4px;
+  background:var(--sunk);border-radius:var(--r);
 }
 .mtab{
   flex:1 1 0;min-width:0;
-  display:flex;align-items:center;justify-content:center;gap:var(--s2);
-  min-height:var(--tap-comfortable);padding:var(--s1) var(--s2);
-  font-family:var(--font-display);font-size:var(--fs-label);
-  letter-spacing:var(--track);text-transform:uppercase;
-  color:var(--ink);cursor:pointer;position:relative;
-  border:var(--slice-plate) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;background:var(--steel-lit);
-  transition:transform var(--t-press) var(--ease-out),filter var(--t-state);
+  display:flex;align-items:center;justify-content:center;gap:var(--s1);
+  min-height:var(--tap);padding:var(--s1) var(--s2);
+  border:0;border-radius:var(--r-sm);background:transparent;cursor:pointer;
+  font-family:var(--font-display);font-size:var(--fs-md);
+  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-dim);
+  transition:background var(--t-state),color var(--t-state);
 }
-.mtab .ic{width:var(--icon);height:var(--icon);opacity:.55;transition:opacity var(--t-state)}
-@media (hover:hover) and (pointer:fine){
-  .mtab:hover:not(.on){filter:brightness(1.08)}
-}
-.mtab:active{transform:translateY(2px)}
+.mtab .ic{width:22px;height:22px;opacity:.6}
 .mtab:focus-visible{outline:none;box-shadow:var(--focus-ring)}
-.mtab.on{
-  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 / var(--slice-plate) stretch;background:var(--parch);
-  color:var(--ink);font-weight:400;
-}
+.mtab.on{background:var(--primary);color:var(--ink-dark);box-shadow:0 2px 0 var(--primary-shadow)}
 .mtab.on .ic{opacity:1}
-.mtab.on::after{
-  content:'';position:absolute;left:20%;right:20%;bottom:1px;height:4px;
-  border-radius:var(--r-pill);background:var(--accent);
-}
-
-/* Tabs at the top of a screen rather than inside a sheet. Sticky, so
-   switching counters never means scrolling back up for them. */
 .mtabs.sticky{
-  position:sticky;top:calc(var(--gutter) * -1);z-index:4;
-  margin:calc(var(--gutter) * -1) calc(var(--gutter) * -1) var(--s4);
-  padding:var(--s2) var(--gutter);
-  background:var(--sea);
-  background-image:var(--water);
-  background-size:420px 420px;
-  box-shadow:0 8px 10px -8px rgba(0,0,0,.55);
+  position:sticky;top:calc(var(--s3) * -1);z-index:4;
+  margin:0 0 var(--s1);
 }
 
 /* ============================================================
    PANEL BANDS — head, body, foot
-
-   Every full-screen panel in the game uses these three, in this order, so
-   nothing numeric appears below the fold on one screen and above it on
-   another. The head states what you are looking at, the body scrolls, the
-   foot holds the button that commits.
    ============================================================ */
 .sheet-foot{
   flex-shrink:0;
   display:flex;flex-direction:column;gap:var(--s2);
   padding:var(--s3) var(--gutter) calc(env(safe-area-inset-bottom) + var(--s3));
-  border-top:3px solid var(--wood-dark);
-  background:var(--wood-dark);
+  background:var(--sea-deep);
+  border-top:1px solid var(--line);
 }
 .sheet-foot.empty{display:none}
-.sheet-foot .grid2{margin-top:0}
+.sheet-foot .grid2{margin:0}
 .sheet-foot .btn{width:100%}

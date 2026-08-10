@@ -69,45 +69,65 @@ game** is written have/need too — repairs, upgrades, fittings, hulls, berths, 
 diving bell — so "can I afford this" is never a question you have to work out.
 
 **One layout, everywhere.** `src/ui/components.js` holds the whole vocabulary and
-every screen builds from it, so a player learns a shape once. An item card is
-always identity → what you hold → what it is → a footer with **the price on the
-left and the action on the right**, primary button rightmost. Quantities are
+every screen builds from it, so a player learns a shape once. The core unit is a
+**list row**: identity → what it is → a footer with **the price on the left and
+the action on the right**, primary button rightmost. The footer is a two-column
+grid whose action column never shrinks and never wraps into the price column, so
+the two cannot overlap — which is exactly what a flex row with `flex-wrap` on it
+did. Quantities are
 always a **stepper** (`− 3 +`) and never a row of preset buttons. A set of things
-you choose between is a **rail** that scrolls sideways, so it can't push what you
-are checking off the screen. What a job requires goes in a **requirement bar** in
+you choose between is a **vertical picker list** — six hulls fit where one and a
+half sideways cards did. What a job requires goes in a **requirement bar** in
 the sheet head, where it cannot scroll away — and the button that commits it sits
 in the panel foot, where it also cannot.
 
-**One frame, everywhere.** A wood **scene bar** along the top edge and a wood
-**nav rail** along the bottom, on every screen, drawn by the shell rather than
-by the screens. The bar names the scene you are in and carries the figures that
-scene's decisions are made against; the rail carries five labelled destinations.
+**One frame, everywhere.** An app bar along the top edge and a tab bar along
+the bottom, on every screen, drawn by the shell rather than by the screens.
+The bar names the scene you are in and carries the figures that scene's
+decisions are made against; the tab bar carries five labelled destinations.
 Both bleed to the physical edge of the glass and take the safe-area insets as
-padding *inside* themselves, so the wood runs under the notch and the home
-indicator while the content never does. Five scenes that each drew their own
-chrome — a purse here, nothing there — is most of what made the game read as
-five separate builds.
+padding *inside* themselves, so the chrome runs under the notch and the home
+indicator while the content never does.
 
-**One art direction.** Kenney's *UI Pack Adventure*, vectors only, and nothing
-else: the repository carries two other Kenney packs and they are deliberately
-unused, because mixing sets drawn in different styles is exactly what makes an
-interface look assembled rather than art directed. Three materials with three
-jobs — **wood** frames a scene, **parchment** carries what you read, **steel**
-carries a value — and every surface in the game is one of those three.
+**One scroll axis.** A screen scrolls vertically and nothing inside it scrolls
+sideways. Sideways rails inside a vertical page are the single worst thing an
+interface like this can do: the screen has no reading order, the rail clips its
+own cards at the fold, and the player cannot tell whether they have seen
+everything. A set of things is a **list**, however many of them there are.
 
-**A surface paints its own field.** Every panel, plate and button is the pack's
-9-sliced frame art over a background this stylesheet chooses, with no `fill` in
-the slice. With `fill`, the field is whatever pixel happens to sit in the middle
-of the source SVG, and that is not a value anyone can see when they pick a text
-colour against it — it is how a label ended up on the frame's mid-brown at
-2.2:1. Contrast is a decision, so the colour it is made against has to be one
-too.
+**One art direction: Kenney's UI Pack** (`assets/kenney-ui`) — a flat modern
+mobile kit with five colour families, each a four-tone ramp, plus buttons,
+checkboxes, sliders, inputs, stars and dividers drawn to match. The ramp is the
+palette:
 
-**Status changes the plate, not the label.** A green numeral on a light steel
-chip measures 2.1:1 and an amber one 3.2:1; a green *plate* with the same ink on
-it measures 6.5:1 — and it is the louder signal besides, because a red plate in
-a row of steel ones is visible before anything has been read. Every status fill
-is a colour the palette documents Navy as safe on, so the ink never changes.
+| | shadow | deep | base | light | job |
+|---|---|---|---|---|---|
+| Blue | `#146587` | `#167DA8` | `#1C9FD7` | `#36BDF7` | navigation, the ordinary action |
+| Green | `#046D41` | `#029357` | `#16BB77` | `#2FD792` | success, a test met, a payout |
+| Yellow | `#B48000` | `#DEA312` | `#FFCC00` | `#FFEA9C` | money, and the thing that is *chosen* |
+| Red | `#871023` | `#CD0B2A` | `#EE2747` | `#FF627B` | a test failed, and anything destructive |
+| Grey | `#666880` | `#989AAF` | `#DADCE7` | `#FFFFFF` | surfaces and disabled |
+
+SHADOW is the slab a control sits on, DEEP its edge, BASE its face, LIGHT its
+lit top edge. The one colour the game brings itself is the ground: deep water,
+under every scene, which is the strongest cohesion device it has.
+
+**Three surfaces, and a component picks one** — `sunk` (a track, a well, a
+thing sunk *into* a card), `card` (the panel everything you read sits on), and
+`raised` (a thing sitting *on* one). All three are navy, so the coloured
+controls are the only saturated things on screen and therefore the only things
+that pull the eye.
+
+**Buttons are drawn from the ramp, not sliced from the kit's button art**, and
+that is a contrast decision rather than a stylistic one. Those faces are fixed
+values chosen for a *light* interface: the grey key is near-white, which on
+this dark ground made every secondary button the brightest object on screen,
+and the red face is `#EE2747`, on which white measures 4.19:1 — under the bar,
+and unfixable, because you cannot recolour the middle of a 9-slice. Painting
+the same ramp keeps the kit's anatomy and lets every face be a value its own
+label can be read on. The kit's own SVGs still draw the round keys, the
+checkboxes, the sliders and the stars, where the art carries a shape CSS
+cannot.
 
 **Panels are full screens, never drawers.** Mission, stores and the after-action
 report all use the same three bands — **head** states what you are looking at
@@ -175,20 +195,26 @@ Everything is reachable by touch or mouse as well.
 
 ```
 index.html            markup shell only — no logic, no inline handlers
+styleguide.html       every component and every state on one page. Open it
+                      before changing a component and after: it is far faster
+                      to judge the set here than by hunting the same button
+                      across five screens, and building it first is what
+                      catches "this face cannot carry its own label"
 vendor/phaser.min.js  pinned Phaser 3.90.0 (arcade build, no Matter)
 fonts/                self-hosted woff2 subsets
 styles/                 loaded in this order; the cascade runs one way down and
                         no sheet overrides one before it
   fonts.css           @font-face declarations
   palette.css         the raw harmony palette and its measured contrast map
-  tokens.css          THE DESIGN SYSTEM — the working colour subset and the job
-                      each colour holds, the type scale and the two faces'
-                      roles, space, shape, depth, motion, z-index, touch floors
-  base.css            reset, the app frame, typography roles, the three
-                      surface primitives every panel is built from
-  components.css      buttons, meters, chips, tiles, item cards, steppers,
-                      rails, requirement rows, tabs, panel bands
-  hud.css             the scene bar and the nav rail
+  tokens.css          THE DESIGN SYSTEM — the Kenney UI ramp and the job each
+                      colour holds, the type scale and the two faces' roles,
+                      space, shape, depth, motion, z-index, touch floors
+  palette.css         NOT LOADED. The original harmony palette, kept for its
+                      contrast maps; the interface runs on the kit's ramp
+  base.css            reset, the app frame, typography, the three surfaces
+  components.css      buttons, meters, chips, stat strips, list rows, pickers,
+                      steppers, requirement rows, tabs, panel bands
+  hud.css             the app bar and the tab bar
   screens.css         what each scene adds: flagship hero, chart, market, sets
   overlays.css        panels, dialogs, pause, title, loading, awards, pops
   battle.css          the engagement view
@@ -196,7 +222,11 @@ tools/
   check-min-size.js   fails on text or icons under the legibility floor
   check-overflow.js   fails on any screen that scrolls sideways
   check-contrast.js   samples the RENDERED PIXELS behind every label on every
-                      screen and fails anything under the palette's own rules
+                      screen and fails anything under 4.5:1 (3:1 large). Takes
+                      the per-channel MEDIAN of the non-text pixels, not the
+                      mode: the water is a texture, so no single background
+                      value dominates, and the mode kept electing an
+                      anti-aliased glyph edge as "the background"
   check-map-spacing.js  fails if two markers land closer than a thumb apart
   check-hud.js        the scene bar, the folding key, the live countdown and
                       the meter's clamp

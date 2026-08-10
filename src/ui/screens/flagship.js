@@ -14,16 +14,12 @@ import {
 } from '../../core/selectors.js';
 import { iconHTML } from '../../art/icons.js';
 import { shipHTML } from '../../art/ships.js';
-import { hullBar, chip, chipRow, outOf, priceChips, meter } from '../format.js';
-import { itemCard, itemAction, itemGrid, sect, emptyCard } from '../components.js';
+import { hullBar, chip, chipRow, outOf, priceChips, meter, shipStats } from '../format.js';
+import { itemCard, itemAction, itemGrid, sect, emptyCard, pips } from '../components.js';
 import { say, deny, pop } from '../../fx/pop.js';
 import { play } from '../../fx/sound.js';
 import { promptDlg } from '../dialog.js';
 import { doRepair } from './port.js';
-
-/* Hero stat: the glyph carries the meaning, the word is only a caption. */
-const hstat = (icon, val, label) =>
-  `<div class="hstat">${iconHTML(icon, 0, 'hstatic')}<b>${val}</b><span>${label}</span></div>`;
 
 export function renderFlagship() {
   const f = S.flag, c = cond(f), bz = isBusy('FLAG');
@@ -33,13 +29,12 @@ export function renderFlagship() {
       <div class="heroStage">${shipHTML('flagship', 'flag', 2.6, bz ? 'sea' : '')}</div>
       <div class="hname">${esc(f.name)}</div>
       <div class="hsub">${bz ? 'Presently at sea under your colours' : 'Riding at anchor, awaiting your word'}</div>
-      <div class="hstats">
-        ${hstat('speed', f.speed, 'Speed')}
-        ${hstat('guns', f.guns, 'Guns')}
-        ${hstat('hull', `${Math.max(0, f.hull)}<span class="of">/${f.max}</span>`, 'Hull')}
-        ${hstat('cargo', f.cargo, 'Cargo')}
-        ${hstat('power', power(f), 'Power')}
-      </div></div>
+      ${/* The same strip every other ship in the game wears. The hero used to
+            build its own five-stat layout out of a private `hstat` helper,
+            which is how it ended up the one place on the screen where a glyph
+            was not 22px. */''}
+      ${shipStats(f, power(f))}
+      </div>
     ${itemCard({
       icon: 'flag', name: 'Condition', sub: bz ? 'At sea' : c,
       held: chipRow([chip('hull', Math.max(0, f.hull) + '<i>/</i>' + f.max,
@@ -67,7 +62,7 @@ export function renderFlagship() {
     const t = f.tiers[k], maxed = t >= MAXTIER, cost = tierCost(k, t);
     return itemCard({
       icon: d.icon, name: d.n, sub: maxed ? 'Fully fitted' : 'Per level',
-      held: `<span class="pips">${'●'.repeat(t)}${'○'.repeat(MAXTIER - t)}</span>`,
+      held: pips(t, MAXTIER),
       body: chipRow([chip(d.stat, d.eff, 'ok', 'What one more level gives')], 'tight'),
       price: maxed ? '' : priceChips(cost),
       action: itemAction(maxed ? 'Max' : 'Upgrade', 'up-flag', { key: k },
@@ -143,14 +138,14 @@ export function renderFlagship() {
       ${meter(have.length / set.pieces.length * 100, done ? 'full' : 'gold', 'sm')}
       <div class="pieces">${set.pieces.map(pc => {
         const got = have.includes(pc);
-        return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 40)}<span>${got ? esc(pc) : '???'}</span></div>`;
+        return `<div class="piece ${got ? 'got' : ''}">${iconHTML('relic', 0)}<span>${got ? esc(pc) : '???'}</span></div>`;
       }).join('')}</div></div>`;
   });
 
   const loose = S.collected.loose || [];
   if (loose.length) {
     h += `<div class="card" style="--i:${i++}"><h3>Oddments</h3>
-      <div class="pieces">${loose.map(pc => `<div class="piece got">${iconHTML('relic', 40)}<span>${esc(pc)}</span></div>`).join('')}</div></div>`;
+      <div class="pieces">${loose.map(pc => `<div class="piece got">${iconHTML('relic', 0)}<span>${esc(pc)}</span></div>`).join('')}</div></div>`;
   }
 
   $('main').innerHTML = h;

@@ -25,7 +25,7 @@ export const TUTSTEPS = [
     text: 'One ship, 500 gold, and an ocean that already has owners. Build the most feared fleet on it.',
     btn: 'Begin' },
 
-  { sel: '#main .item', lockTab: 'fleet', title: 'She Is All You Have',
+  { sel: '#main .listrow', lockTab: 'fleet', title: 'She Is All You Have',
     text: 'Speed, guns, hull, cargo — and at zero hull she is crippled until you repair her here. The docks under her are empty: every other ship you own is one you take off an enemy.',
     btn: 'Next' },
 

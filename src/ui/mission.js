@@ -52,7 +52,7 @@ import { BOUNTY_GOLD_PER_RATING } from '../core/config.js';
 import { reloadMs } from '../battle/state.js';
 import { iconHTML } from '../art/icons.js';
 import { shipHTML } from '../art/ships.js';
-import { chip, have, reqRow, chipRow, bagChips, shipTiles, meter } from './format.js';
+import { chip, have, reqRow, chipRow, bagChips, pickChips, meter } from './format.js';
 import { rail, railCard, reqBar } from './components.js';
 import { openSheet, closeSheet, setSheetFoot } from './sheet.js';
 import { deny } from '../fx/pop.js';
@@ -122,9 +122,10 @@ function togSel(id) {
   drawMission();
 }
 
-/* Ship picker. A rail, not a column: the ships scroll sideways under the
-   requirement bar, so what the job needs stays on screen while you look through
-   the fleet for a hull that meets it. */
+/* Ship picker. A vertical list: six hulls fit where one and a half sideways
+   cards did, the requirement rows above stay put because the page scrolls as
+   one, and the order you tap them in is written on each row rather than
+   inferred from a tag. */
 function shipPicks(voyage, need) {
   const bz = busyIds();
   const slots = voyage ? ['SAILS'] : ['FRONT', 'CENTRE', 'REAR'];
@@ -135,7 +136,9 @@ function shipPicks(voyage, need) {
     return railCard({
       cls: (i > -1 ? 'sel ' : '') + (dis ? 'dis ' : '') + (isF ? 'flag' : ''),
       attrs: dis ? '' : ` data-act="pick-ship" data-id="${s.id}"`,
-      art: shipHTML(isF ? 'flagship' : s.type, isF ? 'flag' : 'player', 0.62),
+      art: shipHTML(isF ? 'flagship' : s.type, isF ? 'flag' : 'player', 0.45),
+      /* the line she takes, as a number on her own row */
+      mark: i > -1 ? String(i + 1) : '',
       name: s.name,
       tag: crip ? 'CRIPPLED' : atSea ? 'AT SEA' : (i > -1 ? slots[i] : ''),
       tagCls: crip ? 'bad' : atSea ? 'blu' : (voyage ? 'blu' : ''),
@@ -150,7 +153,7 @@ function shipPicks(voyage, need) {
         : voyage
           ? tname(s) + ' · ' + fmtDur(voyDuration(curRoute, [s]))
           : tname(s) + ' · fires every ' + (reloadMs(s) / 1000).toFixed(1) + 's',
-      chips: shipTiles(s, power(s), need)
+      chips: pickChips(s, need)
     });
   }).join(''), 'shipPicks');
 }

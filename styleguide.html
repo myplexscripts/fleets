@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Salt &amp; Powder — design system</title>
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/hud.css">
+<link rel="stylesheet" href="styles/screens.css">
+<link rel="stylesheet" href="styles/overlays.css">
+<style>
+  /* styleguide chrome only — never shipped with the game */
+  body{overflow:auto;height:auto;display:block}
+  .sg{padding:0 0 60px}
+  .sg h2{
+    font-family:var(--font-display);font-size:var(--fs-sm);letter-spacing:2px;
+    color:var(--gold);background:var(--sea-abyss);
+    padding:8px var(--gutter);margin:24px 0 12px;text-transform:uppercase;
+  }
+  .sg .pad{padding:0 var(--gutter)}
+  .sg .note{font-size:12px;color:var(--ink-dim);padding:0 var(--gutter);margin:-6px 0 10px}
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .sw{height:44px;border-radius:6px;display:flex;align-items:flex-end;justify-content:center;
+      font:10px/1 var(--font-prose);padding-bottom:3px;color:#0B1D2B}
+</style>
+</head>
+<body>
+<div class="sg">
+
+<h2>1 · Colour ramp — the five families</h2>
+<div class="pad">
+  <div class="swatches" id="ramp"></div>
+</div>
+
+<h2>2 · Type</h2>
+<div class="pad">
+  <div style="font-family:var(--font-display);font-size:var(--fs-xl);letter-spacing:var(--track-wide)">DISPLAY XL — SCENE NAME</div>
+  <div style="font-family:var(--font-display);font-size:var(--fs-lg);letter-spacing:var(--track-wide)">DISPLAY LG — SECTION HEADING</div>
+  <div style="font-family:var(--font-display);font-size:var(--fs-md);letter-spacing:var(--track)">DISPLAY MD — BUTTON / ITEM NAME</div>
+  <p class="sub" style="margin-top:8px">Prose sm — a sentence in Archivo Narrow. Deliver the goods; never a fight. This lane worsens in 29 minutes, and a patrol will push it back.</p>
+</div>
+
+<h2>3 · Buttons — every face, every state</h2>
+<div class="pad">
+  <div class="btnset">
+    <button class="btn gold">Primary</button>
+    <button class="btn blu">Blue</button>
+    <button class="btn grn">Success</button>
+    <button class="btn quiet">Secondary</button>
+    <button class="btn red">Danger</button>
+  </div>
+  <div class="btnset" style="margin-top:10px">
+    <button class="btn gold sm">Small</button>
+    <button class="btn quiet sm">Small</button>
+    <button class="btn red sm">Scuttle</button>
+    <button class="btn gold" disabled>Disabled</button>
+  </div>
+  <button class="btn gold wide" style="margin-top:10px">Wide primary</button>
+</div>
+
+<h2>4 · Meters — 0%, 8%, 43%, 100%</h2>
+<div class="pad" style="display:flex;flex-direction:column;gap:10px">
+  <div class="meter good" style="--p:0%"><i></i></div>
+  <div class="meter bad" style="--p:8%"><i></i></div>
+  <div class="meter warn lg" style="--p:43%"><i></i></div>
+  <div class="meter good lg" style="--p:100%"><i></i></div>
+  <div class="meter gold sm" style="--p:66%"><i></i></div>
+</div>
+
+<h2>5 · Chips and stats</h2>
+<div class="pad">
+  <div class="chips">
+    <span class="chip"><img class="chipic" src="" data-i="gold"><b>1950</b></span>
+    <span class="chip ok"><img class="chipic" src="" data-i="wood"><b>24<i>/</i>2</b></span>
+    <span class="chip bad"><img class="chipic" src="" data-i="metal"><b>8<i>/</i>28</b></span>
+    <span class="chip warn"><img class="chipic" src="" data-i="time"><b>2:14</b></span>
+    <span class="chip dim"><img class="chipic" src="" data-i="sea"><b>0<i>/</i>6</b></span>
+  </div>
+  <div class="stats" style="margin-top:10px">
+    <span class="stat"><img class="ic" src="" data-i="speed"><b>6</b><span>Speed</span></span>
+    <span class="stat"><img class="ic" src="" data-i="guns"><b>8</b><span>Guns</span></span>
+    <span class="stat warn"><img class="ic" src="" data-i="hull"><b>41<i>/</i>60</b><span>Hull</span></span>
+    <span class="stat"><img class="ic" src="" data-i="cargo"><b>25</b><span>Cargo</span></span>
+    <span class="stat"><img class="ic" src="" data-i="power"><b>34</b><span>Power</span></span>
+  </div>
+</div>
+
+<h2>6 · The list row — the core unit</h2>
+<div class="pad">
+  <div class="list">
+
+    <div class="listrow flagged owned">
+      <div class="rowhead">
+        <img class="rowic" src="" data-i="flag">
+        <div class="rowname"><b>Wraith</b><span>Flagship · seaworthy</span></div>
+        <div class="rowtrail"><span class="chip ok"><img class="chipic" src="" data-i="hull"><b>60<i>/</i>60</b></span></div>
+      </div>
+      <div class="rowbody">
+        <div class="stats">
+          <span class="stat"><img class="ic" src="" data-i="speed"><b>6</b><span>Speed</span></span>
+          <span class="stat"><img class="ic" src="" data-i="guns"><b>8</b><span>Guns</span></span>
+          <span class="stat"><img class="ic" src="" data-i="hull"><b>60<i>/</i>60</b><span>Hull</span></span>
+          <span class="stat"><img class="ic" src="" data-i="cargo"><b>25</b><span>Cargo</span></span>
+          <span class="stat"><img class="ic" src="" data-i="power"><b>34</b><span>Power</span></span>
+        </div>
+        <div class="meter good" style="--p:100%"><i></i></div>
+      </div>
+      <div class="rowfoot">
+        <div class="rowprice"></div>
+        <div class="rowacts">
+          <button class="btn sm quiet">Rename</button>
+          <button class="btn sm gold" disabled>Repair</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="listrow">
+      <div class="rowhead">
+        <img class="rowic" src="" data-i="hull">
+        <div class="rowname"><b>Hull Plating</b><span>+18 hull per level</span></div>
+        <div class="rowtrail"><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></div>
+      </div>
+      <div class="rowfoot">
+        <div class="rowprice"><div class="chips tight">
+          <span class="chip ok"><img class="chipic" src="" data-i="gold"><b>1950<i>/</i>420</b></span>
+          <span class="chip ok"><img class="chipic" src="" data-i="wood"><b>24<i>/</i>2</b></span>
+          <span class="chip bad"><img class="chipic" src="" data-i="metal"><b>8<i>/</i>28</b></span>
+        </div></div>
+        <div class="rowacts"><button class="btn sm gold">Upgrade</button></div>
+      </div>
+    </div>
+
+    <div class="listrow">
+      <div class="rowhead">
+        <img class="rowic" src="" data-i="sugar">
+        <div class="rowname"><b>Sugar</b><span>Crates</span></div>
+        <div class="rowtrail"><span class="chip"><img class="chipic" src="" data-i="sugar"><b>10</b></span></div>
+      </div>
+      <div class="rowbody">
+        <div class="stepper">
+          <button class="stepbtn">−</button><span class="stepn">3</span><button class="stepbtn">+</button>
+        </div>
+      </div>
+      <div class="rowfoot">
+        <div class="rowprice"><div class="chips tight">
+          <span class="chip gold"><img class="chipic" src="" data-i="gold"><b>18</b></span>
+        </div></div>
+        <div class="rowacts"><button class="btn sm grn">Sell</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<h2>7 · Requirement rows</h2>
+<div class="pad">
+  <div class="reqbar">
+    <div class="reqrows">
+      <div class="reqrow bad"><img class="reqic" src="" data-i="cargo"><span class="reqlbl">Cargo</span>
+        <span class="reqvals"><b class="got">0</b><i>/</i><b>8</b></span><span class="reqchk"></span></div>
+      <div class="reqrow bad"><img class="reqic" src="" data-i="power"><span class="reqlbl">Power</span>
+        <span class="reqvals"><b class="got">0</b><i>/</i><b>10</b></span><span class="reqchk"></span></div>
+      <div class="reqrow ok"><img class="reqic" src="" data-i="sugar"><span class="reqlbl">Sugar</span>
+        <span class="reqvals"><b class="got">40</b><i>/</i><b>8</b></span><span class="reqchk"></span></div>
+    </div>
+    <div class="chips">
+      <span class="chip"><img class="chipic" src="" data-i="dest"><b>Nassau</b></span>
+      <span class="chip"><img class="chipic" src="" data-i="time"><b>2:14</b></span>
+      <span class="chip warn"><img class="chipic" src="" data-i="target"><b>72%</b></span>
+      <span class="chip gold"><img class="chipic" src="" data-i="noto"><b>+3</b></span>
+    </div>
+    <div class="reqnote">Deliver the goods. Never a fight. Worsens in 29:44.</div>
+  </div>
+</div>
+
+<h2>8 · Ship picker — vertical, never a sideways rail</h2>
+<div class="pad">
+  <div class="picklist">
+    <button class="pickrow sel">
+      <span class="pickmark">1</span>
+      <span class="pickart"><img src="" data-ship="1"></span>
+      <span class="pickmeta"><b>Wraith</b><span class="picksub">Flagship · fires every 3.8s</span>
+        <span class="chips tight">
+          <span class="chip"><img class="chipic" src="" data-i="guns"><b>8</b></span>
+          <span class="chip ok"><img class="chipic" src="" data-i="cargo"><b>25<i>/</i>8</b></span>
+        </span>
+      </span>
+    </button>
+    <button class="pickrow">
+      <span class="pickmark">2</span>
+      <span class="pickart"><img src="" data-ship="2"></span>
+      <span class="pickmeta"><b>Hammer</b><span class="picksub">Man o' War · fires every 6.4s</span>
+        <span class="chips tight">
+          <span class="chip"><img class="chipic" src="" data-i="guns"><b>12</b></span>
+          <span class="chip ok"><img class="chipic" src="" data-i="cargo"><b>50<i>/</i>8</b></span>
+        </span>
+      </span>
+    </button>
+    <button class="pickrow dis">
+      <span class="pickmark"></span>
+      <span class="pickart"><img src="" data-ship="3"></span>
+      <span class="pickmeta"><b>Vixen</b><span class="picksub">At sea</span></span>
+    </button>
+  </div>
+</div>
+
+<h2>9 · Tabs · section heading · empty state</h2>
+<div class="pad">
+  <div class="mtabs"><button class="mtab on">Sell</button><button class="mtab">Shipwright</button></div>
+  <div class="sect"><span class="sectlbl">Captain's Quarters</span>
+    <span class="secttrail"><span class="chip gold"><img class="chipic" src="" data-i="star"><b>0<i>/</i>7</b></span></span></div>
+  <div class="card empty">
+    <img class="emptyic" src="" data-i="sea">
+    <p class="emptytext">No ships at sea. Take a run or a dive from the chart.</p>
+  </div>
+</div>
+
+<h2>10 · Chrome — app bar and tab bar</h2>
+<div style="border:1px solid var(--line)">
+  <div id="topbar"><div class="scenebar">
+    <h1 class="scenetitle">Market</h1>
+    <div class="scenetools">
+      <div class="resitem"><img class="ic" src="" data-i="gold"><b>9000</b></div>
+      <button class="resitem tappable"><img class="ic" src="" data-i="cargo"><span>Stores</span></button>
+      <button class="iconbtn"></button>
+    </div>
+  </div></div>
+  <nav id="nav"></nav>
+</div>
+
+</div>
+
+<script type="module">
+import { iconHTML } from './src/art/icons.js';
+import { loadIconArt } from './src/art/icons.js';
+import { shipHTML, loadShipArt } from './src/art/ships.js';
+
+await loadIconArt();
+await loadShipArt(() => {});
+
+/* fill every placeholder with the real generated art */
+document.querySelectorAll('[data-i]').forEach(el => {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = iconHTML(el.dataset.i, 0);
+  el.src = tmp.firstElementChild.src;
+});
+document.querySelectorAll('[data-ship]').forEach(el => {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = shipHTML('frigate', 'flag', 0.8);
+  const img = tmp.querySelector('img');
+  if (img) { el.src = img.src; el.style.width = img.style.width; }
+});
+
+/* the colour ramp */
+const FAM = { Blue:['#146587','#167DA8','#1C9FD7','#36BDF7'], Green:['#046D41','#029357','#16BB77','#2FD792'],
+  Yellow:['#B48000','#DEA312','#FFCC00','#FFEA9C'], Red:['#871023','#CD0B2A','#EE2747','#FF627B'],
+  Grey:['#666880','#989AAF','#DADCE7','#FFFFFF'] };
+document.getElementById('ramp').innerHTML = Object.entries(FAM)
+  .map(([n,t]) => t.map((c,i) => `<div class="sw" style="background:${c}">${i?'':n}</div>`).join('')).join('');
+
+/* the tab bar */
+const TABS = [['port','Port'],['flag','Flagship'],['map','Map'],['sea','At Sea'],['scales','Market']];
+document.getElementById('nav').innerHTML = TABS.map(([ic,l],i) =>
+  `<button class="${i===0?'on':''}">
+     <span class="navcircle">${iconHTML(ic,0,'navic')}</span>
+     <span class="navlbl">${l}</span>
+     ${i===3?'<span class="badge rdy">2</span>':''}
+   </button>`).join('');
+</script>
+</body>
+</html>

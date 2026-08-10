@@ -1,350 +1,242 @@
 /* ============================================================
-   base — reset, the app frame, typography roles, surface primitives
+   base — reset, the app frame, typography, surfaces
 
    Everything here is a rule the whole game obeys. If a screen needs
-   something this file does not offer, the fix is to add it here rather than
-   to invent it in that screen — that is the difference between a design
-   system and a folder of stylesheets.
+   something this file does not offer, it is added here — that is the
+   difference between a design system and a folder of stylesheets.
    ============================================================ */
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
 html,body{height:100%}
 
-/* The body colour shows through the iOS status bar, which
-   "black-translucent" leaves undrawn. It is the sea, because the sea is what
-   is actually behind it once the app is up — anything else reads as a black
-   slab bolted to the top of the screen. */
 body{
   background-color:var(--sea);
   background-image:var(--water);
   background-size:420px 420px;
-  color:var(--ivory);
+  color:var(--ink);
   font-family:var(--font-prose);
-  font-size:var(--fs-body);
+  font-size:var(--fs-sm);
   line-height:var(--lh-body);
   height:100dvh;
   display:flex;flex-direction:column;overflow:hidden;
   touch-action:manipulation;user-select:none;-webkit-user-select:none;
   overscroll-behavior:none;
-  text-rendering:optimizeLegibility;
   -webkit-font-smoothing:antialiased;
 }
 
-/* ---- ambient layers ---------------------------------------------------- */
+/* ---- ambient ----------------------------------------------------------- */
 #mist{position:fixed;inset:0;z-index:0}
-
-/* Darkened corners and a faint grain: it reads as a screen rather than a
-   document, and it is the cheapest single thing that stops the game looking
-   like a web page. */
 #vignette{
   position:fixed;inset:0;z-index:var(--z-vignette);pointer-events:none;
-  background:
-    radial-gradient(ellipse at 50% 45%,transparent 48%,rgba(2,18,24,.22) 80%,rgba(1,12,16,.45) 100%),
-    repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
-  mix-blend-mode:multiply;
+  background:radial-gradient(ellipse at 50% 42%,transparent 46%,rgba(3,14,22,.34) 82%,rgba(2,10,16,.6) 100%);
 }
-.calm #vignette{background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(2,18,24,.2) 82%,rgba(1,12,16,.4) 100%)}
 
 /* ============================================================
-   the app frame — edge to edge
+   THE APP FRAME — edge to edge
 
-   Three bands and no margins: a wood scene bar clamped to the top edge, the
-   scene itself scrolling between them, a wood nav rail clamped to the
-   bottom edge. Both bars bleed into the safe areas and carry the inset as
-   padding INSIDE themselves, so the wood reaches the physical edge of the
-   glass and the content never sits under the notch or the home indicator.
+   Three bands, no margins: an app bar clamped to the top edge, the scene
+   scrolling between, a tab bar clamped to the bottom. Both bars bleed into
+   the safe areas and carry the insets as padding INSIDE themselves, so the
+   chrome reaches the physical glass and the content never sits under the
+   notch or the home indicator.
 
-   Nothing in the game is centred in a column with sea either side of it. A
-   phone screen is the canvas, not a viewport a page happens to be inside.
+   ONE SCROLL AXIS. The scene scrolls vertically and nothing inside it
+   scrolls sideways. Horizontal rails inside a vertical page were the single
+   worst thing about the old build: a screen that scrolls two ways has no
+   reading order, and every rail clipped its own cards at the fold.
    ============================================================ */
 #app{
   position:relative;z-index:var(--z-scene);
-  flex:1;min-height:0;
-  display:none;flex-direction:column;
+  flex:1;min-height:0;display:none;flex-direction:column;
 }
 #app.on{display:flex}
 
-/* The scene. It scrolls; the bars do not. */
 main{
   flex:1;min-height:0;
   overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-  padding:var(--gutter) var(--gutter) var(--s6);
-  background-color:var(--sea);
-  background-image:var(--water);
-  background-size:420px 420px;
+  padding:var(--s3) var(--gutter) var(--s6);
+  display:flex;flex-direction:column;gap:var(--stack);
 }
-/* A scene that draws its own full-bleed world — the chart. */
-main.nopad{padding:0;overflow:hidden;position:relative}
+/* A scroller's children must not shrink. `main` is a flex column, so by
+   default every block in it is a flex item with flex-shrink:1 — and once the
+   page is taller than the viewport (which is always) the browser starts
+   taking height off them to make them fit. That is what crushed the flagship
+   hero to a sliver with the next card sitting on top of it. */
+main > *{flex-shrink:0}
+main.nopad{padding:0;overflow:hidden;position:relative;display:block}
 
 /* ============================================================
-   typography roles
-
-   Display for anything glanced at, prose for anything read. The rule is
-   length: one word or one number is display, a clause is prose.
+   TYPOGRAPHY
    ============================================================ */
 h1,h2,h3,h4{
   font-family:var(--font-display);font-weight:400;
   letter-spacing:var(--track);text-transform:uppercase;
-  line-height:var(--lh-tight);
+  line-height:var(--lh-tight);color:var(--ink);
 }
 
-/* A sentence. Anywhere the game explains rather than states. */
+/* A sentence. */
 .sub{
-  font-family:var(--font-prose);
-  font-size:var(--fs-body);line-height:var(--lh-body);
-  color:var(--ink-soft);
+  font-family:var(--font-prose);font-size:var(--fs-sm);
+  line-height:var(--lh-body);color:var(--ink-dim);
 }
 .sub b{color:var(--ink);font-weight:600}
 .sub.quote{font-style:italic}
 .center{text-align:center}
-.warnline{margin-top:var(--s2);color:var(--bad-deep);font-weight:600}
-
-/* Prose sitting on the open sea rather than on a panel flips to ivory. */
-main > .sub,.on-sea .sub{color:var(--ivory-soft)}
+.warnline{margin-top:var(--s2);color:var(--gold);font-weight:600}
 
 /* ---- the section heading ----
-   A dark plank across the full column with the label branded into it. Full
-   width rather than hugging its text, because a heading that also carries a
-   counter and a button cannot hug anything without truncating the label —
-   that is what "YOUR SHI…" was. */
-/* A plank across the full column with the label branded into it, and — where
-   a section has one — the counter and the control that belong to it on the
-   same line.
-
-   It does NOT wrap. A heading that breaks onto two lines to fit a button is
-   a heading that changes height depending on how much money you have, which
-   is how the same screen ends up a different shape at two different moments.
-   The label shrinks and truncates instead, and the controls are sized small
-   enough that on a 360px phone it never has to. */
+   A label with a rule running out of it to the right edge, and whatever
+   counter or control the section owns sitting at the end of that rule. It is
+   type and a hairline — not a slab. A heading built as a filled plank costs
+   56px of a phone to say two words, and five of them on one screen is a
+   third of the screen spent on furniture. */
 .sect{
-  display:flex;align-items:center;gap:var(--s2);flex-wrap:nowrap;
-  width:100%;min-height:46px;
-  margin:var(--s5) 0 var(--s3);
-  padding:var(--s1) var(--s3);
-  border:10px solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 / 10px stretch;
-  background:var(--wood-dark);
-  font-family:var(--font-display);font-size:var(--fs-title);
-  letter-spacing:var(--track);text-transform:uppercase;
-  line-height:1.1;color:var(--ivory);
-  animation:riseIn var(--t-enter) var(--ease-out) both;
-  animation-delay:calc(var(--i,0)*60ms);
+  display:flex;align-items:center;gap:var(--s3);
+  min-height:var(--tap);
+  margin:var(--s4) 0 var(--s1);
+  font-family:var(--font-display);font-size:var(--fs-lg);
+  letter-spacing:var(--track-wide);text-transform:uppercase;
+  color:var(--ink);line-height:var(--lh-tight);
 }
-/* first heading on a screen does not need a gap above it */
 main > .sect:first-child,.sheet-body > .sect:first-child{margin-top:0}
-/* The label wraps to two lines rather than truncating. It is the one thing on
-   the plank the player cannot reconstruct from context — "CAPTAIN'S QUARTE…"
-   is a heading that has stopped being a heading — so when a counter and a
-   button leave it too little room it takes a second line and the plank grows
-   by exactly that much. The row itself still never wraps: the controls stay
-   on the right where the eye goes for an action. */
-.sect .sectlbl{
-  flex:0 1 auto;min-width:0;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;overflow-wrap:break-word;
-  text-shadow:0 2px 0 rgba(0,0,0,.32);
+.sect .sectlbl{flex:0 1 auto;min-width:0;overflow-wrap:break-word}
+/* the rule: it fills whatever the label and the controls leave */
+.sect::after{
+  content:'';flex:1 1 auto;height:2px;min-width:var(--s3);
+  border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--line),transparent);
+  order:1;
 }
 .sect .secttrail{
-  flex:0 0 auto;margin-left:auto;
-  display:flex;align-items:center;gap:var(--s1);
-}
-.sect .secttrail .chips{margin-top:0;flex-wrap:nowrap}
-/* The controls riding a heading are the compact cut of themselves: a heading
-   is a label with an affordance on it, not a toolbar. */
-.sect .secttrail .btn.sm{min-height:40px;padding:2px var(--s2);--lift:3px;font-size:var(--fs-micro)}
-.sect .secttrail .chip{font-size:var(--fs-label);padding:1px var(--s1) 1px 1px}
-/* A heading carrying a counter has less room for its own word, so it takes
-   the next step down the scale rather than spending it on an ellipsis. */
-.sect:has(.secttrail) .sectlbl{font-size:var(--fs-head)}
-
-/* ---- the empty state ----
-   The first thing a new player sees on three of the five screens, so it is a
-   composed thing rather than a bare sentence in a box: a large faded glyph
-   over one plain line, centred, with room around it. */
-.card.empty{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:var(--s3);text-align:center;
-  padding:var(--s6) var(--s4);
-}
-.card.empty .emptyic{
-  width:clamp(56px,16vw,80px);height:clamp(56px,16vw,80px);
-  opacity:.32;
-}
-.card.empty .emptytext{
-  font-family:var(--font-prose);font-size:var(--fs-body);
-  line-height:var(--lh-body);color:var(--ink-soft);max-width:34ch;
+  order:2;flex:0 0 auto;display:flex;align-items:center;gap:var(--s2);
 }
 
-/* ---- glyphs ----
-   Every icon in the game is an <img> of an SVG. 40px is the floor, enforced
-   by tools/check-min-size.js: below that a glyph stops being recognisable
-   and starts being a smudge with a colour. */
-.ic{display:inline-block;vertical-align:middle;flex-shrink:0;image-rendering:auto}
+/* ---- glyphs ---- */
+.ic{display:inline-block;vertical-align:middle;flex-shrink:0}
 
 /* ============================================================
-   surface primitives
+   SURFACES
 
-   Three materials, three mixins. Every panel, plank and plate in the game is
-   one of these three lines — which is precisely why they all agree.
-
-   All three are 9-slice border-images: the art's four corners keep their own
-   size, its edges stretch along the sides, its centre fills the middle. The
-   vectors are used rather than the PNGs so a surface is crisp at any size on
-   any density.
+   Three, and a component picks one. All three are navy, so the coloured
+   controls are the only saturated things on screen and therefore the only
+   things that pull the eye.
    ============================================================ */
-
-/* PARCHMENT — the field content is printed on. */
-.surface,.card,.item,.dlg,.pausebox,.railcard,.goodcard,.tcard,.awardcard,.foecard,#tutTip{
-  border:var(--slice-panel) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_brown.svg') 16 / var(--slice-panel) stretch;
-  border-radius:0;
-  background:var(--parch);
-  padding:var(--inset);
-  color:var(--ink);
-}
-/* WOOD — structure. A plank frames, it never carries content. */
-.plank{
-  border:var(--slice-plank) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_brown_dark.svg') 16 / var(--slice-plank) stretch;
-  background:var(--wood-dark);
-  color:var(--ivory);
-}
-/* STEEL — a readout. Small, inset, and always holding a value. */
-.plate{
-  border:var(--slice-plate) solid transparent;
-  border-image:url('../assets/kenney-adventure/Vector/panel_grey.svg') 16 / var(--slice-plate) stretch;
-  background:var(--steel-lit);
-  color:var(--ink);
-}
-
-/* Anything on parchment takes ink; the ink decision belongs to the surface,
-   not to the component sitting on it. */
-.card,.item,.dlg,.pausebox,.railcard,.goodcard,.tcard,.foecard{color:var(--ink)}
-.card h3,.item h3,.dlg h3,.railcard h3{color:var(--ink)}
-
-/* ---- cards ---- */
-@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
-.calm .card,.calm .sect,.calm .item,.calm .hero,.calm .goodcard,
-.calm .railcard,.calm .tcard,.calm .relicgrid{animation:none !important}
-
 .card{
+  background:var(--card);
+  border-radius:var(--r);
+  box-shadow:var(--shadow-card);
+  padding:var(--inset);
   position:relative;
-  margin-bottom:var(--stack);
-  animation:riseIn var(--t-enter) var(--ease-out) both;
-  animation-delay:calc(var(--i,0)*60ms);
 }
-.card h3{
-  font-family:var(--font-display);font-size:var(--fs-title);
-  letter-spacing:var(--track);text-transform:uppercase;color:var(--ink);
-}
+.sunk{background:var(--sunk);border-radius:var(--r-sm)}
+.raised{background:var(--raised);border-radius:var(--r-sm)}
 
-/* A card can be flagged by state. The flag is a coloured rule down its left
-   edge rather than a recoloured frame: the frame is the art and the art does
-   not change, so state gets its own channel and every state reads the same
-   way whatever kind of card it is on. */
-.card::before,.item::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
-  border-radius:var(--r-pill);pointer-events:none;
-  background:var(--flagcolor,transparent);
+/* A card can be flagged by state — a colour bar down its leading edge. The
+   card's own fill never changes, so state has one channel and reads the same
+   way on every kind of card. */
+.card.flagged{overflow:hidden}
+.card.flagged::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--flag,transparent);
 }
-.card.owned,.item.owned,.card.chartercard,.card.flagcard{--flagcolor:var(--accent)}
-.card.ready,.item.ready{--flagcolor:var(--good)}
-.card.atsea,.item.atsea{--flagcolor:var(--steel-dark)}
-.card.bosscard,.item.dis{--flagcolor:var(--bad-deep)}
-.card.setdone{--flagcolor:var(--accent-lit)}
-.item.dis{opacity:.55}
-.card.decided{opacity:.62}
+.card.owned,.card.chartercard,.card.flagcard{--flag:var(--accent)}
+.card.ready{--flag:var(--good)}
+.card.atsea{--flag:var(--blue)}
+.card.bosscard{--flag:var(--bad)}
+.card.setdone{--flag:var(--accent-lit)}
+.card.decided{opacity:.55}
 
 /* ---- layout helpers ---- */
 .row{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);flex-wrap:wrap}
 .btnset{display:flex;gap:var(--s2);flex-wrap:wrap;flex-shrink:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
 
-/* ---- a text link that is still a real button ---- */
+/* ---- a link that is still a real button ---- */
 .linkbtn{
-  background:none;border:none;color:var(--ink-soft);font:inherit;font-weight:600;
+  background:none;border:none;color:var(--gold);font:inherit;font-weight:600;
   text-decoration:underline;text-underline-offset:3px;cursor:pointer;
   padding:var(--s2) var(--s1);min-height:var(--tap);border-radius:var(--r-sm);
 }
-.linkbtn:hover{color:var(--ink)}
 .linkbtn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 
-/* ---- small type ---- */
-.pips{
-  display:inline-flex;gap:3px;align-items:center;flex-shrink:0;
-  font-size:var(--fs-micro);color:var(--accent-deep);letter-spacing:2px;
+/* ---- level pips ---- */
+.pips{display:inline-flex;gap:3px;align-items:center;flex-shrink:0}
+.pips i{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,.18);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);
 }
+.pips i.on{background:var(--accent);box-shadow:none}
 
 /* ---- flavour blockquote ---- */
 .evt{
-  border-left:4px solid var(--wood-dark);
-  background:color-mix(in srgb, var(--parch-sunk) 70%, transparent);
-  padding:var(--s2) var(--s3);margin-top:var(--s3);
-  font-family:var(--font-prose);font-size:var(--fs-body);font-style:italic;
-  color:var(--ink-soft);line-height:var(--lh-body);border-radius:var(--r-sm);
+  border-left:3px solid var(--blue);
+  background:var(--sunk);border-radius:0 var(--r-sm) var(--r-sm) 0;
+  padding:var(--s2) var(--s3);margin-top:var(--s2);
+  font-family:var(--font-prose);font-size:var(--fs-sm);font-style:italic;
+  color:var(--ink-dim);line-height:var(--lh-body);
 }
-.evt.noto{border-color:var(--accent);color:var(--ink)}
-.evt.prize{border-color:var(--accent-lit);color:var(--ink);font-style:normal}
+.evt.noto{border-color:var(--accent)}
+.evt.prize{border-color:var(--good);font-style:normal}
 
-/* ---- wipe transition ---- */
+/* ---- the empty state ----
+   The first thing a new player sees on three of the five screens, so it is a
+   composed thing rather than a bare sentence in a box. */
+.card.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--s3);text-align:center;padding:var(--s5) var(--s4);
+}
+.card.empty .emptyic{width:56px;height:56px;opacity:.4}
+.card.empty .emptytext{
+  font-family:var(--font-prose);font-size:var(--fs-sm);
+  line-height:var(--lh-body);color:var(--ink-dim);max-width:32ch;
+}
+
+/* ---- wipe ---- */
 #wipe{position:fixed;inset:0;z-index:var(--z-wipe);pointer-events:none;visibility:hidden}
 #wipe.go{visibility:visible}
-#wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg);transition:none}
-#wipe .p1{background:var(--wood-dark)}
+#wipe .p{position:absolute;top:-10%;bottom:-10%;width:170%;left:-230%;transform:skewX(-11deg)}
+#wipe .p1{background:var(--blue-deep)}
 #wipe .p2{background:var(--sea-deep)}
-#wipe.go .p1{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1)}
-#wipe.go .p2{left:120%;transition:left .62s cubic-bezier(.55,.05,.3,1) .07s}
+#wipe.go .p1{left:120%;transition:left .55s cubic-bezier(.55,.05,.3,1)}
+#wipe.go .p2{left:120%;transition:left .55s cubic-bezier(.55,.05,.3,1) .06s}
 
-/* ---- coins ---- */
 .coin{
-  position:fixed;z-index:45;width:15px;height:15px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle at 35% 30%,var(--ivory-soft),var(--accent));
+  position:fixed;z-index:45;width:14px;height:14px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,var(--gold-lit),var(--gold-deep));
 }
 
-/* reads safe-area insets into JS via border widths */
 #safeProbe{
   position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;visibility:hidden;
   border-top:env(safe-area-inset-top) solid transparent;
   border-bottom:env(safe-area-inset-bottom) solid transparent;
 }
 
+/* ---- entrances ---- */
+@keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.card,.listrow{animation:riseIn var(--t-enter) var(--ease-out) both;animation-delay:calc(var(--i,0)*40ms)}
+.calm *{animation:none !important}
+
 /* ============================================================
-   scrollbars — none, anywhere.
-   A scrollbar is browser chrome, and browser chrome is the loudest thing on
-   screen saying "this is a web page". Scrolling works exactly as before; it
-   just does not draw a track.
+   scrollbars — none. A scrollbar is browser chrome, and browser chrome is
+   the loudest thing on screen saying "this is a web page".
    ============================================================ */
 *{scrollbar-width:none;-ms-overflow-style:none}
 *::-webkit-scrollbar{width:0;height:0;display:none}
 
 /* ============================================================
-   larger canvases
-
-   The layout is authored for a phone held in one hand. A tablet or a desktop
-   window gets MORE of the game rather than a stretched copy of it: the
-   scene becomes a multi-column board and the nav moves to the side, which is
-   where a thumb is on a landscape device. Nothing is centred in a 660px
-   column with wasted sea either side.
+   larger canvases — more of the game, not a stretched copy of it
    ============================================================ */
-@media (min-width:900px) and (orientation:landscape){
+@media (min-width:820px){
   main:not(.nopad){
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(clamp(330px,26vw,520px),1fr));
-    gap:0 var(--s5);align-content:start;
-    padding:var(--s5) var(--s6) var(--s7);
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:var(--stack) var(--s4);align-content:start;
+    padding:var(--s4) var(--s5) var(--s6);
   }
-  /* Headings and the hero span the board. So does anything that already
-     manages its own columns — an item grid or a rail lays its own cards out,
-     so handing it one column of a multi-column board strands it in the left
-     third and leaves the rest of the screen as open water. */
-  .sect,.hero,.itemgrid,.rail,.goodsgrid,.tally,.wmeter{grid-column:1/-1}
+  .sect,.hero,.fullspan{grid-column:1/-1}
 }
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{
-    animation-duration:.01ms !important;animation-iteration-count:1 !important;
-    transition-duration:.01ms !important;
-  }
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#174050">
+<meta name="theme-color" content="#0C2438">
 <meta name="description" content="Salt &amp; Powder — build the most feared fleet in the Caribbean.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,11 +17,17 @@
 <link rel="preload" href="fonts/archivo-narrow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Cascade order is the design system's order, and it is one way down:
-     raw palette → tokens → base → components → the places that use them.
-     No stylesheet after this point overrides one before it; each adds what
-     the one before it does not cover. -->
+     tokens → base → components → the places that use them. No stylesheet
+     after this point overrides one before it; each adds what the one before
+     it does not cover.
+
+     styles/palette.css is NOT loaded. The interface is drawn in the Kenney
+     UI kit's own five-family ramp, because the kit's buttons, checkboxes and
+     sliders are painted in those exact values — a label picked from a
+     different palette would sit on art that disagrees with it. That ramp,
+     and the job each colour holds, is documented at the top of tokens.css;
+     palette.css is kept as the reference document it always was. -->
 <link rel="stylesheet" href="styles/fonts.css">
-<link rel="stylesheet" href="styles/palette.css">
 <link rel="stylesheet" href="styles/tokens.css">
 <link rel="stylesheet" href="styles/base.css">
 <link rel="stylesheet" href="styles/components.css">
@@ -42,9 +48,9 @@
 
 <!-- the game proper; hidden until you leave the title screen -->
 <div id="app">
-  <!-- The frame: a scene bar clamped to the top edge, the scene between, the
-       nav rail clamped to the bottom. Both bars bleed into the safe areas and
-       carry the insets inside themselves, so the wood reaches the glass and
+  <!-- The frame: an app bar clamped to the top edge, the scene between, a
+       tab bar clamped to the bottom. Both bars bleed into the safe areas and
+       carry the insets inside themselves, so the chrome reaches the glass and
        the content never sits under the notch or the home indicator. The
        shell fills the bar per screen; screens only draw the scene. -->
   <header id="topbar"></header>
